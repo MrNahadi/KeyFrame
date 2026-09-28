@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from keyframe import SEED, evaluate, features, paths
+from keyframe import SEED, evaluate, features, paths, splits
 
 MODEL_FACTORIES = {
     "logreg": lambda: make_pipeline(
@@ -53,6 +53,7 @@ def run_ablation(
     *,
     shop_test: bool = False,
     force: bool = False,
+    fold: int | None = None,
     output_dir: Path = paths.PROCESSED / "experiments",
 ) -> Path:
     """Score one feature-set x model combination via LOLO and write the predictions.
@@ -61,8 +62,7 @@ def run_ablation(
     unless ``force``. ``shop_test`` requires a residualising feature set (R9):
     it feeds the held-out load's reference rows to the residual step only.
     """
-    suffix = "_shop_test" if shop_test else ""
-    out_path = output_dir / f"ablation_{feature_set}_{model}{suffix}.parquet"
+    out_path = output_dir / _ablation_name(feature_set, model, shop_test, fold)
     if out_path.exists() and not force:
         return out_path
 
@@ -80,10 +80,43 @@ def run_ablation(
         def extra_healthy(held_out_bin: object) -> pd.DataFrame:
             return _extra_healthy(df, held_out_bin)
 
-    predictions = evaluate.lolo_predict(factory, df, columns, extra_healthy=extra_healthy)
+    predictions = evaluate.lolo_predict(
+        factory,
+        df,
+        columns,
+        extra_healthy=extra_healthy,
+        only_folds=None if fold is None else [fold],
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     predictions.to_parquet(out_path)
     return out_path
+
+
+def _ablation_name(feature_set: str, model: str, shop_test: bool, fold: int | None) -> str:
+    suffix = "_shop_test" if shop_test else ""
+    fold_part = "" if fold is None else f"_fold{fold}"
+    return f"ablation_{feature_set}_{model}{suffix}{fold_part}.parquet"
+
+
+def load_ablation(
+    feature_set: str,
+    model: str,
+    *,
+    shop_test: bool = False,
+    output_dir: Path = paths.PROCESSED / "experiments",
+) -> pd.DataFrame | None:
+    """Predictions for one ablation arm: the whole-run file if present, else the per-fold
+    files stitched together. Returns None unless every load bin is covered."""
+    whole = output_dir / _ablation_name(feature_set, model, shop_test, None)
+    if whole.exists():
+        return pd.read_parquet(whole)
+    parts = [
+        output_dir / _ablation_name(feature_set, model, shop_test, fold)
+        for fold in splits.LOAD_BINS
+    ]
+    if not all(part.exists() for part in parts):
+        return None
+    return pd.concat(pd.read_parquet(part) for part in parts).sort_index()
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -95,12 +128,20 @@ def main(argv: list[str] | None = None) -> None:
     ablation.add_argument("--model", required=True, choices=sorted(MODEL_FACTORIES))
     ablation.add_argument("--shop-test", action="store_true")
     ablation.add_argument("--force", action="store_true")
+    ablation.add_argument(
+        "--fold", type=int, choices=splits.LOAD_BINS, help="run one held-out load only"
+    )
 
     args = parser.parse_args(argv)
 
     table = load_feature_table()
     out_path = run_ablation(
-        table, args.feature_set, args.model, shop_test=args.shop_test, force=args.force
+        table,
+        args.feature_set,
+        args.model,
+        shop_test=args.shop_test,
+        force=args.force,
+        fold=args.fold,
     )
     print(out_path)
 

@@ -180,3 +180,23 @@ def test_lolo_predict_default_behaviour_unchanged_without_extra_healthy() -> Non
 
     assert len(result) == len(df)
     assert all(frame is None for frame in seen)
+
+
+def test_only_folds_runs_just_those_folds_and_stitches_back_to_the_full_run():
+    n = 40
+    df = pd.DataFrame(
+        {
+            "x": np.arange(n, dtype=float),
+            "load_bin": [40, 60, 75, 85] * (n // 4),
+            "run": ["r"] * n,
+            "label": ["Normal", "AC"] * (n // 2),
+        }
+    )
+
+    def factory() -> DummyClassifier:
+        return DummyClassifier(strategy="most_frequent")
+
+    full = evaluate.lolo_predict(factory, df, ["x"])
+    parts = [evaluate.lolo_predict(factory, df, ["x"], only_folds=[b]) for b in splits.LOAD_BINS]
+    assert [set(p["fold"]) for p in parts] == [{b} for b in splits.LOAD_BINS]
+    pd.testing.assert_frame_equal(pd.concat(parts).sort_index(), full.sort_index())

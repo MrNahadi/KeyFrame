@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 
 _EDGES = [130, 175, 207]
-_BINS = [40, 60, 75, 85]
+LOAD_BINS: tuple[int, ...] = (40, 60, 75, 85)
+_BINS = list(LOAD_BINS)
 
 
 def load_bin(shaft_power_kw: float | pd.Series) -> int | pd.Series:
