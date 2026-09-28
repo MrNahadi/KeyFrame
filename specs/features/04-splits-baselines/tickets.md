@@ -38,14 +38,14 @@ Notes:
 
 ## T-004: Cross-validated predictions over LOLO folds
 
-Status: open
+Status: done
 Blocked by: T-002, T-003
 Slice: Any sklearn model can be scored over the four held-out loads, giving per-row predictions and a pooled-plus-per-fold summary.
 Test seam: `keyframe.evaluate.lolo_predict`, `keyframe.evaluate.summarise`
 Context: requirements R8-R9; `grep -n 'def ' keyframe/splits.py keyframe/evaluate.py`
 Acceptance:
-- [ ] Synthetic test: a model is fitted once per fold and never sees test rows (a spy estimator records the indices it was fitted on)
-- [ ] Summary has one pooled row and one row per fold; per-fold macro F1 uses only classes present in that fold
+- [x] Synthetic test: a model is fitted once per fold and never sees test rows (a spy estimator records the indices it was fitted on)
+- [x] Summary has one pooled row and one row per fold; per-fold macro F1 uses only classes present in that fold
 Notes:
 
 ## T-005: Notebook 02: four baselines on raw sensors

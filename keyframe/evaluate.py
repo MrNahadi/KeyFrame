@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, recall_score
 
-from keyframe import paths
+from keyframe import paths, splits
 
 CLASS_ORDER: list[str] = ["Normal", "AC", "AF", "INJ", "CW", "TD"]
 
@@ -46,6 +48,70 @@ def confusion(y_true: pd.Series, y_pred: pd.Series) -> pd.DataFrame:
 def accuracy(y_true: pd.Series, y_pred: pd.Series) -> float:
     """Plain accuracy (reported, not a target)."""
     return float(np.mean(np.asarray(y_true) == np.asarray(y_pred)))
+
+
+def lolo_predict(
+    model_factory: Callable[[], Any], df: pd.DataFrame, features: list[str]
+) -> pd.DataFrame:
+    """Fit a fresh model per LOLO fold and predict the held-out rows.
+
+    Returns a DataFrame (original index) with ``run``, ``load_bin``, ``fold``,
+    ``y_true``, ``y_pred`` and, when the model supports it, one probability
+    column per class it was fitted on.
+    """
+    rows = []
+    for held_out_bin, train_index, test_index in splits.lolo_folds(df):
+        model = model_factory()
+        X_train = df.loc[train_index, features]
+        y_train = df.loc[train_index, "label"]
+        X_test = df.loc[test_index, features]
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+
+        fold_result = pd.DataFrame(
+            {
+                "run": df.loc[test_index, "run"],
+                "load_bin": df.loc[test_index, "load_bin"],
+                "fold": held_out_bin,
+                "y_true": df.loc[test_index, "label"],
+                "y_pred": np.asarray(y_pred),
+            },
+            index=test_index,
+        )
+        if hasattr(model, "predict_proba"):
+            proba = model.predict_proba(X_test)
+            for class_index, class_label in enumerate(model.classes_):
+                fold_result[f"proba_{class_label}"] = proba[:, class_index]
+        rows.append(fold_result)
+
+    return pd.concat(rows).loc[df.index]
+
+
+def summarise(predictions: pd.DataFrame) -> pd.DataFrame:
+    """Headline metrics pooled over all folds, plus one row per fold.
+
+    Per-fold scores cover only the classes present in that fold's true labels.
+    """
+    rows = [_score_slice("pooled", predictions["y_true"], predictions["y_pred"])]
+    for fold in sorted(predictions["fold"].unique()):
+        mask = predictions["fold"] == fold
+        rows.append(
+            _score_slice(fold, predictions.loc[mask, "y_true"], predictions.loc[mask, "y_pred"])
+        )
+    return pd.DataFrame(rows)
+
+
+def _score_slice(fold: object, y_true: pd.Series, y_pred: pd.Series) -> dict[str, object]:
+    recall = per_class_recall(y_true, y_pred)
+    worst_class = recall.idxmin()
+    return {
+        "fold": fold,
+        "macro_f1": macro_f1(y_true, y_pred),
+        "accuracy": accuracy(y_true, y_pred),
+        "false_alarm_rate": false_alarm_rate(y_true, y_pred),
+        "worst_recall": recall.min(),
+        "worst_recall_class": worst_class,
+    }
 
 
 def _git_commit() -> str:
