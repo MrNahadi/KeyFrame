@@ -1,0 +1,69 @@
+[project]
+name = "keyframe"
+version = "0.1.0"
+description = "Fault diagnosis for a marine diesel engine that holds up at loads it never trained on."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+authors = [{ name = "Farid Muigu" }]
+dependencies = [
+    "numpy==2.5.3",
+    "pandas==3.0.6",
+    "pyarrow==25.0.1",
+    "scikit-learn==1.9.1",
+    "lightgbm==4.7.0",
+    "xgboost-cpu==3.4.1",
+    "optuna==5.0.0",
+    "shap==0.52.0",
+    "lime==0.2.0.1",
+    "matplotlib==3.11.2",
+    "plotly==7.1.0",
+    "joblib==1.6.0",
+    "fastapi==0.141.1",
+    "uvicorn==0.54.0",
+    "pydantic==2.13.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "ruff==0.16.9",
+    "mypy==2.3.1",
+    "pandas-stubs==3.0.5.260914",
+    "jupyterlab==4.6.4",
+    "jupytext==1.19.5",
+    "nbconvert==7.17.1",
+    "ipykernel==7.3.0",
+    "httpx==0.28.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["keyframe"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-include = ["*.ipynb"]
+extend-exclude = ["notebooks/*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "NPY", "PD002"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"notebooks/*.py" = ["E402", "B018"]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["keyframe", "api"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["data: needs the dataset in data/raw (run `uv run python -m keyframe.download`)"]

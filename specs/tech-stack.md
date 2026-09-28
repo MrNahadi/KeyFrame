@@ -67,7 +67,7 @@ keyframe/
 ### Notebooks
 
 - The source of truth is `notebooks/NN_name.py` in jupytext percent format (`# %%` cells, `# %% [markdown]` for prose). Edit that file, never the `.ipynb`.
-- Build the executed copy with `uv run jupytext --to ipynb --execute notebooks/NN_name.py`, and commit both files so reviewers see outputs on GitHub.
+- Build the executed copy with `uv run jupytext --set-kernel python3 --to ipynb --execute notebooks/NN_name.py`, and commit both files so reviewers see outputs on GitHub.
 - Each notebook opens with a markdown cell that says, for the primary user, what question it answers and what it found. Headings are questions or findings, not "Section 2".
 - Static matplotlib figures, saved to `reports/figures/NN_*.png` at 150 dpi. Keep the executed notebook under about 5 MB.
 - Results tables go to `reports/results/*.csv` with the fold, class and metric columns needed to show spread across folds.
@@ -93,6 +93,6 @@ Run from the repo root. All must pass before any ticket is marked done.
 | Typecheck | `uv run mypy` |
 | Test | `uv run pytest` |
 | Build | Python: none. Front end (from roadmap item 12): `npm --prefix web run build` |
-| E2E | Notebooks: `uv run jupytext --to ipynb --execute notebooks/<name>.py` for each notebook the ticket touched. Front end (from roadmap item 12): `npm --prefix web test` |
+| E2E | Notebooks: `uv run jupytext --set-kernel python3 --to ipynb --execute notebooks/<name>.py` for each notebook the ticket touched. Front end (from roadmap item 12): `npm --prefix web test` |
 
 Data setup (one command, needs network): `uv run python -m keyframe.download`.

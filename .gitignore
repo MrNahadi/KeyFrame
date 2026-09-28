@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Data: rebuilt with `uv run python -m keyframe.download`
+data/
+
+# Front end
+web/node_modules/
+web/dist/
+
+# Ralph loop runtime state
+.ralph/logs/
+.ralph/done
+.ralph/progress.md
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/

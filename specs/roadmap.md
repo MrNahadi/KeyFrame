@@ -2,7 +2,7 @@
 
 Each item is one feature, one branch (`feature/NN-slug`), one folder in `specs/features/`. Items follow the brief's milestones; the brief's milestone numbers are in brackets. Results lock at item 9, before any front-end work.
 
-- [ ] 1. **Scaffold** [M1]: pinned environment, `keyframe` package, one-command data download with checksum, lockbox set aside, lint/type/test commands passing, CI.
+- [x] 1. **Scaffold** [M1]: pinned environment, `keyframe` package, one-command data download with checksum, lockbox set aside, lint/type/test commands passing, CI.
 - [ ] 2. **Data audit** [M2]: notebook 00 loads all 16 files into one clean table; units, gaps, missing channels and every fault switch-on point documented; row counts match the dataset index.
 - [ ] 3. **EDA, engineering checklist and targets review** [M3, M4 gate]: notebook 01 compares each fault with healthy running at matched load, looks into the cavitation and injector puzzles, commits `reports/engineering_checklist.md` before any model, and records the one allowed target revision (or "no change") in `reports/targets.md`.
 - [ ] 4. **Splits and baselines** [M5]: leave-one-load-out splits with tests that no split mixes loads; notebook 02 scores dummy, logistic regression, random forest and gradient boosting on raw sensors, reproducing a macro F1 near 0.52.
