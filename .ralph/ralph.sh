@@ -11,8 +11,9 @@
 #     request: all built-in tools cost ~44k tokens before any work, this set ~19k),
 #   - usage is logged per iteration and flagged when the work passes the budget.
 #
-# "Work tokens" = how far the context grew past the fixed start (system prompt,
-# tools, PROMPT.md) plus everything written. That is what PROMPT.md's budget means.
+# "Work tokens" = new (uncached) context written during the session plus all output,
+# summed over every model call. It includes the fixed start (~20k: system prompt,
+# tools, PROMPT.md) once, so compare against RALPH_TOKEN_BUDGET + ~20k.
 #
 # Tunables (environment):
 #   RALPH_EFFORT        low | medium | high           (default medium)
@@ -29,7 +30,7 @@ PROMPT=".ralph/PROMPT.md"
 SETTINGS=".ralph/settings.json"
 LOGS=".ralph/logs"
 EFFORT="${RALPH_EFFORT:-medium}"   # Keyframe: medium, analysis tickets need it
-BUDGET="${RALPH_TOKEN_BUDGET:-25000}"
+BUDGET="${RALPH_TOKEN_BUDGET:-45000}"   # 25k work + ~20k fixed start
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -89,8 +90,12 @@ read_usage() {
     const calls = Array.isArray(u.iterations) && u.iterations.length > 0 ? u.iterations : [u];
     const start = ctx(calls[0]);
     const end = ctx(calls[calls.length - 1]);
-    const out = calls.reduce((n, c) => n + (c.output_tokens || 0), 0) || u.output_tokens || 0;
-    const work = Math.max(0, end - start) + out;
+    // The final usage block only covers the last API call, so sum the whole session from
+    // modelUsage: new context written to cache plus output, across every model used.
+    const models = Object.values(d.modelUsage || {});
+    const out = models.reduce((n, m) => n + (m.outputTokens || 0), 0) || u.output_tokens || 0;
+    const written = models.reduce((n, m) => n + (m.cacheCreationInputTokens || 0) + (m.inputTokens || 0), 0);
+    const work = models.length ? written + out : Math.max(0, end - start) + out;
     console.log([start, end, out, work, d.num_turns || 0, (d.total_cost_usd || 0).toFixed(4)].join(" "));
     console.log(String(d.result || "").slice(0, 600));
   ' "$1"
