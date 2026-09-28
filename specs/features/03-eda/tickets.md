@@ -18,7 +18,7 @@ Status: open
 Blocked by: T-001
 Slice: Notebook 01 exists, loads `data/processed/clean.parquet` (building it via keyframe if missing) and shows the coverage map and the load-versus-fault comparison.
 Test seam: executing `notebooks/01_eda.py`
-Context: requirements R6-R8, R12; tech-stack.md "Notebooks"; `grep -n '^# %%' notebooks/00_data_audit.py` (copy its structure); `head -20 reports/engineering_checklist.md` is not needed
+Context: requirements R6-R8, R12; tech-stack.md "Notebooks"; `grep -n '^# %%' notebooks/00_data_audit.py` (copy its structure)
 Acceptance:
 - [ ] `01_coverage.png`, `01_load_vs_fault_shift.png`, `reports/results/01_fault_shifts.csv`
 - [ ] Notebook executes and the executed `.ipynb` is committed
