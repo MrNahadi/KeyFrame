@@ -185,6 +185,99 @@ def test_rolling_slope_exact_and_warmup_flag():
     assert (result.loc[df["t"] >= 5, "roll_warmup_5"] == 0).all()
 
 
+def _synthetic_engine(n=60, fault_offset=0.0, fault_frac=0.0, seed=0):
+    rng = np.random.default_rng(seed)
+    speed = rng.uniform(1000, 2000, n)
+    load = rng.uniform(50, 500, n)
+    fuel = rng.uniform(5, 20, n)
+    target = 2.0 * speed + 0.5 * load - 1.5 * fuel + 100.0
+    label = np.full(n, "Normal", dtype=object)
+    n_fault = int(n * fault_frac)
+    if n_fault:
+        label[:n_fault] = "AC"
+        target[:n_fault] += fault_offset
+    df = pd.DataFrame(
+        {
+            "Engine Speed": speed,
+            "Water Brake Weight": load,
+            "Fuel Flow": fuel,
+            "Exhaust Temp 1": target,
+        }
+    )
+    return df, pd.Series(label)
+
+
+def test_healthy_engine_residuals_fit_ignores_fault_rows():
+    df, y = _synthetic_engine(n=60, fault_offset=500.0, fault_frac=0.3, seed=1)
+    healthy_only = df.loc[y == "Normal"]
+
+    transformer = features.HealthyEngineResiduals(
+        inputs=("Engine Speed", "Water Brake Weight", "Fuel Flow"),
+        targets=["Exhaust Temp 1"],
+    )
+    transformer.fit(df, y)
+    fitted_on_all = transformer.models_["Exhaust Temp 1"].predict(
+        healthy_only[list(transformer.inputs)]
+    )
+
+    reference = features.HealthyEngineResiduals(
+        inputs=("Engine Speed", "Water Brake Weight", "Fuel Flow"),
+        targets=["Exhaust Temp 1"],
+    )
+    reference.fit(healthy_only, pd.Series(["Normal"] * len(healthy_only)))
+    fitted_on_healthy_only = reference.models_["Exhaust Temp 1"].predict(
+        healthy_only[list(reference.inputs)]
+    )
+
+    np.testing.assert_allclose(fitted_on_all, fitted_on_healthy_only, rtol=1e-8)
+
+
+def test_healthy_engine_residuals_synthetic_linear_engine():
+    df, y = _synthetic_engine(n=80, fault_offset=300.0, fault_frac=0.25, seed=2)
+
+    transformer = features.HealthyEngineResiduals(
+        inputs=("Engine Speed", "Water Brake Weight", "Fuel Flow"),
+        targets=["Exhaust Temp 1"],
+        degree=1,
+    )
+    transformer.fit(df, y)
+    out = transformer.transform(df)
+
+    healthy_resid = out.loc[y == "Normal", "resid_Exhaust Temp 1"]
+    fault_resid = out.loc[y != "Normal", "resid_Exhaust Temp 1"]
+
+    np.testing.assert_allclose(healthy_resid.to_numpy(), 0.0, atol=25.0)
+    assert fault_resid.mean() > 250.0
+
+
+def test_healthy_engine_residuals_in_pipeline_with_lolo_predict():
+    from sklearn.dummy import DummyClassifier
+    from sklearn.pipeline import make_pipeline
+
+    from keyframe import evaluate
+
+    df, y = _synthetic_engine(n=90, fault_offset=200.0, fault_frac=0.2, seed=3)
+    df["label"] = y
+    df["run"] = [f"run{i % 3}" for i in range(len(df))]
+    df["load_bin"] = np.tile([0, 1, 2], len(df) // 3)
+
+    def model_factory():
+        return make_pipeline(
+            features.HealthyEngineResiduals(
+                inputs=("Engine Speed", "Water Brake Weight", "Fuel Flow"),
+                targets=["Exhaust Temp 1"],
+            ),
+            DummyClassifier(strategy="most_frequent"),
+        )
+
+    result = evaluate.lolo_predict(
+        model_factory,
+        df,
+        ["Engine Speed", "Water Brake Weight", "Fuel Flow", "Exhaust Temp 1"],
+    )
+    assert len(result) == len(df)
+
+
 @pytest.mark.data
 def test_rolling_features_full_table_under_two_minutes():
     path = paths.PROCESSED / "clean.parquet"

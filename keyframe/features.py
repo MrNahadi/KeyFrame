@@ -6,7 +6,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 
+import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 EXCLUDED_COLUMNS: frozenset[str] = frozenset(
     {
@@ -215,3 +220,59 @@ def add_rolling_features(
     ]
     rolled = pd.concat(parts).reindex(df.index)
     return pd.concat([df, rolled], axis=1)
+
+
+class HealthyEngineResiduals(BaseEstimator, TransformerMixin):
+    """Add ``resid_<target>`` columns: measured minus what a healthy engine would read.
+
+    Fits, on rows where ``y == "Normal"`` only, one polynomial ridge regression
+    per target channel from ``inputs``, standardised inside. ``targets=None``
+    means every raw sensor channel except the inputs. Polynomial ridge rather
+    than trees because held-out loads at 40% and 85% sit at the edges of the
+    training range and trees cannot extrapolate.
+    """
+
+    def __init__(
+        self,
+        inputs: Sequence[str] = ("Engine Speed", "Water Brake Weight", "Fuel Flow"),
+        targets: Sequence[str] | None = None,
+        degree: int = 2,
+        alpha: float = 1.0,
+    ) -> None:
+        self.inputs = inputs
+        self.targets = targets
+        self.degree = degree
+        self.alpha = alpha
+
+    def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray) -> HealthyEngineResiduals:
+        y = pd.Series(np.asarray(y), index=X.index)
+        healthy = X.loc[y == "Normal"]
+
+        self.targets_ = (
+            list(self.targets)
+            if self.targets is not None
+            else [c for c in raw_sensor_columns(X) if c not in self.inputs]
+        )
+        self.models_: dict[str, Pipeline] = {}
+        inputs = list(self.inputs)
+        for target in self.targets_:
+            model = make_pipeline(
+                PolynomialFeatures(degree=self.degree, include_bias=False),
+                StandardScaler(),
+                Ridge(alpha=self.alpha),
+            )
+            model.fit(healthy[inputs], healthy[target])
+            self.models_[target] = model
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        inputs = list(self.inputs)
+        out = X.copy()
+        for target in self.targets_:
+            predicted = self.models_[target].predict(X[inputs])
+            out[f"resid_{target}"] = X[target].to_numpy() - predicted
+        return out
+
+    def get_feature_names_out(self, input_features=None) -> np.ndarray:
+        base = list(input_features) if input_features is not None else []
+        return np.asarray(base + [f"resid_{target}" for target in self.targets_])

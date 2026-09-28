@@ -27,15 +27,15 @@ Notes:
 
 ## T-003: Healthy-engine residual transformer
 
-Status: open
+Status: done
 Blocked by:
 Slice: A pipeline step fitted on healthy rows of the training fold that turns each sensor into its deviation from what a healthy engine would read.
 Test seam: `keyframe.features.HealthyEngineResiduals`
 Context: requirements R6-R8; `grep -n 'def lolo_predict' -A35 keyframe/evaluate.py`; `grep -n 'EXCLUDED_COLUMNS\|def raw_sensor_columns' -A5 keyframe/features.py`
 Acceptance:
-- [ ] Fit uses only rows with y == "Normal" (test proves fault rows don't change the fit)
-- [ ] Synthetic linear engine: healthy residuals ≈ 0, injected fault offset recovered
-- [ ] Works inside a sklearn Pipeline with `lolo_predict`
+- [x] Fit uses only rows with y == "Normal" (test proves fault rows don't change the fit)
+- [x] Synthetic linear engine: healthy residuals ≈ 0, injected fault offset recovered
+- [x] Works inside a sklearn Pipeline with `lolo_predict`
 Notes:
 
 ## T-004: Shop-test hook for the residual model
