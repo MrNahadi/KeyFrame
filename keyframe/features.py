@@ -4,6 +4,8 @@ plus the physics features derived from a single row of the clean table.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
+
 import pandas as pd
 
 EXCLUDED_COLUMNS: frozenset[str] = frozenset(
@@ -145,3 +147,71 @@ def add_physics_features(df: pd.DataFrame) -> pd.DataFrame:
     result["phys_tch_lo_share"] = shares["tch_lo_share"]
     result["phys_cooling_water_rise"] = cooling_water_rise(df)
     return result
+
+
+def _run_rolling_features(
+    group: pd.DataFrame, channels: Sequence[str], windows_s: Sequence[float], stats: Sequence[str]
+) -> pd.DataFrame:
+    """Trailing time-based rolling features for a single run, sorted by ``t``."""
+    ordered = group.sort_values("t")
+    t = ordered["t"].to_numpy()
+    time_index = pd.to_timedelta(t, unit="s")
+    t_start = t[0]
+    columns: dict[str, pd.Series] = {}
+
+    for window in windows_s:
+        warmup = ((t - t_start) < window).astype(int)
+        columns[f"roll_warmup_{window}"] = pd.Series(warmup, index=ordered.index)
+
+        t_series = pd.Series(t, index=time_index)
+        roller_t = t_series.rolling(f"{window}s", min_periods=1)
+        sum_t = roller_t.sum()
+        sum_tt = t_series.pow(2).rolling(f"{window}s", min_periods=1).sum()
+        count = roller_t.count()
+        denom = count * sum_tt - sum_t.pow(2)
+
+        for channel in channels:
+            values = pd.Series(ordered[channel].to_numpy(), index=time_index)
+            roller_v = values.rolling(f"{window}s", min_periods=1)
+            if "mean" in stats:
+                mean = roller_v.mean()
+                columns[f"{channel}_roll_{window}s_mean"] = pd.Series(
+                    mean.to_numpy(), index=ordered.index
+                )
+            if "std" in stats:
+                std = roller_v.std()
+                columns[f"{channel}_roll_{window}s_std"] = pd.Series(
+                    std.to_numpy(), index=ordered.index
+                )
+            if "slope" in stats:
+                sum_v = roller_v.sum()
+                sum_tv = (t_series * values).rolling(f"{window}s", min_periods=1).sum()
+                slope = (count * sum_tv - sum_t * sum_v) / denom.where(denom != 0)
+                columns[f"{channel}_roll_{window}s_slope"] = pd.Series(
+                    (slope * 60.0).to_numpy(), index=ordered.index
+                )
+
+    return pd.DataFrame(columns, index=ordered.index)
+
+
+def add_rolling_features(
+    df: pd.DataFrame,
+    channels: Iterable[str],
+    windows_s: Sequence[float] = (60, 300, 900),
+    stats: Sequence[str] = ("mean", "std", "slope"),
+) -> pd.DataFrame:
+    """Return a copy of ``df`` with trailing time-based rolling features per run.
+
+    Each row's window contains only rows of the same run with ``t`` in
+    ``(t - window, t]``; a run's rolling state never depends on another run or
+    on later rows. Slope is the least-squares slope against ``t`` in units
+    per minute. ``roll_warmup_<window>`` is 1 while a run's window is still
+    filling (the first ``window`` seconds of the run).
+    """
+    channels = list(channels)
+    parts = [
+        _run_rolling_features(run_df, channels, windows_s, stats)
+        for _, run_df in df.groupby("run", sort=False)
+    ]
+    rolled = pd.concat(parts).reindex(df.index)
+    return pd.concat([df, rolled], axis=1)

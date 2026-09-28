@@ -1,5 +1,7 @@
 """Raw-sensor input columns exclude leakage columns and non-numeric columns."""
 
+import time
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -141,3 +143,61 @@ def test_clean_parquet_columns():
     assert result
     assert set(result).isdisjoint(features.EXCLUDED_COLUMNS)
     assert not df[result].isna().any().any()
+
+
+def _two_run_frame() -> pd.DataFrame:
+    t = np.arange(0, 20, 1.0)
+    run1 = pd.DataFrame({"run": "run1", "t": t, "value": np.linspace(10, 29, 20)})
+    run2 = pd.DataFrame({"run": "run2", "t": t, "value": np.linspace(100, 300, 20)})
+    return pd.concat([run1, run2], ignore_index=True)
+
+
+def test_rolling_features_never_cross_run_boundary_or_look_forward():
+    df = _two_run_frame()
+    before = features.add_rolling_features(
+        df, ["value"], windows_s=(5,), stats=("mean", "std", "slope")
+    )
+
+    mutated = df.copy()
+    mutated.loc[mutated["run"] == "run2", "value"] += 1000.0
+    mutated.loc[(mutated["run"] == "run1") & (mutated["t"] > 10), "value"] += 1000.0
+    after = features.add_rolling_features(
+        mutated, ["value"], windows_s=(5,), stats=("mean", "std", "slope")
+    )
+
+    run1_early = (df["run"] == "run1") & (df["t"] <= 10)
+    for column in ["value_roll_5s_mean", "value_roll_5s_std", "value_roll_5s_slope"]:
+        pd.testing.assert_series_equal(
+            before.loc[run1_early, column], after.loc[run1_early, column]
+        )
+
+
+def test_rolling_slope_exact_and_warmup_flag():
+    t = np.arange(0, 20, 1.0)
+    gradient = 3.0
+    df = pd.DataFrame({"run": "run1", "t": t, "value": 5.0 + gradient * t})
+
+    result = features.add_rolling_features(df, ["value"], windows_s=(5,), stats=("slope",))
+
+    # The very first row's window has a single point, so its slope is undefined.
+    np.testing.assert_allclose(result["value_roll_5s_slope"].iloc[1:], gradient * 60.0, rtol=1e-9)
+    assert (result.loc[df["t"] < 5, "roll_warmup_5"] == 1).all()
+    assert (result.loc[df["t"] >= 5, "roll_warmup_5"] == 0).all()
+
+
+@pytest.mark.data
+def test_rolling_features_full_table_under_two_minutes():
+    path = paths.PROCESSED / "clean.parquet"
+    if not path.exists():
+        pytest.skip("data/processed/clean.parquet not built")
+    df = pd.read_parquet(path)
+    df = features.add_physics_features(df)
+    channels = features.raw_sensor_columns(df)
+
+    start = time.perf_counter()
+    features.add_rolling_features(
+        df, channels, windows_s=(60, 300, 900), stats=("mean", "std", "slope")
+    )
+    elapsed = time.perf_counter() - start
+
+    assert elapsed < 120

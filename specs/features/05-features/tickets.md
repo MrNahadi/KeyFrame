@@ -14,15 +14,15 @@ Notes:
 
 ## T-002: Causal time-based rolling features
 
-Status: open
+Status: done
 Blocked by:
 Slice: Trailing 1, 5 and 15 minute mean, std and slope per run, fast enough for the full table.
 Test seam: `keyframe.features.add_rolling_features(df, channels, windows_s, stats)`
 Context: requirements R3-R5; `grep -n 'def rolling_std' -A25 keyframe/eda.py`; tests/conftest.py
 Acceptance:
-- [ ] Synthetic two-run test: no value depends on another run's rows or on later rows (changing a future row or the other run leaves earlier values unchanged)
-- [ ] Slope of a line with known gradient is exact; warm-up flag is 1 exactly while the window is filling
-- [ ] A data-marked test times the full table under 2 minutes (skip if data absent)
+- [x] Synthetic two-run test: no value depends on another run's rows or on later rows (changing a future row or the other run leaves earlier values unchanged)
+- [x] Slope of a line with known gradient is exact; warm-up flag is 1 exactly while the window is filling
+- [x] A data-marked test times the full table under 2 minutes (skip if data absent)
 Notes:
 
 ## T-003: Healthy-engine residual transformer
