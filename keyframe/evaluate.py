@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -13,6 +13,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, recall_score
 
 from keyframe import paths, splits
+from keyframe.features import HealthyEngineResiduals
 
 CLASS_ORDER: list[str] = ["Normal", "AC", "AF", "INJ", "CW", "TD"]
 
@@ -51,21 +52,40 @@ def accuracy(y_true: pd.Series, y_pred: pd.Series) -> float:
 
 
 def lolo_predict(
-    model_factory: Callable[[], Any], df: pd.DataFrame, features: list[str]
+    model_factory: Callable[[], Any],
+    df: pd.DataFrame,
+    features: list[str],
+    extra_healthy: Callable[[Any], pd.DataFrame] | None = None,
+    only_folds: Iterable[Any] | None = None,
 ) -> pd.DataFrame:
     """Fit a fresh model per LOLO fold and predict the held-out rows.
+
+    ``extra_healthy(held_out_bin)``, when given, returns reference rows for the
+    held-out load. They are fitted into the pipeline's ``HealthyEngineResiduals``
+    step only (a shop-test variant), never added to the classifier's training rows
+    and never scored.
+
+    ``only_folds`` restricts the run to those held-out bins (for splitting a heavy
+    experiment into one invocation per fold); the other folds are skipped entirely.
 
     Returns a DataFrame (original index) with ``run``, ``load_bin``, ``fold``,
     ``y_true``, ``y_pred`` and, when the model supports it, one probability
     column per class it was fitted on.
     """
+    wanted = None if only_folds is None else set(only_folds)
     rows = []
     for held_out_bin, train_index, test_index in splits.lolo_folds(df):
+        if wanted is not None and held_out_bin not in wanted:
+            continue
         model = model_factory()
         X_train = df.loc[train_index, features]
         y_train = df.loc[train_index, "label"]
         X_test = df.loc[test_index, features]
-        model.fit(X_train, y_train)
+        fit_params = {}
+        if extra_healthy is not None:
+            step_name = _residual_step_name(model)
+            fit_params[f"{step_name}__extra_healthy"] = extra_healthy(held_out_bin)
+        model.fit(X_train, y_train, **fit_params)
         y_pred = model.predict(X_test)
 
         fold_result = pd.DataFrame(
@@ -84,7 +104,20 @@ def lolo_predict(
                 fold_result[f"proba_{class_label}"] = proba[:, class_index]
         rows.append(fold_result)
 
-    return pd.concat(rows).loc[df.index]
+    result = pd.concat(rows)
+    return (
+        result.loc[df.index.intersection(result.index)]
+        if wanted is not None
+        else result.loc[df.index]
+    )
+
+
+def _residual_step_name(model: Any) -> str:
+    """Name of the ``HealthyEngineResiduals`` step in a ``Pipeline``, for routing fit params."""
+    for name, step in getattr(model, "steps", []):
+        if isinstance(step, HealthyEngineResiduals):
+            return name
+    raise ValueError("extra_healthy given but model has no HealthyEngineResiduals step")
 
 
 def summarise(predictions: pd.DataFrame) -> pd.DataFrame:

@@ -6,6 +6,30 @@ from __future__ import annotations
 
 import pandas as pd
 
+from keyframe.features import (
+    cooler_effectiveness,
+    cooling_water_rise,
+    exhaust_temp_spread,
+    fuel_flow_per_kw,
+    indicated_work_spread,
+    pmax_spread,
+    turbine_temp_drop,
+)
+
+__all__ = [
+    "matched_healthy",
+    "fault_shift",
+    "around_switch_on",
+    "rolling_std",
+    "cooler_effectiveness",
+    "exhaust_temp_spread",
+    "pmax_spread",
+    "indicated_work_spread",
+    "turbine_temp_drop",
+    "cooling_water_rise",
+    "fuel_flow_per_kw",
+]
+
 GRADUAL_FAULT_TYPES = {"AC", "AF", "CW", "TD"}
 LOAD_MATCH_TOLERANCE_KW = 5.0
 
@@ -103,57 +127,3 @@ def rolling_std(series: pd.Series, t: pd.Series, window_s: float) -> pd.Series:
     ordered = pd.Series(series.to_numpy(), index=time_index).sort_index()
     result = ordered.rolling(f"{window_s}s", min_periods=1).std()
     return pd.Series(result.reindex(time_index).to_numpy(), index=series.index)
-
-
-def cooler_effectiveness(df: pd.DataFrame) -> pd.Series:
-    """(T14 - T15) / (T14 - T16): intercooler effectiveness."""
-    t14 = df["Charge Air IC Air Temp. In"]
-    t15 = df["Charge Air IC Air Temp. Out"]
-    t16 = df["Charge Air IC Cooling Water Temp. In"]
-    return (t14 - t15) / (t14 - t16)
-
-
-def exhaust_temp_spread(df: pd.DataFrame) -> pd.Series:
-    """Max minus min exhaust gas temperature across cylinders 1-3."""
-    cylinders = df[["No.1 Exh.Gas Temp.", "No.2 Exh.Gas Temp.", "No.3 Exh.Gas Temp."]]
-    return cylinders.max(axis=1) - cylinders.min(axis=1)
-
-
-def pmax_spread(df: pd.DataFrame) -> pd.Series:
-    """Max minus min in-cylinder peak pressure across cylinders 1-3."""
-    cylinders = df[
-        [
-            "Max. In-Cylinder Press. No.1",
-            "Max. In-Cylinder Press. No.2",
-            "Max. In-Cylinder Press. No.3",
-        ]
-    ]
-    return cylinders.max(axis=1) - cylinders.min(axis=1)
-
-
-def indicated_work_spread(df: pd.DataFrame) -> pd.Series:
-    """Max minus min indicated work across cylinders 1-3."""
-    cylinders = df[["Indicated Work No.1", "Indicated Work No.2", "Indicated Work No.3"]]
-    return cylinders.max(axis=1) - cylinders.min(axis=1)
-
-
-def turbine_temp_drop(df: pd.DataFrame) -> pd.Series:
-    """T4 - T5: temperature drop across the turbine."""
-    return df["Exh.Gas Temp. Turbine In"] - df["Exh.Gas Temp. Turbine Out"]
-
-
-def cooling_water_rise(df: pd.DataFrame) -> pd.Series:
-    """Mean of T7-T9 minus T6: cooling water temperature rise across the engine."""
-    outlets = df[
-        [
-            "Cooling Water Temp. Engine Out I",
-            "Cooling Water Temp. Engine Out II",
-            "Cooling Water Temp. Engine Out III",
-        ]
-    ]
-    return outlets.mean(axis=1) - df["Cooling Water Temp. Engine In"]
-
-
-def fuel_flow_per_kw(df: pd.DataFrame) -> pd.Series:
-    """Fuel flow normalised by shaft power."""
-    return df["Fuel Flow"] / df["Shaft Power"]

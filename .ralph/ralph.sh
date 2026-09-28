@@ -56,6 +56,8 @@ if [[ "${RALPH_DRY_RUN:-}" == "1" ]]; then
 fi
 
 rm -f .ralph/done
+echo "$$" > .ralph/loop.pid
+trap 'rm -f .ralph/loop.pid' EXIT
 
 branch="$(git branch --show-current)"
 if [[ "$branch" != feature/* ]]; then
@@ -107,8 +109,13 @@ for ((i = 1; i <= MAX; i++)); do
 
   # Unset the parent session's identity so each iteration is its own session
   # (matters when the loop is started from inside a Claude Code session).
-  env -u CLAUDECODE -u CLAUDE_CODE_SESSION_ID -u CLAUDE_CODE_REMOTE_SESSION_ID \
-    claude "${args[@]}" > "$log" 2>&1 < /dev/null || true
+  # Each iteration runs in its own process group, so .ralph/stop.sh can end it and
+  # every process it spawned (tests, notebooks, experiments) in one go.
+  setsid env -u CLAUDECODE -u CLAUDE_CODE_SESSION_ID -u CLAUDE_CODE_REMOTE_SESSION_ID \
+    claude "${args[@]}" > "$log" 2>&1 < /dev/null &
+  echo "$!" > .ralph/iteration.pgid
+  wait "$!" || true
+  rm -f .ralph/iteration.pgid
 
   { read -r start end out work turns cost; result="$(cat)"; } < <(read_usage "$log")
   run_total=$((run_total + work))

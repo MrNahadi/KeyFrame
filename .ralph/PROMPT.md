@@ -69,6 +69,7 @@ When the ticket, the R-numbers you read and the ADRs don't answer a question, do
 
 ## Never
 
+- Run a command in the background, or end your turn to wait for one. This session ends when you stop, so background work is lost and nothing will wake you. Run everything in the foreground; split anything over 9 minutes (for example with `--fold`).
 - Add `Co-Authored-By` or any other Claude or AI attribution line to a commit message (owner's rule).
 - Edit `specs/brief.md`, `specs/mission.md` or `specs/roadmap.md`.
 - Add a dependency that isn't installed. If a ticket needs one, escalate it as a question.
