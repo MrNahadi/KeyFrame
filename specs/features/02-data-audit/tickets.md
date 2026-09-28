@@ -55,15 +55,15 @@ Notes: ADR 0004 — missing_by_channel now compares the set of README-named runs
 
 ## T-005: Notebook 00, part 1: files, units, sampling and missing channels
 
-Status: open
+Status: done
 Blocked by: T-004
 Slice: Notebook 00 runs end to end and shows the first four audit sections with tables and one sampling figure.
 Test seam: executing `notebooks/00_data_audit.py` with jupytext
 Context: requirements R13-R16; tech-stack.md "Notebooks"; keyframe/audit.py (signatures only: `grep -n '^def ' keyframe/*.py`)
 Acceptance:
-- [ ] Sections: files and row counts vs index; units and raw-voltage channels; logging interval (1 s / 2 s pattern, gaps over 4 s); missing channels
-- [ ] Figure `reports/figures/00_sampling_intervals.png`; tables `reports/results/00_row_counts.csv`, `00_missing_channels.csv`
-- [ ] The notebook executes with the jupytext command and the executed `.ipynb` is committed
+- [x] Sections: files and row counts vs index; units and raw-voltage channels; logging interval (1 s / 2 s pattern, gaps over 4 s); missing channels
+- [x] Figure `reports/figures/00_sampling_intervals.png`; tables `reports/results/00_row_counts.csv`, `00_missing_channels.csv`
+- [x] The notebook executes with the jupytext command and the executed `.ipynb` is committed
 Notes:
 
 ## T-006: Notebook 00, part 2: switch-on points, load bins and findings
