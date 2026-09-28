@@ -2,14 +2,14 @@
 
 ## T-001: Model input columns with the exclusions enforced
 
-Status: open
+Status: done
 Blocked by:
 Slice: One function gives the raw-sensor input columns; a test proves the excluded channels can never get through.
 Test seam: `keyframe.features.raw_sensor_columns(df)`, `keyframe.features.EXCLUDED_COLUMNS`
 Context: requirements R1-R3; tech-stack.md "Data and leakage"; tests/conftest.py
 Acceptance:
-- [ ] Synthetic test: every excluded column present in the input is absent from the output; non-numeric columns are dropped
-- [ ] Data-marked test on `data/processed/clean.parquet` (skip if absent): output non-empty, no excluded column, no column with any missing value
+- [x] Synthetic test: every excluded column present in the input is absent from the output; non-numeric columns are dropped
+- [x] Data-marked test on `data/processed/clean.parquet` (skip if absent): output non-empty, no excluded column, no column with any missing value
 Notes:
 
 ## T-002: Leave-one-load-out splitter and its nested inner loop
