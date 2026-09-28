@@ -2,14 +2,14 @@
 
 ## T-001: Physics features
 
-Status: open
+Status: done
 Blocked by:
 Slice: One call adds every physics feature from the brief to the clean table, with NaN-safe denominators, and notebook 01 keeps working.
 Test seam: `keyframe.features.add_physics_features(df)`
 Context: requirements R1-R2; `grep -n '^def ' keyframe/eda.py keyframe/features.py`; `grep -n 'phys\|effectiveness\|spread' keyframe/eda.py | head -30`
 Acceptance:
-- [ ] Hand-computed tests for pressure ratio, cooler effectiveness, spreads, turbine drop, fuel per kW, heat-balance shares; zero denominators give NaN
-- [ ] Physics functions live in `features.py`; `eda.py` imports them; `tests/test_eda.py` still passes
+- [x] Hand-computed tests for pressure ratio, cooler effectiveness, spreads, turbine drop, fuel per kW, heat-balance shares; zero denominators give NaN
+- [x] Physics functions live in `features.py`; `eda.py` imports them; `tests/test_eda.py` still passes
 Notes:
 
 ## T-002: Causal time-based rolling features
