@@ -12,8 +12,8 @@
 # LightGBM (0.667), random forest (0.648) and logreg (0.542), but every model
 # falls well short of the target (0.80) and its false alarm rate (12.2%) is
 # more than double the 5% target. Detection delay is honest, not
-# reassuring: XGBoost only ever raises a sustained alarm on 6 of the 12 fault
-# runs (median delay among those, 563 s / 9.4 min), so half the runs are
+# reassuring: XGBoost only ever raises a sustained alarm on 6 of the 13 fault
+# runs (median delay among those, 563 s / 9.4 min), so more than half the runs are
 # never detected at all. Scores computed without each run's first 10 minutes
 # after switch-on are close to the full scores, so gradual onset is not
 # hiding a much better underlying model.
@@ -254,7 +254,7 @@ best_model_table
 #    ahead of LightGBM (0.667), random forest (0.648) and logreg (0.542),
 #    but none reach the 0.80 target and XGBoost's false alarm rate (12.2%)
 #    is more than double the 5% target.
-# 2. XGBoost's alarm only fires on 6 of the 12 fault runs at all; the
+# 2. XGBoost's alarm only fires on 6 of the 13 fault runs at all; the
 #    median delay among those (563 s / 9.4 min) looks close to the
 #    10-minute target, but half the runs never trigger a sustained alarm,
 #    so the detection-delay target is not met once the undetected runs are
