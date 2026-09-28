@@ -64,15 +64,15 @@ Notes:
 
 ## T-006: Notebook 04: comparison, confusion, alarms
 
-Status: open
+Status: done
 Blocked by: T-005
 Slice: Notebook 04 presents every model's held-out results, the tuned settings and the alarm behaviour from cached outputs.
 Test seam: executing `notebooks/04_modelling.py`
 Context: requirements R11-R12; `grep -n '^# %%' notebooks/03_feature_engineering.py` (structure to copy); `head -3 reports/results/04_models.csv reports/results/04_alarms.csv`
 Acceptance:
-- [ ] `04_fold_scores.png`, `04_confusion_best.png`, `04_detection_delay.png`
-- [ ] Target table (met / not met) and scores with and without the first 10 minutes after switch-on
-- [ ] Executes under 5 minutes; executed `.ipynb` committed
+- [x] `04_fold_scores.png`, `04_confusion_best.png`, `04_detection_delay.png`
+- [x] Target table (met / not met) and scores with and without the first 10 minutes after switch-on
+- [x] Executes under 5 minutes; executed `.ipynb` committed
 Notes:
 
 ## T-007: Findings and the best-model decision
