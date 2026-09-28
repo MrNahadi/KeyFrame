@@ -14,15 +14,15 @@ Notes:
 
 ## T-002: Nested Optuna tuning
 
-Status: open
+Status: done
 Blocked by:
 Slice: Each model can be tuned for one outer fold using only the inner folds of its training loads.
 Test seam: `keyframe.tuning.tune`, `keyframe.tuning.SEARCH_SPACES`
 Context: requirements R1-R3, R6; `grep -n 'def inner_lolo_folds' -A10 keyframe/splits.py`; `grep -n 'def lolo_predict\|def summarise\|def macro_f1' keyframe/evaluate.py`; `ls docs/adr/` then read only the feature-set ADR from feature 05
 Acceptance:
-- [ ] Spy test: the objective never fits on or scores rows outside `train_df`
-- [ ] Seeded study is reproducible (same best params twice on a tiny synthetic table)
-- [ ] `thin(df, step)` keeps every step-th row within each run in time order (test)
+- [x] Spy test: the objective never fits on or scores rows outside `train_df`
+- [x] Seeded study is reproducible (same best params twice on a tiny synthetic table)
+- [x] `thin(df, step)` keeps every step-th row within each run in time order (test)
 Notes:
 
 ## T-003: Tuning and modelling experiments
