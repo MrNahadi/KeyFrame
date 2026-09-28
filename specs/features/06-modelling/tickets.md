@@ -52,14 +52,14 @@ Notes: lightgbm, xgboost and random_forest all needed narrower search spaces (sm
 
 ## T-005: Alarm parameters chosen inside the inner folds
 
-Status: in-progress
+Status: done
 Blocked by: T-001, T-004
 Slice: Alarm settings picked per outer fold from inner-fold predictions, then applied to the held-out predictions of every model.
 Test seam: `uv run python -m keyframe.experiments alarm --model <m>`; `keyframe.alarm.choose_alarm_params`
 Context: requirements R10; `grep -n '^def ' keyframe/alarm.py keyframe/experiments.py`
 Acceptance:
-- [ ] Test: parameter choice uses only inner-fold predictions (spy)
-- [ ] `reports/results/04_alarms.csv` with per-run detection delay, false alarm rate at alarm level, chosen params per fold, for every model
+- [x] Test: parameter choice uses only inner-fold predictions (spy)
+- [x] `reports/results/04_alarms.csv` with per-run detection delay, false alarm rate at alarm level, chosen params per fold, for every model
 Notes:
 
 ## T-006: Notebook 04: comparison, confusion, alarms
