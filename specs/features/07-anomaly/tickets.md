@@ -2,14 +2,14 @@
 
 ## T-001: Detector interface and Isolation Forest
 
-Status: open
+Status: done
 Blocked by:
 Slice: A healthy-only detector interface with Isolation Forest behind it.
 Test seam: `keyframe.anomaly.IsolationForestDetector` (`fit`, `score`)
 Context: requirements R1-R3; `grep -n '^def \|^class ' keyframe/features.py | head -30`
 Acceptance:
-- [ ] Synthetic test: points far from a healthy cloud score higher than points inside it
-- [ ] Standardisation and imputation use training healthy rows only (test)
+- [x] Synthetic test: points far from a healthy cloud score higher than points inside it
+- [x] Standardisation and imputation use training healthy rows only (test)
 Notes:
 
 ## T-002: PCA with Hotelling T² and Q
