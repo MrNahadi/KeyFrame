@@ -2,14 +2,14 @@
 
 ## T-001: Sustained alarms and detection delay
 
-Status: open
+Status: done
 Blocked by:
 Slice: Row predictions become sustained alarms per run, with detection delay and alarm-level false alarm rate.
 Test seam: `keyframe.alarm.sustained_alarm`, `detection_delay`, `alarm_metrics`
 Context: requirements R7-R9; `grep -n '^def ' keyframe/evaluate.py keyframe/audit.py`; tests/conftest.py
 Acceptance:
-- [ ] Synthetic tests: an alarm fires exactly `min_duration_s` after a sustained run of confident predictions; a single stray prediction never fires; alarms never carry across runs or look ahead
-- [ ] Detection delay on a synthetic run with a known switch-on; pre-switch-on alarms counted as false alarms
+- [x] Synthetic tests: an alarm fires exactly `min_duration_s` after a sustained run of confident predictions; a single stray prediction never fires; alarms never carry across runs or look ahead
+- [x] Detection delay on a synthetic run with a known switch-on; pre-switch-on alarms counted as false alarms
 Notes:
 
 ## T-002: Nested Optuna tuning
