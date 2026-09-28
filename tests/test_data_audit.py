@@ -64,7 +64,7 @@ def test_injector_run_has_no_switch_on(full_table):
         assert pd.isna(result.loc[run, "row_index"])
 
 
-def test_dpf_and_dpex_are_fully_empty_in_the_four_raw_runs(full_table):
+def test_dpf_and_dpex_are_fully_empty_in_the_runs_the_release_names(full_table):
     result = audit.missing_by_channel(full_table)
     for channel in audit.MISSING_CHANNELS:
         fully_empty = set(
@@ -83,3 +83,8 @@ def test_fifth_expected_empty_run_is_the_lockboxed_run(full_table):
         "Clogged_Injector_Nozzle2_LoadProgram"
     }
     assert download.LOCKBOX_FILE == "Clogged_Injector_Nozzle2_LoadProgram.csv"
+
+
+def test_only_the_known_channels_are_missing_anywhere(full_table):
+    result = audit.missing_by_channel(full_table)
+    assert set(result["channel"]) <= set(audit.MISSING_CHANNELS)

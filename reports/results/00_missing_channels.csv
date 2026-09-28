@@ -1,27 +1,9 @@
 run,channel,missing_share
-AC_Fouling_40_Load,Time,1.0
-AC_Fouling_60_Load,Time,1.0
-AC_Fouling_75_Load,Time,1.0
 AC_Fouling_85_Load,Compressor Filter Loss,1.0
 AC_Fouling_85_Load,Turbine Back Pressure,1.0
-AC_Fouling_85_Load,Time,1.0
-AF_Clogging_40_Load,Time,1.0
-AF_Clogging_60_Load,Time,1.0
-AF_Clogging_75_Load,Time,1.0
-AF_Clogging_85_Load,Time,1.0
 Clogged_Injector_Nozzle1_40_60_85_Load,Compressor Filter Loss,1.0
 Clogged_Injector_Nozzle1_40_60_85_Load,Turbine Back Pressure,1.0
-Clogged_Injector_Nozzle1_40_60_85_Load,Time,1.0
 CW_Pump_Cavitation_60_Load,Compressor Filter Loss,1.0
 CW_Pump_Cavitation_60_Load,Turbine Back Pressure,1.0
-CW_Pump_Cavitation_60_Load,Time,1.0
 CW_Pump_Cavitation_85_Load,Compressor Filter Loss,1.0
 CW_Pump_Cavitation_85_Load,Turbine Back Pressure,1.0
-CW_Pump_Cavitation_85_Load,Time,1.0
-Reference_Data,Time_abs,1.0
-Reference_Data,Time_rel,1.0
-Reference_Data,Anomaly State,1.0
-Reference_Data,Turbine Back Pressure,1.0
-Turbine_Degradation_40_Load,Time,1.0
-Turbine_Degradation_60_Load,Time,1.0
-Turbine_Degradation_85_Load,Time,1.0

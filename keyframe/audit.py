@@ -41,8 +41,17 @@ def sampling_intervals(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# Columns that exist in only one of the two schemas. They are NaN in the other schema's
+# rows of the one table by construction, which is not "missing", so they are skipped.
+REFERENCE_ONLY_COLUMNS = {"Time"}
+SCENARIO_ONLY_COLUMNS = {"Time_abs", "Time_rel", "Anomaly State", "Turbine Back Pressure"}
+
+
 def missing_by_channel(df: pd.DataFrame) -> pd.DataFrame:
-    """Per run and channel: share of missing values, confirming the known fully-empty channels."""
+    """Per run and channel: share of missing values, confirming the known fully-empty channels.
+
+    Only channels in the run's own schema are counted (see ``REFERENCE_ONLY_COLUMNS``).
+    """
     channels = [
         c
         for c in df.columns
@@ -50,7 +59,10 @@ def missing_by_channel(df: pd.DataFrame) -> pd.DataFrame:
     ]
     rows = []
     for run, group in df.groupby("run", sort=False):
+        not_in_schema = SCENARIO_ONLY_COLUMNS if run == "Reference_Data" else REFERENCE_ONLY_COLUMNS
         for channel in channels:
+            if channel in not_in_schema:
+                continue
             share = group[channel].isna().mean()
             if share > 0:
                 rows.append({"run": run, "channel": channel, "missing_share": share})

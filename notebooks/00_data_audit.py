@@ -13,7 +13,9 @@
 # 6,492 INJ, 9,174 CW, 7,846 TD). The bench does not log at a fixed 2 s: rows
 # step 1 s and 2 s alternately (about 1.6 s on average), and no run has a gap
 # over 4 s. `dPf` (Compressor Filter Loss) and `dPex` (Turbine Back Pressure)
-# are fully empty in the four raw-signal runs. Every fixed-load run switches
+# are fully empty in four of the fourteen runs here (AC 85%, the one-hole
+# injector run and both cavitation runs) and in the lockbox run, exactly as the
+# release notes say; no other channel has a missing value. Every fixed-load run switches
 # on exactly once and stays faulty to the end (28 min to 111 min of healthy
 # data first); the injector run is faulty from its first row. Every
 # fixed-load run sits in its nominal load bin 100% of the time; the injector
@@ -151,12 +153,13 @@ clean_path
 #   we loaded are the ones the index describes: the table is trustworthy as
 #   a starting point.
 # - Sampling is not a fixed interval: rows step 1 s and 2 s alternately
-#   (about 1.6 s on average), with no gap over the 4 s threshold. Any
-#   windowing scheme must work in row counts, not a fixed time step, or
-#   resample first.
-# - `dPf` and `dPex` are fully empty in the four raw runs found above;
-#   models that use these channels must either drop those runs or impute
-#   before training, and any imputation must be fit on train data only.
+#   (about 1.6 s on average), with no gap over the 4 s threshold. Rolling
+#   windows are therefore defined in seconds of `t`, never in row counts,
+#   and are computed within one run.
+# - `dPf` and `dPex` are empty in five of the fifteen runs, and they are the
+#   very settings the researchers changed to create two of the faults. They
+#   are never model inputs: using them would be reading the answer, and their
+#   missing pattern alone gives away which file a row came from.
 # - Every fixed-load run switches on exactly once and stays faulty to the
 #   end; injector runs are faulty throughout. Splits must cut across whole
 #   runs, never inside a run, so no window straddles the healthy/faulty
