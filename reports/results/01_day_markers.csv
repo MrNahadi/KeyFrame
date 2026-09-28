@@ -1,0 +1,91 @@
+channel,run,median,other_runs_median,z_vs_other_runs
+Engine room Temp.,AC_Fouling_40_Load,24.32969,28.10508,-0.7938943455488129
+Engine room Temp.,AC_Fouling_60_Load,30.186775,26.89419,0.6888645272630203
+Engine room Temp.,AC_Fouling_75_Load,17.30532,28.37367,-2.7051897030957757
+Engine room Temp.,AC_Fouling_85_Load,29.58126,27.038735,0.5301007572483099
+Engine room Temp.,AF_Clogging_40_Load,24.54795,28.12536,-0.7499577274990274
+Engine room Temp.,AF_Clogging_60_Load,24.56129,28.42539,-0.8066893438962639
+Engine room Temp.,AF_Clogging_75_Load,19.44393,28.30956,-2.008676517812535
+Engine room Temp.,AF_Clogging_85_Load,24.53308,28.37675,-0.8020947958643332
+Engine room Temp.,CW_Pump_Cavitation_60_Load,27.10825,28.29704,-0.24643712375192342
+Engine room Temp.,CW_Pump_Cavitation_85_Load,29.38715,26.97193,0.5019541814233264
+Engine room Temp.,Clogged_Injector_Nozzle1_40_60_85_Load,24.45022,28.38674,-0.8251067707909883
+Engine room Temp.,Reference_Data,33.0418,25.15844,1.9515927300615938
+Engine room Temp.,Turbine_Degradation_40_Load,25.2048,28.37675,-0.6589447800153205
+Engine room Temp.,Turbine_Degradation_60_Load,29.09507,27.1656,0.40253874297301057
+Engine room Temp.,Turbine_Degradation_85_Load,31.52854,27.10801,0.9398325367819883
+LO Cooling Water Temp. In,AC_Fouling_40_Load,15.296455,15.57543,-0.04742261883991988
+LO Cooling Water Temp. In,AC_Fouling_60_Load,19.060295,15.36719,0.5980466204501227
+LO Cooling Water Temp. In,AC_Fouling_75_Load,9.2880345,15.62923,-1.133024373129822
+LO Cooling Water Temp. In,AC_Fouling_85_Load,15.19255,15.694035,-0.0816185448844882
+LO Cooling Water Temp. In,AF_Clogging_40_Load,16.28771,15.40025,0.1447435716931775
+LO Cooling Water Temp. In,AF_Clogging_60_Load,13.63397,15.746970000000001,-0.34538868479574053
+LO Cooling Water Temp. In,AF_Clogging_75_Load,9.896055,15.70043,-0.9860093088444698
+LO Cooling Water Temp. In,AF_Clogging_85_Load,14.34525,15.72303,-0.22461033768793126
+LO Cooling Water Temp. In,CW_Pump_Cavitation_60_Load,14.96474,15.55745,-0.09949837714009145
+LO Cooling Water Temp. In,CW_Pump_Cavitation_85_Load,15.26653,15.71649,-0.07310391997126557
+LO Cooling Water Temp. In,Clogged_Injector_Nozzle1_40_60_85_Load,13.06259,15.67007,-0.4447445132226572
+LO Cooling Water Temp. In,Reference_Data,21.221065,15.25388,1.2064402923450166
+LO Cooling Water Temp. In,Turbine_Degradation_40_Load,15.37117,15.55077,-0.029134605195437178
+LO Cooling Water Temp. In,Turbine_Degradation_60_Load,18.08129,15.39929,0.4371477736706037
+LO Cooling Water Temp. In,Turbine_Degradation_85_Load,20.09652,15.39152,0.7691550883558836
+Charge Air IC Cooling Water Temp. In,AC_Fouling_40_Load,16.04711,15.66702,0.09708063866145698
+Charge Air IC Cooling Water Temp. In,AC_Fouling_60_Load,18.86773,15.5627,0.8500293345412613
+Charge Air IC Cooling Water Temp. In,AC_Fouling_75_Load,8.7706255,15.94278,-2.1170326649927045
+Charge Air IC Cooling Water Temp. In,AC_Fouling_85_Load,14.69443,15.925920000000001,-0.31393191313158003
+Charge Air IC Cooling Water Temp. In,AF_Clogging_40_Load,16.26338,15.6171,0.1648750658246739
+Charge Air IC Cooling Water Temp. In,AF_Clogging_60_Load,13.31546,15.95852,-0.6799134127384954
+Charge Air IC Cooling Water Temp. In,AF_Clogging_75_Load,9.784143499999999,15.9302,-1.7039081858875191
+Charge Air IC Cooling Water Temp. In,AF_Clogging_85_Load,13.59114,15.94467,-0.604446419900281
+Charge Air IC Cooling Water Temp. In,CW_Pump_Cavitation_60_Load,14.68992,15.89364,-0.3064877971964426
+Charge Air IC Cooling Water Temp. In,CW_Pump_Cavitation_85_Load,14.67404,15.94071,-0.3222843717556418
+Charge Air IC Cooling Water Temp. In,Clogged_Injector_Nozzle1_40_60_85_Load,13.160515,15.94689,-0.7190360864822771
+Charge Air IC Cooling Water Temp. In,Reference_Data,20.76504,14.69952,1.9779484877578133
+Charge Air IC Cooling Water Temp. In,Turbine_Degradation_40_Load,15.7347,15.78093,-0.011705942400802008
+Charge Air IC Cooling Water Temp. In,Turbine_Degradation_60_Load,17.90706,15.615305,0.5876772408242145
+Charge Air IC Cooling Water Temp. In,Turbine_Degradation_85_Load,19.39483,15.60503,0.9830734551778125
+Fuel Temp.,AC_Fouling_40_Load,24.952235,26.94997,-0.4945408766503159
+Fuel Temp.,AC_Fouling_60_Load,28.836635,26.41349,0.6005813284514653
+Fuel Temp.,AC_Fouling_75_Load,16.54609,26.97318,-3.3801821601733497
+Fuel Temp.,AC_Fouling_85_Load,27.20225,26.45246,0.1840173880088707
+Fuel Temp.,AF_Clogging_40_Load,25.85599,26.9525,-0.26992146963295427
+Fuel Temp.,AF_Clogging_60_Load,24.81528,26.97905,-0.5308675220532397
+Fuel Temp.,AF_Clogging_75_Load,18.78696,26.96766,-2.2419986010004984
+Fuel Temp.,AF_Clogging_85_Load,24.01893,26.97391,-0.728080357240401
+Fuel Temp.,CW_Pump_Cavitation_60_Load,26.287,26.92318,-0.15612765847715393
+Fuel Temp.,CW_Pump_Cavitation_85_Load,27.0323,26.432,0.1469449295888207
+Fuel Temp.,Clogged_Injector_Nozzle1_40_60_85_Load,24.88063,26.97476,-0.5148017973649645
+Fuel Temp.,Reference_Data,30.73545,25.90718,1.321961564603728
+Fuel Temp.,Turbine_Degradation_40_Load,26.29525,26.97391,-0.16576789908376527
+Fuel Temp.,Turbine_Degradation_60_Load,27.89664,26.54112,0.3349674752867564
+Fuel Temp.,Turbine_Degradation_85_Load,28.61424,26.481009999999998,0.5295131533971709
+Fuel Oil Temp. Flow meter In,AC_Fouling_40_Load,21.713185000000003,23.01248,-0.32291117139785985
+Fuel Oil Temp. Flow meter In,AC_Fouling_60_Load,24.18524,22.9408,0.309389084673523
+Fuel Oil Temp. Flow meter In,AC_Fouling_75_Load,11.19356,23.02494,-4.001580203144347
+Fuel Oil Temp. Flow meter In,AC_Fouling_85_Load,23.14968,22.953315,0.048642921347519415
+Fuel Oil Temp. Flow meter In,AF_Clogging_40_Load,21.77464,23.01328,-0.30759894792655956
+Fuel Oil Temp. Flow meter In,AF_Clogging_60_Load,21.49642,23.02834,-0.3769134418604381
+Fuel Oil Temp. Flow meter In,AF_Clogging_75_Load,12.83317,23.02181,-3.0510674843844616
+Fuel Oil Temp. Flow meter In,AF_Clogging_85_Load,20.983995,23.02526,-0.5040193065767923
+Fuel Oil Temp. Flow meter In,CW_Pump_Cavitation_60_Load,22.98469,22.98496,-6.683278675939404e-05
+Fuel Oil Temp. Flow meter In,CW_Pump_Cavitation_85_Load,23.00201,22.97069,0.007739049245011456
+Fuel Oil Temp. Flow meter In,Clogged_Injector_Nozzle1_40_60_85_Load,20.924725000000002,23.02609,-0.5187339452599036
+Fuel Oil Temp. Flow meter In,Reference_Data,25.84518,21.93676,0.9990992587881423
+Fuel Oil Temp. Flow meter In,Turbine_Degradation_40_Load,22.00975,23.02526,-0.25023452347300473
+Fuel Oil Temp. Flow meter In,Turbine_Degradation_60_Load,23.9141,22.95468,0.23952985305604188
+Fuel Oil Temp. Flow meter In,Turbine_Degradation_85_Load,24.14203,22.95221,0.29718282668811824
+Sea Cooling Water Press.,AC_Fouling_40_Load,0.9618293155,0.734889752,2.390945010522563
+Sea Cooling Water Press.,AC_Fouling_60_Load,0.73536567,0.73652329,-0.011028127193720127
+Sea Cooling Water Press.,AC_Fouling_75_Load,0.748479643,0.73588764,0.12275127976635562
+Sea Cooling Water Press.,AC_Fouling_85_Load,0.736497929,0.736103771,0.0037701711783683606
+Sea Cooling Water Press.,AF_Clogging_40_Load,0.906618099,0.734860859,1.7433600298873841
+Sea Cooling Water Press.,AF_Clogging_60_Load,0.77388142,0.734543665,0.37578309530147136
+Sea Cooling Water Press.,AF_Clogging_75_Load,0.696147903,0.738318199825287,-0.4068525494466217
+Sea Cooling Water Press.,AF_Clogging_85_Load,0.728271825027466,0.737200702,-0.08525409030134629
+Sea Cooling Water Press.,CW_Pump_Cavitation_60_Load,0.594849154,0.737676998,-1.4787621468067742
+Sea Cooling Water Press.,CW_Pump_Cavitation_85_Load,0.596579907,0.738048383,-1.4635899074431602
+Sea Cooling Water Press.,Clogged_Injector_Nozzle1_40_60_85_Load,0.7588098395,0.735096168,0.2334990774134497
+Sea Cooling Water Press.,Reference_Data,0.6946,0.739061474,-0.41265124394764235
+Sea Cooling Water Press.,Turbine_Degradation_40_Load,0.923767655,0.7344518125,1.976331164048766
+Sea Cooling Water Press.,Turbine_Degradation_60_Load,0.748849703,0.7354394165,0.12906601389070438
+Sea Cooling Water Press.,Turbine_Degradation_85_Load,0.731489819,0.7369339135,-0.052225344710677614
