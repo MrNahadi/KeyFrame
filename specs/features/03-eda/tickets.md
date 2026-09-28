@@ -52,16 +52,16 @@ Notes:
 
 ## T-005: Notebook 01 part 4: the injector and test-day puzzle
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: A section that measures how far each run's day-dependent channels separate it from the others, and names the day-marker channels.
 Test seam: executing `notebooks/01_eda.py`
 Context: requirements R11; `grep -n '^# %%' notebooks/01_eda.py`
 Acceptance:
-- [ ] Figure `01_day_markers.png` (per-run distributions of the R11 channels) and table `reports/results/01_day_markers.csv`
-- [ ] A named list of day-marker channels with a recommendation for feature engineering (drop, residualise, or keep), justified in engine terms
-- [ ] No model is trained
-- [ ] Notebook executes and the executed `.ipynb` is committed
+- [x] Figure `01_day_markers.png` (per-run distributions of the R11 channels) and table `reports/results/01_day_markers.csv`
+- [x] A named list of day-marker channels with a recommendation for feature engineering (drop, residualise, or keep), justified in engine terms
+- [x] No model is trained
+- [x] Notebook executes and the executed `.ipynb` is committed
 Notes:
 
 ## T-006: Observed checklist and the notebook's findings summary

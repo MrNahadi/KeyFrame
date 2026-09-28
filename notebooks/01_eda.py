@@ -427,3 +427,83 @@ for run in cw_runs:
 # faulty segment. Nothing here looks like a recording artefact — the weak
 # mean shift and strong variance shift is cavitation's real signature, not a
 # labelling or logging glitch.
+
+# %% [markdown]
+# ## The test-day puzzle: which channels are day markers?
+#
+# `Engine room Temp.`, `LO Cooling Water Temp. In`, `Charge Air IC Cooling
+# Water Temp. In`, `Fuel Temp.`, `Fuel Oil Temp. Flow meter In` and
+# `Sea Cooling Water Press.` (`Pl_water2`) are not set by the engine, so any
+# spread between runs on these channels reflects ambient or supply
+# conditions on the day each run was recorded, not the fault. For each
+# channel and run, this compares the run's median against the pooled
+# distribution of every *other* run, in units of the other runs' standard
+# deviation, to see how far a run's "day" separates it from the rest —
+# including whether the injector run is really the outlier the checklist
+# expects.
+
+# %%
+DAY_MARKER_CHANNELS = [
+    "Engine room Temp.",
+    "LO Cooling Water Temp. In",
+    "Charge Air IC Cooling Water Temp. In",
+    "Fuel Temp.",
+    "Fuel Oil Temp. Flow meter In",
+    "Sea Cooling Water Press.",
+]
+ALL_RUNS = sorted(full_table["run"].unique())
+
+day_marker_rows = []
+for channel in DAY_MARKER_CHANNELS:
+    for run in ALL_RUNS:
+        own = full_table.loc[full_table["run"] == run, channel].dropna()
+        other = full_table.loc[full_table["run"] != run, channel].dropna()
+        day_marker_rows.append(
+            {
+                "channel": channel,
+                "run": run,
+                "median": own.median(),
+                "other_runs_median": other.median(),
+                "z_vs_other_runs": (own.median() - other.median()) / other.std(),
+            }
+        )
+day_markers = pd.DataFrame(day_marker_rows)
+day_markers.to_csv(paths.RESULTS / "01_day_markers.csv", index=False)
+
+fig, axes = plt.subplots(2, 3, figsize=(16, 8))
+for ax, channel in zip(axes.flat, DAY_MARKER_CHANNELS, strict=True):
+    by_run = [full_table.loc[full_table["run"] == run, channel].dropna() for run in ALL_RUNS]
+    ax.boxplot(by_run, tick_labels=ALL_RUNS, vert=True)
+    ax.set_title(channel, fontsize=8)
+    ax.tick_params(axis="x", labelrotation=90, labelsize=6)
+    ax.tick_params(axis="y", labelsize=7)
+fig.suptitle("Per-run distributions of the day-marker channels")
+fig.tight_layout()
+fig.savefig(paths.FIGURES / "01_day_markers.png", dpi=150)
+plt.show()
+
+# %% [markdown]
+# `day_markers` shows the injector run (`Clogged_Injector_Nozzle1_...`)
+# sitting close to the pack on every one of these channels
+# (|z| below 1 throughout) — it is not the test-day outlier the checklist
+# worried about. The real outliers are `Reference_Data`, warm on all five
+# temperature channels (z around 1.2 to 2.0), and the two 75%-load runs
+# (`AC_Fouling_75_Load`, `AF_Clogging_75_Load`), cold on the same five
+# (z from -1.7 to -4.0) — two different test days at the extremes of the
+# ambient range, unrelated to load or fault. `Sea Cooling Water Press.`
+# behaves differently: it clusters by load (the 40%-load runs read high,
+# CW's two runs read low) rather than by day, so it looks more like a
+# load-linked supply-pressure effect than a day marker.
+#
+# **Day markers and what to do with them:** `Engine room Temp.`, `LO
+# Cooling Water Temp. In`, `Charge Air IC Cooling Water Temp. In`, `Fuel
+# Temp.` and `Fuel Oil Temp. Flow meter In` all move together with ambient
+# conditions on the day of the run, independent of fault or load — feature
+# engineering should residualise them against a same-run healthy baseline
+# (`eda.matched_healthy`) rather than use their raw levels, so a model does
+# not learn "which day" instead of "which fault". `Engine room Temp.` is
+# already excluded from model inputs by `keyframe.features.EXCLUDED_COLUMNS`;
+# the other four are not currently excluded and should be residualised, not
+# dropped, since their *shape* around switch-on can still carry fault
+# information (as it does for AF above). `Sea Cooling Water Press.` is not a
+# day marker on this evidence and can be kept as-is.
