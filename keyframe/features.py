@@ -49,6 +49,16 @@ def raw_sensor_columns(df: pd.DataFrame) -> list[str]:
     return [column for column in numeric.columns if column not in EXCLUDED_COLUMNS]
 
 
+RESIDUAL_INPUTS: tuple[str, ...] = ("Engine Speed", "Water Brake Weight", "Fuel Flow")
+"""What the healthy-engine model predicts every other sensor from: speed, brake load, fuel."""
+
+
+def sensor_channels(df: pd.DataFrame) -> list[str]:
+    """Measured sensor channels: ``raw_sensor_columns`` minus derived physics and rolling columns."""
+    derived = set(_physics_columns(df)) | set(_rolling_columns(df))
+    return [c for c in raw_sensor_columns(df) if c not in derived]
+
+
 def _safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     """Elementwise division; zero or negative denominators give NaN, never inf."""
     return numerator / denominator.where(denominator > 0)
@@ -238,7 +248,7 @@ class HealthyEngineResiduals(BaseEstimator, TransformerMixin):
 
     Fits, on rows where ``y == "Normal"`` only, one polynomial ridge regression
     per target channel from ``inputs``, standardised inside. ``targets=None``
-    means every raw sensor channel except the inputs. Polynomial ridge rather
+    means every measured sensor channel (``sensor_channels``) except the inputs. Polynomial ridge rather
     than trees because held-out loads at 40% and 85% sit at the edges of the
     training range and trees cannot extrapolate.
     """
@@ -269,7 +279,7 @@ class HealthyEngineResiduals(BaseEstimator, TransformerMixin):
         self.targets_ = (
             list(self.targets)
             if self.targets is not None
-            else [c for c in raw_sensor_columns(X) if c not in self.inputs]
+            else [c for c in sensor_channels(X) if c not in self.inputs]
         )
         self.models_: dict[str, Pipeline] = {}
         inputs = list(self.inputs)
@@ -297,30 +307,35 @@ class HealthyEngineResiduals(BaseEstimator, TransformerMixin):
 
 
 def _physics_columns(df: pd.DataFrame) -> list[str]:
-    return [c for c in df.columns if c.startswith("phys_")]
+    return [c for c in df.columns if c.startswith("phys_") and "_roll_" not in c]
 
 
 def _rolling_columns(df: pd.DataFrame) -> list[str]:
     return [c for c in df.columns if "_roll_" in c or c.startswith("roll_warmup_")]
 
 
-def _drop_day_markers(X: pd.DataFrame) -> pd.DataFrame:
-    """Post-residual pipeline step: drop the raw day-marker channels, keeping their
-    ``resid_`` replacements (and every other column) added by ``HealthyEngineResiduals``.
+def _residual_view(X: pd.DataFrame) -> pd.DataFrame:
+    """Post-residual step: drop every raw reading that now has a ``resid_`` twin, and the
+    rolling means of raw readings, so the classifier sees how far each sensor sits from
+    a healthy engine at this operating point rather than load-driven levels. The residual
+    inputs (speed, brake load, fuel flow) stay, so the classifier still knows the load.
     """
-    return X.drop(columns=list(DAY_MARKER_RESIDUAL_CHANNELS))
+    residualised = {c.removeprefix("resid_") for c in X.columns if c.startswith("resid_")}
+    rolling_means_of_raw = [
+        c
+        for c in X.columns
+        if c.endswith("_mean") and "_roll_" in c and c.split("_roll_")[0] in residualised
+    ]
+    return X.drop(columns=sorted(residualised) + rolling_means_of_raw)
 
 
 def _feature_columns(*, physics: bool, rolling: bool) -> Callable[[pd.DataFrame], list[str]]:
     def columns(df: pd.DataFrame) -> list[str]:
-        all_raw = raw_sensor_columns(df)
-        phys_columns = set(_physics_columns(df))
-        roll_columns = set(_rolling_columns(df))
-        result = [c for c in all_raw if c not in phys_columns and c not in roll_columns]
+        result = sensor_channels(df)
         if physics:
-            result += [c for c in all_raw if c in phys_columns]
+            result += _physics_columns(df)
         if rolling:
-            result += [c for c in all_raw if c in roll_columns]
+            result += _rolling_columns(df)
         return [c for c in result if c not in EXCLUDED_COLUMNS]
 
     return columns
@@ -329,7 +344,7 @@ def _feature_columns(*, physics: bool, rolling: bool) -> Callable[[pd.DataFrame]
 @dataclass(frozen=True)
 class FeatureSet:
     """One named ablation arm: the ``features`` list to pass to ``lolo_predict`` and
-    whether ``build_pipeline`` should residualise the day-marker channels.
+    whether ``build_pipeline`` adds healthy-engine residuals for every sensor channel.
     """
 
     columns: Callable[[pd.DataFrame], list[str]]
@@ -339,31 +354,41 @@ class FeatureSet:
 FEATURE_SETS: dict[str, FeatureSet] = {
     "raw": FeatureSet(_feature_columns(physics=False, rolling=False), residuals=False),
     "raw+physics": FeatureSet(_feature_columns(physics=True, rolling=False), residuals=False),
+    "raw+physics+rolling": FeatureSet(
+        _feature_columns(physics=True, rolling=True), residuals=False
+    ),
     "residuals": FeatureSet(_feature_columns(physics=False, rolling=False), residuals=True),
     "residuals+physics": FeatureSet(_feature_columns(physics=True, rolling=False), residuals=True),
     "residuals+physics+rolling": FeatureSet(
         _feature_columns(physics=True, rolling=True), residuals=True
     ),
-    "raw+physics+rolling": FeatureSet(
-        _feature_columns(physics=True, rolling=True), residuals=False
-    ),
 }
 
 
 def build_pipeline(feature_set: str, model: BaseEstimator) -> Pipeline:
-    """Unfitted ``Pipeline`` for ``feature_set``, usable as a ``lolo_predict`` factory
-    result: with the residuals flag set, a ``HealthyEngineResiduals`` step (targets are
-    the day-marker channels) is fitted first and the raw day-marker columns are dropped
-    before ``model`` sees the data; call with ``FEATURE_SETS[feature_set].columns(df)``
-    as the ``features`` argument to ``lolo_predict`` so the residual step has its inputs.
+    """Unfitted ``Pipeline`` for ``feature_set``, usable as a ``lolo_predict`` factory result.
+
+    With residuals, a ``HealthyEngineResiduals`` step is fitted first (on the training
+    fold's healthy rows only) for every measured sensor channel, and ``_residual_view``
+    then drops the raw readings, so day-marker temperatures such as fuel and cooling
+    water inlet temperatures reach the model only as residuals (notebook 01's advice).
+    Pass ``FEATURE_SETS[feature_set].columns(df)`` as ``features`` to ``lolo_predict``.
     """
     spec = FEATURE_SETS[feature_set]
     if not spec.residuals:
         return Pipeline([("model", model)])
     return Pipeline(
         [
-            ("residuals", HealthyEngineResiduals(targets=list(DAY_MARKER_RESIDUAL_CHANNELS))),
-            ("drop_day_markers", FunctionTransformer(_drop_day_markers)),
+            ("residuals", HealthyEngineResiduals(inputs=RESIDUAL_INPUTS)),
+            ("residual_view", FunctionTransformer(_residual_view)),
             ("model", model),
         ]
     )
+
+
+def build_feature_table(clean: pd.DataFrame) -> pd.DataFrame:
+    """The clean table plus physics features and trailing 1/5/15-minute rolling mean, std
+    and slope of every sensor channel and physics feature (all stateless, computed once)."""
+    table = add_physics_features(clean)
+    rolled_channels = sensor_channels(table) + _physics_columns(table)
+    return add_rolling_features(table, rolled_channels)

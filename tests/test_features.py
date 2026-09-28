@@ -375,3 +375,43 @@ def test_build_pipeline_unfitted_and_usable_with_lolo_predict():
 
     result = evaluate.lolo_predict(model_factory, df, training_columns)
     assert len(result) == len(df)
+
+
+def _synthetic_table_with_derived_columns() -> pd.DataFrame:
+    """The synthetic table (already carrying a stand-in physics and rolling column) plus a
+    real trailing rolling mean of one sensor channel."""
+    table = _synthetic_feature_table()
+    table["t"] = table.groupby("run").cumcount() * 2.0
+    return features.add_rolling_features(table, ["Fuel Temp."], windows_s=(120,))
+
+
+def test_feature_sets_differ_once_physics_and_rolling_columns_exist():
+    """Regression: every set used to collapse to raw sensors when the table lacked
+    physics and rolling columns, so the ablation compared identical inputs."""
+    table = _synthetic_table_with_derived_columns()
+    raw = features.FEATURE_SETS["raw"].columns(table)
+    with_physics = features.FEATURE_SETS["raw+physics"].columns(table)
+    with_rolling = features.FEATURE_SETS["raw+physics+rolling"].columns(table)
+    assert set(raw) < set(with_physics) < set(with_rolling)
+    assert all(c.startswith("phys_") for c in set(with_physics) - set(raw))
+    assert not any("_roll_" in c for c in with_physics)
+    assert not any(c.startswith("phys_") or "_roll_" in c for c in raw)
+
+
+def test_residual_view_keeps_load_inputs_and_drops_every_raw_reading():
+    from sklearn.dummy import DummyClassifier
+
+    table = _synthetic_table_with_derived_columns()
+    cols = features.FEATURE_SETS["residuals+physics+rolling"].columns(table)
+    pipeline = features.build_pipeline(
+        "residuals+physics+rolling", DummyClassifier(strategy="most_frequent")
+    )
+    seen = set(pipeline[:-1].fit_transform(table[cols], table["label"]).columns)
+
+    sensors = features.sensor_channels(table)
+    targets = [c for c in sensors if c not in features.RESIDUAL_INPUTS]
+    assert set(features.RESIDUAL_INPUTS) & set(sensors) <= seen
+    assert not (set(targets) & seen)
+    assert {f"resid_{c}" for c in targets} <= seen
+    assert not any(c.endswith("_mean") and c.split("_roll_")[0] in targets for c in seen)
+    assert any(c.startswith("phys_") for c in seen)
