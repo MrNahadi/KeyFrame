@@ -147,7 +147,7 @@ def _score_slice(fold: object, y_true: pd.Series, y_pred: pd.Series) -> dict[str
     }
 
 
-def _git_commit() -> str:
+def git_commit() -> str:
     result = subprocess.run(
         ["git", "rev-parse", "--short", "HEAD"],
         cwd=paths.ROOT,
@@ -164,7 +164,7 @@ def log_results(name: str, table: pd.DataFrame, results_dir: Path = paths.RESULT
     out = table.copy()
     out["experiment"] = name
     out["date"] = date.today().isoformat()
-    out["git_commit"] = _git_commit()
+    out["git_commit"] = git_commit()
     out_path = results_dir / f"{name}.csv"
     out.to_csv(out_path, index=False)
     return out_path

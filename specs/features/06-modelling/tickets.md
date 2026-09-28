@@ -27,14 +27,14 @@ Notes:
 
 ## T-003: Tuning and modelling experiments
 
-Status: open
+Status: done
 Blocked by: T-002
 Slice: `tuning` and `modelling` experiment commands that write tuned params and held-out predictions.
 Test seam: `uv run python -m keyframe.experiments tuning ...`, `... modelling ...`
 Context: requirements R4-R6; `grep -n 'def \|argparse\|add_parser' keyframe/experiments.py | head -40`
 Acceptance:
-- [ ] Unit test runs both experiments on a tiny synthetic table in a tmp dir; every row predicted exactly once
-- [ ] Existing outputs are skipped unless `--force`
+- [x] Unit test runs both experiments on a tiny synthetic table in a tmp dir; every row predicted exactly once
+- [x] Existing outputs are skipped unless `--force`
 Notes:
 
 ## T-004: Tune and fit all four models
