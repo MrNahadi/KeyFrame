@@ -256,7 +256,7 @@ best_model_table
 #    is more than double the 5% target.
 # 2. XGBoost's alarm only fires on 6 of the 13 fault runs at all; the
 #    median delay among those (563 s / 9.4 min) looks close to the
-#    10-minute target, but half the runs never trigger a sustained alarm,
+#    10-minute target, but 7 of the 13 runs never trigger a sustained alarm,
 #    so the detection-delay target is not met once the undetected runs are
 #    counted honestly.
 # 3. Scores with and without each run's first 10 minutes after switch-on
