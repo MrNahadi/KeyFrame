@@ -22,13 +22,14 @@
 #   the three cylinders stop agreeing. No.3 Exh.Gas Temp. drops 2.1 standard
 #   deviations below healthy while No.1 rises, a 2.5 SD spread that dwarfs
 #   every other fault, while the air path stays close to flat as predicted.
-# - **CW** (cavitation) is a genuine puzzle: the combustion and air path,
-#   predicted untouched, move by a moderate amount (Charge Air Press. shift
-#   -1.19). The mean-shift table alone looks like an artefact, but the
-#   dedicated rolling-std analysis below finds a real, non-artefactual
-#   variance signature instead — cavitation shows up as instability, not a
-#   level shift, exactly as the checklist's "strength: fluctuation" column
-#   predicted.
+# - **CW** (cavitation) shows up as instability, not a level shift: the
+#   60 s rolling std of Fresh Cooling Water Press. rises at both loads (ratio
+#   1.09) and of Engine Cooling water flow at 85% (4.63x, but 0.48x at 60%).
+#   The apparent moves in the combustion and air path (Charge Air Press.
+#   shift -1.19) are mostly warm-up drift in the pre-fault segment: at 85%
+#   load the exhaust chain drifted 7-9 °C before switch-on but moves only
+#   0.1-0.5 °C at switch-on itself. The easy detection flagged in the first
+#   check needs rolling features and a steady-state caveat, not a mean shift.
 # - **TD** (turbine degradation) is the cleanest match of all five faults:
 #   every strong and moderate prediction lands in the right direction, with
 #   Charge Air Press. and the whole exhaust chain moving together.
