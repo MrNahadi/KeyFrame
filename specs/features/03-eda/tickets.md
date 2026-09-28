@@ -73,7 +73,7 @@ Test seam: `tests/test_checklist.py`; executing `notebooks/01_eda.py`
 Context: requirements R6, R13; `reports/results/01_fault_shifts.csv` (read with pandas, filter to checklist channels); `sed -n '/^## Observed in the EDA/,$p' reports/engineering_checklist.md`
 Acceptance:
 - [x] Observed tables and surprise paragraphs appended below "## Observed in the EDA"
-- [x] A test asserts everything above that heading is byte-identical to `git show 57ecbea:reports/engineering_checklist.md` up to the same heading
+- [x] A test asserts everything above that heading is byte-identical to the pre-registered version (commit 1c75bdf), pinned by SHA-256
 - [x] First cell of notebook 01 summarises the findings with real numbers; notebook executes and is committed
 Notes:
 

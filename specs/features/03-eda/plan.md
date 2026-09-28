@@ -4,7 +4,7 @@ Roadmap item 3 (brief milestones 3 and the milestone 4 gate). Done when the "Obs
 
 ## Approach
 
-The "Expected" half of `reports/engineering_checklist.md` was pre-registered on main (commit 57ecbea) before any fault run was compared with healthy running. This feature does the comparison. Shared numeric logic (matched healthy baselines, effect sizes, windows around switch-on) goes into `keyframe/eda.py` with tests; notebook 01 calls it and presents the findings. No model is trained in this feature: no classifier, no regressor, nothing fitted to labels.
+The "Expected" half of `reports/engineering_checklist.md` was pre-registered on main (commit 1c75bdf) before any fault run was compared with healthy running. This feature does the comparison. Shared numeric logic (matched healthy baselines, effect sizes, windows around switch-on) goes into `keyframe/eda.py` with tests; notebook 01 calls it and presents the findings. No model is trained in this feature: no classifier, no regressor, nothing fitted to labels.
 
 ## Modules touched
 

@@ -20,5 +20,5 @@
 
 ## Checklist and targets
 
-- R13. Append to `reports/engineering_checklist.md` below "## Observed in the EDA": per fault, a table with each Expected row's channel, expected direction, observed standardised shift (median across the fault's runs) and std ratio, and Agree / Disagree / Unclear. Then one paragraph per fault on surprises. Never edit anything above that heading (a test checks the pre-registered part is byte-identical to commit 57ecbea).
+- R13. Append to `reports/engineering_checklist.md` below "## Observed in the EDA": per fault, a table with each Expected row's channel, expected direction, observed standardised shift (median across the fault's runs) and std ratio, and Agree / Disagree / Unclear. Then one paragraph per fault on surprises. Never edit anything above that heading (a test checks the pre-registered part is byte-identical to commit 1c75bdf).
 - R14. `reports/targets.md` records the milestone 4 gate: the brief's target table, the evidence from the EDA that bears on each target (coverage, fold composition, how separable each fault looks), and the decision: keep every target, or revise specific ones with the reason. The decision is taken by the answerer sub-agent (ask it with the evidence), labelled with its ADR. Revisions may only use EDA evidence, never model results. The file ends with "Targets final as of <date>."
