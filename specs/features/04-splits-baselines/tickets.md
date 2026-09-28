@@ -26,14 +26,14 @@ Notes:
 
 ## T-003: Metrics and the results log
 
-Status: open
+Status: done
 Blocked by:
 Slice: The brief's metrics computed from labels, and a results log that records every experiment with its commit.
 Test seam: `keyframe.evaluate` metric functions and `log_results`
 Context: requirements R7, R10; `sed -n '/^## Goals and success metrics/,/^## Validation protocol/p' specs/brief.md`
 Acceptance:
-- [ ] Hand-checked tests: macro F1 ignores classes absent from y_true; false alarm rate on a known case; confusion matrix order fixed
-- [ ] `log_results` writes a CSV with experiment, date and git_commit columns (test writes to a tmp dir)
+- [x] Hand-checked tests: macro F1 ignores classes absent from y_true; false alarm rate on a known case; confusion matrix order fixed
+- [x] `log_results` writes a CSV with experiment, date and git_commit columns (test writes to a tmp dir)
 Notes:
 
 ## T-004: Cross-validated predictions over LOLO folds
