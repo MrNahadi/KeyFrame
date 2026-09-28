@@ -69,6 +69,7 @@ When the ticket, the R-numbers you read and the ADRs don't answer a question, do
 
 ## Never
 
+- Add `Co-Authored-By` or any other Claude or AI attribution line to a commit message (owner's rule).
 - Edit `specs/brief.md`, `specs/mission.md` or `specs/roadmap.md`.
 - Add a dependency that isn't installed. If a ticket needs one, escalate it as a question.
 - Push, merge, rebase, reset, or switch branches.
