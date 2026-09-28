@@ -111,7 +111,10 @@ for ((i = 1; i <= MAX; i++)); do
   # (matters when the loop is started from inside a Claude Code session).
   # Each iteration runs in its own process group, so .ralph/stop.sh can end it and
   # every process it spawned (tests, notebooks, experiments) in one go.
+  # No automatic backgrounding of slow commands, and a 10-minute default Bash timeout:
+  # a headless iteration can't be woken by a background task, so it would end mid-ticket.
   setsid env -u CLAUDECODE -u CLAUDE_CODE_SESSION_ID -u CLAUDE_CODE_REMOTE_SESSION_ID \
+    CLAUDE_AUTO_BACKGROUND_TASKS=0 BASH_DEFAULT_TIMEOUT_MS=600000 BASH_MAX_TIMEOUT_MS=600000 \
     claude "${args[@]}" > "$log" 2>&1 < /dev/null &
   echo "$!" > .ralph/iteration.pgid
   wait "$!" || true

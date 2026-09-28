@@ -1,0 +1,15 @@
+{
+  "model": "lightgbm",
+  "fold": 85,
+  "best_params": {
+    "num_leaves": 10,
+    "learning_rate": 0.0030613016967272603,
+    "n_estimators": 61,
+    "min_child_samples": 12,
+    "feature_fraction": 0.5290233774392548,
+    "reg_lambda": 0.0974140427325692
+  },
+  "best_inner_score": 0.4004437895780555,
+  "n_trials": 23,
+  "git_commit": "5c24139"
+}

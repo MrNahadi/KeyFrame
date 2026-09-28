@@ -1,0 +1,15 @@
+{
+  "model": "xgboost",
+  "fold": 85,
+  "best_params": {
+    "max_depth": 7,
+    "learning_rate": 0.0033572967053517922,
+    "n_estimators": 59,
+    "subsample": 0.5917022549267169,
+    "colsample_bytree": 0.6521211214797689,
+    "reg_lambda": 0.12561043700013558
+  },
+  "best_inner_score": 0.4048711488522574,
+  "n_trials": 9,
+  "git_commit": "5c24139"
+}
