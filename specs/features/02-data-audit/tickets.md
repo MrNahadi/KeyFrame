@@ -15,15 +15,15 @@ Notes:
 
 ## T-002: Load runs with metadata into one table
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: Load a scenario or reference file with run, fault_type, label, t, load_bin and nominal_load columns, and concatenate all raw files into one table.
 Test seam: `keyframe.load.load_run(path)`, `keyframe.load.load_all(raw_dir)`, `keyframe.splits.load_bin(x)`
 Context: requirements R4-R6; `data/raw/dataset_index.csv` (read with pandas, show columns file_name and nominal_load); tests/conftest.py
 Acceptance:
-- [ ] `load_bin` puts 129.9 → 40, 130 → 60, 174.9 → 60, 175 → 75, 206.9 → 75, 207 → 85, and raises on NaN
-- [ ] A synthetic scenario run labels rows before switch-on `Normal` and after it with the fault code; a synthetic reference file gets `Normal`, `t` from `Time`, NaN `Anomaly State`
-- [ ] `load_all` on a synthetic raw folder unions columns, never reads a `lockbox` folder, and orders rows by file path then file order
+- [x] `load_bin` puts 129.9 → 40, 130 → 60, 174.9 → 60, 175 → 75, 206.9 → 75, 207 → 85, and raises on NaN
+- [x] A synthetic scenario run labels rows before switch-on `Normal` and after it with the fault code; a synthetic reference file gets `Normal`, `t` from `Time`, NaN `Anomaly State`
+- [x] `load_all` on a synthetic raw folder unions columns, never reads a `lockbox` folder, and orders rows by file path then file order
 Notes:
 
 ## T-003: Audit functions for sampling, missing channels, switch-on and load bins
