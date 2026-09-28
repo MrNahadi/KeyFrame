@@ -28,14 +28,14 @@ Notes:
 
 ## T-003: Audit functions for sampling, missing channels, switch-on and load bins
 
-Status: open
+Status: done
 Blocked by: T-002
 Slice: Functions that turn the one table into the audit tables notebook 00 shows, and write it as Parquet.
 Test seam: `keyframe.audit.sampling_intervals`, `missing_by_channel`, `switch_on_points`, `load_bin_agreement`, `write_clean_table`
 Context: requirements R7-R11; keyframe/load.py (signatures only: `grep -n '^def ' keyframe/load.py`); tests/conftest.py
 Acceptance:
-- [ ] Each function is tested on a small synthetic table with a known answer (a 7 s gap is reported; an all-empty channel is 100% missing; a run with no switch-on reports none; bin agreement is 1.0 for a run fully inside its bin)
-- [ ] `write_clean_table` round-trips through Parquet with dtypes preserved
+- [x] Each function is tested on a small synthetic table with a known answer (a 7 s gap is reported; an all-empty channel is 100% missing; a run with no switch-on reports none; bin agreement is 1.0 for a run fully inside its bin)
+- [x] `write_clean_table` round-trips through Parquet with dtypes preserved
 Notes:
 
 ## T-004: Check the real files against the dataset index
