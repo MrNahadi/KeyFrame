@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from keyframe.alarm import detection_delay, sustained_alarm
+from keyframe.alarm import choose_alarm_params, detection_delay, sustained_alarm
 
 
 def _predictions(run_rows: list[tuple[str, float, str, float]]) -> pd.DataFrame:
@@ -99,3 +99,41 @@ def test_detection_delay_skips_runs_without_switch_on() -> None:
     result = detection_delay(alarms, switch_on)
 
     assert result.empty
+
+
+def test_choose_alarm_params_prefers_lowest_delay_within_false_alarm_budget() -> None:
+    # Clean run: Normal to t=59, then confident AC from switch-on (t=60) onward, so
+    # every grid combination has zero false alarms and the shortest min_duration_s wins.
+    rows = [(0.0, float(t), "Normal", "Normal", 0.99) for t in range(0, 60)]
+    rows += [(0.0, float(t), "AC", "AC", 0.95) for t in range(60, 240)]
+    predictions = pd.DataFrame(
+        [
+            {"run": "run1", "t": t, "y_true": y_true, "y_pred": y_pred, f"proba_{y_pred}": proba}
+            for _, t, y_true, y_pred, proba in rows
+        ]
+    )
+    switch_on = pd.DataFrame({"run": ["run1"], "t": [60.0]})
+
+    chosen = choose_alarm_params(predictions, switch_on)
+
+    assert chosen["min_duration_s"] == 30
+    assert chosen["false_alarm_rate"] == 0.0
+    assert chosen["median_detection_delay_s"] == 30.0
+
+
+def test_choose_alarm_params_falls_back_to_lowest_false_alarm_rate() -> None:
+    # A healthy run confidently (mis)predicted as a fault throughout: every grid
+    # combination breaches the 5% false alarm budget, so the least-bad one (the
+    # longest min_duration_s, which flags the smallest share of the run) wins.
+    predictions = pd.DataFrame(
+        [
+            {"run": "run1", "t": float(t), "y_true": "Normal", "y_pred": "AC", "proba_AC": 0.99}
+            for t in range(0, 600)
+        ]
+    )
+    switch_on = pd.DataFrame({"run": ["run1"], "t": [float("nan")]})
+
+    chosen = choose_alarm_params(predictions, switch_on)
+
+    assert chosen["false_alarm_rate"] > 0.05
+    assert chosen["min_duration_s"] == 300

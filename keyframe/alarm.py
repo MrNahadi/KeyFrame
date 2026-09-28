@@ -48,6 +48,49 @@ def sustained_alarm(
     return alarm
 
 
+MIN_DURATIONS_S: tuple[float, ...] = (30, 60, 120, 300)
+MIN_PROBABILITIES: tuple[float, ...] = (0.5, 0.6, 0.7, 0.8)
+MAX_FALSE_ALARM_RATE = 0.05
+
+
+def choose_alarm_params(predictions: pd.DataFrame, switch_on: pd.DataFrame) -> dict:
+    """Grid search (R10) over ``MIN_DURATIONS_S`` x ``MIN_PROBABILITIES`` on ``predictions``.
+
+    Picks the combination with the lowest median detection delay among those whose
+    false alarm rate is at most ``MAX_FALSE_ALARM_RATE``, falling back to the lowest
+    false alarm rate if none qualifies. ``predictions`` should be inner-fold-only
+    (never the outer test rows) so the outer fold never chooses its own parameters.
+    Returns a dict with ``min_duration_s``, ``min_probability`` and that combination's
+    metrics from :func:`alarm_metrics`.
+    """
+    qualifying: dict | None = None
+    fallback: dict | None = None
+    for min_duration_s in MIN_DURATIONS_S:
+        for min_probability in MIN_PROBABILITIES:
+            alarms = predictions.assign(
+                alarm=sustained_alarm(predictions, min_duration_s, min_probability)
+            )
+            metrics = alarm_metrics(alarms, switch_on)
+            candidate = {
+                "min_duration_s": min_duration_s,
+                "min_probability": min_probability,
+                **metrics.to_dict(),
+            }
+            if fallback is None or candidate["false_alarm_rate"] < fallback["false_alarm_rate"]:
+                fallback = candidate
+            if candidate["false_alarm_rate"] <= MAX_FALSE_ALARM_RATE and (
+                qualifying is None or _delay_key(candidate) < _delay_key(qualifying)
+            ):
+                qualifying = candidate
+    assert fallback is not None  # MIN_DURATIONS_S x MIN_PROBABILITIES is never empty
+    return qualifying if qualifying is not None else fallback
+
+
+def _delay_key(candidate: dict) -> float:
+    delay = candidate["median_detection_delay_s"]
+    return float("inf") if pd.isna(delay) else delay
+
+
 def detection_delay(alarms: pd.DataFrame, switch_on: pd.DataFrame) -> pd.DataFrame:
     """Per run with a switch-on: time from switch-on to the first fault alarm that
     starts (transitions from a different alarm state) at or after switch-on, and its

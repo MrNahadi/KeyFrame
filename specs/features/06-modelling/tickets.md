@@ -52,7 +52,7 @@ Notes: lightgbm, xgboost and random_forest all needed narrower search spaces (sm
 
 ## T-005: Alarm parameters chosen inside the inner folds
 
-Status: open
+Status: in-progress
 Blocked by: T-001, T-004
 Slice: Alarm settings picked per outer fold from inner-fold predictions, then applied to the held-out predictions of every model.
 Test seam: `uv run python -m keyframe.experiments alarm --model <m>`; `keyframe.alarm.choose_alarm_params`

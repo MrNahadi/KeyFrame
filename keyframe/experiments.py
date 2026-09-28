@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from keyframe import SEED, evaluate, features, paths, splits, tuning
+from keyframe import SEED, alarm, audit, evaluate, features, paths, splits, tuning
 
 MODELLING_FEATURE_SET = "raw+physics+rolling"
 
@@ -235,6 +235,7 @@ def run_modelling(
     force: bool = False,
     tuning_dir: Path = paths.MODELS / "tuning",
     output_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
 ) -> Path:
     """Refit ``model`` per outer fold with that fold's tuned params, predicting the
     held-out rows (R5). Every outer fold's tuned-params JSON must already exist."""
@@ -255,11 +256,13 @@ def run_modelling(
     predictions = pd.concat(parts).loc[df.index]
     output_dir.mkdir(parents=True, exist_ok=True)
     predictions.to_parquet(out_path)
-    _log_modelling_summary(model, predictions)
+    _log_modelling_summary(model, predictions, results_dir)
     return out_path
 
 
-def _log_modelling_summary(model: str, predictions: pd.DataFrame) -> None:
+def _log_modelling_summary(
+    model: str, predictions: pd.DataFrame, results_dir: Path = paths.RESULTS
+) -> None:
     """Merge ``model``'s summary into ``reports/results/04_models.csv`` (R5).
 
     Each CLI invocation tunes/fits one model, so the row for that model is replaced
@@ -267,12 +270,79 @@ def _log_modelling_summary(model: str, predictions: pd.DataFrame) -> None:
     """
     summary = evaluate.summarise(predictions)
     summary.insert(0, "model", model)
-    results_path = paths.RESULTS / "04_models.csv"
+    results_path = results_dir / "04_models.csv"
     if results_path.exists():
         existing = pd.read_csv(results_path)
         existing = existing[existing["model"] != model]
         summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
-    evaluate.log_results("04_models", summary)
+    evaluate.log_results("04_models", summary, results_dir=results_dir)
+
+
+def run_alarm(
+    df: pd.DataFrame,
+    model: str,
+    *,
+    force: bool = False,
+    tuning_dir: Path = paths.MODELS / "tuning",
+    modelling_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Alarm params chosen per outer fold from that fold's inner-fold predictions only,
+    then scored on the fold's held-out predictions (R10). ``model`` must already have
+    tuned params (``run_tuning``) and modelling predictions (``run_modelling``)."""
+    out_path = results_dir / "04_alarms.csv"
+    if out_path.exists() and not force and model in pd.read_csv(out_path)["model"].unique():
+        return out_path
+
+    columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+    outer_predictions = pd.read_parquet(modelling_dir / f"modelling_{model}.parquet")
+
+    fold_tables = []
+    for fold in splits.LOAD_BINS:
+        train_df = df[df["load_bin"] != fold]
+        params = load_tuned_params(model, fold, tuning_dir)
+
+        def factory(params=params) -> object:
+            return tuning.MODEL_BUILDERS[model](params)
+
+        inner_predictions = evaluate.lolo_predict(factory, train_df, columns)
+        inner_predictions = inner_predictions.assign(t=train_df.loc[inner_predictions.index, "t"])
+        inner_switch_on = audit.switch_on_points(train_df)
+        chosen = alarm.choose_alarm_params(inner_predictions, inner_switch_on)
+
+        fold_predictions = outer_predictions.loc[outer_predictions["fold"] == fold].copy()
+        fold_predictions["t"] = df.loc[fold_predictions.index, "t"]
+        fold_switch_on = audit.switch_on_points(df.loc[fold_predictions.index])
+        alarms = fold_predictions.assign(
+            alarm=alarm.sustained_alarm(
+                fold_predictions, chosen["min_duration_s"], chosen["min_probability"]
+            )
+        )
+        metrics = alarm.alarm_metrics(alarms, fold_switch_on)
+        delays = alarm.detection_delay(alarms, fold_switch_on)
+        delays["model"] = model
+        delays["fold"] = fold
+        delays["min_duration_s"] = chosen["min_duration_s"]
+        delays["min_probability"] = chosen["min_probability"]
+        delays["false_alarm_rate"] = metrics["false_alarm_rate"]
+        fold_tables.append(delays)
+
+    summary = pd.concat(fold_tables, ignore_index=True)
+    _log_alarm_summary(model, summary, out_path)
+    return out_path
+
+
+def _log_alarm_summary(model: str, summary: pd.DataFrame, out_path: Path) -> None:
+    """Merge ``model``'s per-run alarm rows into ``reports/results/04_alarms.csv`` (R10).
+
+    Each CLI invocation scores one model, so that model's rows are replaced in place,
+    keeping earlier models' rows (mirrors ``_log_modelling_summary``).
+    """
+    if out_path.exists():
+        existing = pd.read_csv(out_path)
+        existing = existing[existing["model"] != model]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results("04_alarms", summary, results_dir=out_path.parent)
 
 
 def load_modelling(
@@ -319,6 +389,12 @@ def main(argv: list[str] | None = None) -> None:
     modelling.add_argument("--model", required=True, choices=sorted(tuning.MODEL_BUILDERS))
     modelling.add_argument("--force", action="store_true")
 
+    alarm_parser = subparsers.add_parser(
+        "alarm", help="Choose alarm params per outer fold from its inner folds, then score them."
+    )
+    alarm_parser.add_argument("--model", required=True, choices=sorted(tuning.MODEL_BUILDERS))
+    alarm_parser.add_argument("--force", action="store_true")
+
     args = parser.parse_args(argv)
 
     table = load_feature_table()
@@ -348,8 +424,10 @@ def main(argv: list[str] | None = None) -> None:
             timeout_s=args.timeout_s,
             force=args.force,
         )
-    else:
+    elif args.experiment == "modelling":
         out_path = run_modelling(table, args.model, force=args.force)
+    else:
+        out_path = run_alarm(table, args.model, force=args.force)
     print(out_path)
 
 
