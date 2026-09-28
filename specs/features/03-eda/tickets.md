@@ -39,15 +39,15 @@ Notes:
 
 ## T-004: Notebook 01 part 3: the cavitation puzzle
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: A section that explains why cavitation is easy to detect when its averages barely move, and checks for recording artefacts.
 Test seam: executing `notebooks/01_eda.py`
 Context: requirements R4, R10; `grep -n '^# %%' notebooks/01_eda.py`; `sed -n '/## Cooling water pump cavitation/,/## Turbine/p' reports/engineering_checklist.md`
 Acceptance:
-- [ ] Mean-shift versus std-ratio figure `01_cavitation_mean_vs_std.png` and rolling-std figure `01_cavitation_rolling_std.png`
-- [ ] Explicit artefact checks with their results, and a stated conclusion
-- [ ] Notebook executes and the executed `.ipynb` is committed
+- [x] Mean-shift versus std-ratio figure `01_cavitation_mean_vs_std.png` and rolling-std figure `01_cavitation_rolling_std.png`
+- [x] Explicit artefact checks with their results, and a stated conclusion
+- [x] Notebook executes and the executed `.ipynb` is committed
 Notes:
 
 ## T-005: Notebook 01 part 4: the injector and test-day puzzle

@@ -298,3 +298,132 @@ plt.show()
 # checklist: one clogged nozzle starves cylinder 1 while the governor and the
 # other cylinders take up the load, so the imbalance between cylinders is the
 # signature, not the engine's overall efficiency.
+
+# %% [markdown]
+# ## The cavitation puzzle: why is a near-invisible mean shift easy to detect?
+#
+# CW's switch-on panels above already show rolling std of Pl_water1 and
+# Qw_eng stepping up while their means barely move. This checks that across
+# every channel for both CW runs, then looks for recording artefacts that
+# could produce a false step instead of a real fault.
+
+# %%
+METADATA_COLUMNS = {
+    "Time_abs",
+    "Time_rel",
+    "Time",
+    "t",
+    "load_bin",
+    "nominal_load",
+    "run",
+    "fault_type",
+    "label",
+    "Anomaly State",
+}
+ALL_CHANNELS = [
+    c
+    for c in full_table.columns
+    if c not in METADATA_COLUMNS and pd.api.types.is_numeric_dtype(full_table[c])
+]
+
+cw_runs = sorted(full_table.loc[full_table["fault_type"] == "CW", "run"].unique())
+cw_shift_frames = []
+for run in cw_runs:
+    shift_table = eda.fault_shift(full_table, run, ALL_CHANNELS)
+    shift_table.insert(0, "run", run)
+    cw_shift_frames.append(shift_table)
+cw_shifts = pd.concat(cw_shift_frames, ignore_index=True)
+cw_shifts.to_csv(paths.RESULTS / "01_cavitation_shifts.csv", index=False)
+
+fig, axes = plt.subplots(1, len(cw_runs), figsize=(6 * len(cw_runs), 5), sharey=True)
+for ax, run in zip(axes, cw_runs, strict=True):
+    sub = cw_shifts[cw_shifts["run"] == run]
+    ax.scatter(sub["shift"], sub["std_ratio"], s=14, alpha=0.7)
+    ax.axhline(1, color="k", linestyle="--", linewidth=0.8)
+    ax.axvline(0, color="k", linestyle="--", linewidth=0.8)
+    ax.set_xlabel("standardised mean shift")
+    ax.set_title(run)
+axes[0].set_ylabel("std ratio (faulty / healthy)")
+fig.suptitle("CW: mean shift vs std ratio, every channel")
+fig.tight_layout()
+fig.savefig(paths.FIGURES / "01_cavitation_mean_vs_std.png", dpi=150)
+plt.show()
+
+# %% [markdown]
+# Almost every point sits near shift = 0 (mean barely moves), but a cluster
+# of channels — the two flagged in the checklist among them — sit well above
+# std ratio = 1: the fault widens the spread of readings rather than
+# relocating the mean. That is the "too easy to detect" puzzle: a model that
+# only looks at means would see nothing, but variance-based features pick
+# cavitation up cleanly.
+
+# %%
+fig, axes = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+rolling_specs = [
+    ("Rolling std, Fresh Cooling Water Press. (5 min)", _rolling_std_pl_water1),
+    ("Rolling std, Engine Cooling water flow (5 min)", _rolling_std_qw_eng),
+]
+for ax, (label, comp) in zip(axes, rolling_specs, strict=True):
+    for run in cw_runs:
+        window = eda.around_switch_on(full_table, run)
+        load_bin = window["load_bin"].iloc[0]
+        ax.plot(
+            window["t_from_switch_on_min"],
+            comp(window),
+            color=LOAD_COLORS.get(load_bin, "gray"),
+            linewidth=0.9,
+            label=f"{run} ({load_bin}%)",
+        )
+    ax.axvline(0, color="k", linestyle="--", linewidth=0.8)
+    ax.set_ylabel(label, fontsize=8)
+axes[-1].set_xlabel("minutes from switch-on")
+axes[0].legend(fontsize=7)
+fig.suptitle("CW: rolling std around switch-on")
+fig.tight_layout()
+fig.savefig(paths.FIGURES / "01_cavitation_rolling_std.png", dpi=150)
+plt.show()
+
+# %% [markdown]
+# ### Artefact checks
+#
+# A real cavitation signature should widen the spread of physically-related
+# channels gradually, not step a single unrelated channel exactly at
+# switch-on. Three checks, one per known artefact pattern:
+
+# %%
+# 1. Largest mean shifts, by channel: are any far from the cooling-water loop?
+top_shifts = (
+    cw_shifts.assign(abs_shift=cw_shifts["shift"].abs())
+    .sort_values("abs_shift", ascending=False)
+    .head(10)[["run", "channel", "shift", "std_ratio"]]
+)
+top_shifts
+
+# %%
+# 2. Logging interval before vs after switch-on: a step here would be an
+# artefact of the recording, not the fault.
+for run in cw_runs:
+    own = full_table[full_table["run"] == run].sort_values("t")
+    t_switch = own.loc[own["label"] != "Normal", "t"].iloc[0]
+    before_dt = own.loc[own["t"] < t_switch, "t"].diff().median()
+    after_dt = own.loc[own["t"] >= t_switch, "t"].diff().median()
+    print(f"{run}: median dt before={before_dt:.2f}s, after={after_dt:.2f}s")
+
+# %%
+# 3. Constant or clipped channels in the faulty segment (zero variance would
+# point to a stuck sensor rather than a physical effect).
+for run in cw_runs:
+    faulty = full_table[(full_table["run"] == run) & (full_table["label"] != "Normal")]
+    zero_var = [c for c in ALL_CHANNELS if faulty[c].std() == 0]
+    print(f"{run}: zero-variance channels = {zero_var}")
+
+# %% [markdown]
+# **Conclusion:** the largest shifts cluster in the cooling-water group
+# (Fresh Cooling Water Press., Engine Cooling water flow, Loss with cooling
+# water, the cooling water temperature channels) with the rest of the engine
+# close to unchanged, matching the checklist's predicted mechanism rather
+# than an arbitrary channel. The logging interval is unchanged across
+# switch-on in both runs, and no channel is constant or clipped in the
+# faulty segment. Nothing here looks like a recording artefact — the weak
+# mean shift and strong variance shift is cavitation's real signature, not a
+# labelling or logging glitch.
