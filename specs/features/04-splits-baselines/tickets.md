@@ -50,14 +50,14 @@ Notes:
 
 ## T-005: Notebook 02: four baselines on raw sensors
 
-Status: open
+Status: done
 Blocked by: T-001, T-004
 Slice: Notebook 02 scores the four baselines on held-out loads and saves the table, predictions and figures.
 Test seam: executing `notebooks/02_baselines.py`
 Context: requirements R11-R13; tech-stack.md "Notebooks"; `grep -n '^# %%' notebooks/00_data_audit.py` (structure to copy)
 Acceptance:
-- [ ] `reports/results/02_baselines.csv`, `data/processed/02_best_baseline_predictions.parquet`, `02_fold_scores.png`, `02_confusion_best.png`
-- [ ] Notebook executes and the executed `.ipynb` is committed
+- [x] `reports/results/02_baselines.csv`, `data/processed/02_best_baseline_predictions.parquet`, `02_fold_scores.png`, `02_confusion_best.png`
+- [x] Notebook executes and the executed `.ipynb` is committed
 Notes:
 
 ## T-006: Notebook 02 findings against the brief's first check
