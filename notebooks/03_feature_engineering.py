@@ -75,8 +75,38 @@ fig.savefig(paths.FIGURES / "03_ablation.png", dpi=150)
 plt.show()
 
 # %% [markdown]
+# ## Pruning the best feature set inside the training folds
+#
+# Predictions come from the cached experiment outputs
+# (`uv run python -m keyframe.experiments pruning ...`), not recomputed here. Each
+# outer fold drops near-duplicate features (|Pearson r| > 0.98 on that fold's training
+# healthy rows) then features whose grouped permutation importance on the fold's inner
+# LOLO folds is ≤ 0 (R13); the outer test rows are never touched by either step.
+
+# %%
+best_feature_set, best_model = pooled.iloc[0][["feature_set", "model"]]
+best_feature_set, best_model = str(best_feature_set), str(best_model)
+
+pruning_predictions = experiments.load_pruning(best_feature_set, best_model)
+dropped_by_fold = pruning_predictions.groupby("fold")["dropped_feature"].first()
+pruning_rows = []
+for fold, dropped in dropped_by_fold.items():
+    fold_predictions = pruning_predictions[pruning_predictions["fold"] == fold]
+    row = evaluate.summarise(fold_predictions).iloc[0].to_dict()
+    row["fold"] = fold
+    row["dropped_features"] = dropped
+    pruning_rows.append(row)
+pooled_dropped = sorted(set().union(*[d.split(",") if d else [] for d in dropped_by_fold]))
+pooled_row = evaluate.summarise(pruning_predictions).iloc[0].to_dict()
+pooled_row["dropped_features"] = ",".join(pooled_dropped)
+pruning_results = pd.DataFrame([pooled_row, *pruning_rows])
+pruning_results.insert(0, "feature_set", best_feature_set)
+pruning_results.insert(1, "model", best_model)
+evaluate.log_results("03_pruning", pruning_results)
+pruning_results
+
+# %% [markdown]
 # ## What this means for the next notebook
 #
 # Numbers above are read from the executed run, not tuned to hit a target.
-# Notebook 03 part 2 prunes feature sets inside the training folds; part 3
-# reports the shop-test score, findings and the decision.
+# Notebook 03 part 3 reports the shop-test score, findings and the decision.

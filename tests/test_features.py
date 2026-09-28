@@ -415,3 +415,60 @@ def test_residual_view_keeps_load_inputs_and_drops_every_raw_reading():
     assert {f"resid_{c}" for c in targets} <= seen
     assert not any(c.endswith("_mean") and c.split("_roll_")[0] in targets for c in seen)
     assert any(c.startswith("phys_") for c in seen)
+
+
+def test_prune_correlated_drops_one_of_a_perfect_pair_keeps_uncorrelated():
+    rng = np.random.default_rng(0)
+    base = rng.normal(size=200)
+    df = pd.DataFrame(
+        {
+            "a": base,
+            "a_twin": base * 2 + 1,  # perfectly correlated with a
+            "b": rng.normal(size=200),  # uncorrelated
+        }
+    )
+
+    kept = features.prune_correlated(df, ["a", "a_twin", "b"], threshold=0.98)
+
+    assert kept == ["a", "b"]
+
+
+def test_inner_permutation_importance_only_uses_inner_fold_rows():
+    from sklearn.dummy import DummyClassifier
+
+    train_df = pd.DataFrame(
+        {
+            "Engine Speed": np.linspace(0, 1, 60),
+            "Fuel Flow": np.linspace(1, 2, 60),
+            "label": ["Normal"] * 60,
+            "load_bin": np.tile([40, 60, 75], 20),
+        }
+    )
+    seen_indices: set = set()
+
+    class SpyClassifier(DummyClassifier):
+        def fit(self, X, y, **kwargs):
+            seen_indices.update(X.index)
+            return super().fit(X, y, **kwargs)
+
+    def factory():
+        return SpyClassifier(strategy="most_frequent")
+
+    importance = features.inner_permutation_importance(
+        factory, train_df, ["Engine Speed", "Fuel Flow"], n_repeats=1
+    )
+
+    assert seen_indices == set(train_df.index)  # inner folds together cover all training rows
+    assert set(importance["feature"]) == {"Engine Speed", "Fuel Flow"}
+    assert set(importance["fold"]) == {40, 60, 75}
+
+
+def test_stratified_subsample_keeps_class_shares_and_is_seeded():
+    labels = pd.Series(["Normal"] * 800 + ["AC"] * 200)
+    first = features._stratified_subsample(labels, 100, np.random.default_rng(0))
+    again = features._stratified_subsample(labels, 100, np.random.default_rng(0))
+    assert list(first) == list(again)
+    assert labels[first].value_counts().to_dict() == {"Normal": 80, "AC": 20}
+    assert features._stratified_subsample(labels, None, np.random.default_rng(0)).equals(
+        labels.index
+    )

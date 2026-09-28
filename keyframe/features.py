@@ -392,3 +392,100 @@ def build_feature_table(clean: pd.DataFrame) -> pd.DataFrame:
     table = add_physics_features(clean)
     rolled_channels = sensor_channels(table) + _physics_columns(table)
     return add_rolling_features(table, rolled_channels)
+
+
+def prune_correlated(df: pd.DataFrame, columns: list[str], threshold: float = 0.98) -> list[str]:
+    """Keep the first of every pair of ``columns`` with |Pearson r| > ``threshold`` on ``df``,
+    dropping the rest (R13a). Compute on a training fold's healthy rows only; a constant
+    column (undefined correlation) is always kept."""
+    corr = np.abs(df[columns].corr().to_numpy(dtype=float))
+    kept: list[int] = []
+    for i in range(len(columns)):
+        if any(corr[i, j] > threshold for j in kept):  # NaN (constant column) compares False
+            continue
+        kept.append(i)
+    return [columns[i] for i in kept]
+
+
+def _source_group(column: str) -> str:
+    """The source channel a feature belongs to, for grouped permutation importance (R13b).
+
+    A physics feature (and any rolling stats built on it) is its own group, since it
+    already blends several channels. Otherwise a raw reading, its residual and its
+    rolling stats share the group named after the raw reading.
+    """
+    if column.startswith("phys_") or column.startswith("roll_warmup_"):
+        return column
+    if column.startswith("resid_"):
+        return column.removeprefix("resid_")
+    if "_roll_" in column:
+        return column.split("_roll_")[0]
+    return column
+
+
+def _stratified_subsample(labels: pd.Series, max_rows: int | None, rng) -> pd.Index:
+    """Up to ``max_rows`` of ``labels``' index, keeping each class's share (seeded)."""
+    if max_rows is None or len(labels) <= max_rows:
+        return labels.index
+    share = max_rows / len(labels)
+    picked = [
+        rng.choice(group.index.to_numpy(), size=max(1, round(len(group) * share)), replace=False)
+        for _, group in labels.groupby(labels)
+    ]
+    return pd.Index(np.sort(np.concatenate(picked)))
+
+
+def inner_permutation_importance(
+    model_factory: Callable[[], BaseEstimator],
+    train_df: pd.DataFrame,
+    columns: list[str],
+    n_repeats: int = 3,
+    random_state: int = 0,
+    max_test_rows: int | None = 8000,
+) -> pd.DataFrame:
+    """Grouped permutation importance on the inner LOLO folds of one training set (R13b).
+
+    Columns sharing a ``_source_group`` are permuted together, so a channel, its residual
+    and its rolling stats are explained as one group while each physics feature stands on
+    its own; per-column importance over hundreds of correlated columns would be neither
+    affordable nor meaningful. Never touches the outer test rows: ``train_df`` must already
+    exclude them. Returns one row per (inner fold, feature), the importance of ``feature``'s
+    group repeated for every member.
+
+    The inner test rows are subsampled (seeded, stratified by label) to at most
+    ``max_test_rows`` before permuting, so one outer fold stays under the 9-minute
+    experiment limit; the model is still fitted on every inner training row.
+    """
+    from keyframe import splits
+    from keyframe.evaluate import macro_f1
+
+    groups: dict[str, list[str]] = {}
+    for column in columns:
+        groups.setdefault(_source_group(column), []).append(column)
+
+    rng = np.random.default_rng(random_state)
+    records = []
+    for inner_bin, inner_train_index, inner_test_index in splits.inner_lolo_folds(train_df):
+        model = model_factory()
+        X_train = train_df.loc[inner_train_index, columns]
+        y_train = train_df.loc[inner_train_index, "label"]
+        test_index = _stratified_subsample(
+            train_df.loc[inner_test_index, "label"], max_test_rows, rng
+        )
+        X_test = train_df.loc[test_index, columns]
+        y_test = train_df.loc[test_index, "label"]
+        model.fit(X_train, y_train)
+        baseline = macro_f1(y_test, model.predict(X_test))
+
+        for group_columns in groups.values():
+            drops = []
+            for _ in range(n_repeats):
+                X_perm = X_test.copy()
+                permuted = rng.permutation(len(X_perm))
+                X_perm[group_columns] = X_perm[group_columns].to_numpy()[permuted]
+                drops.append(baseline - macro_f1(y_test, model.predict(X_perm)))
+            importance = float(np.mean(drops))
+            for column in group_columns:
+                records.append({"fold": inner_bin, "feature": column, "importance": importance})
+
+    return pd.DataFrame.from_records(records, columns=["fold", "feature", "importance"])

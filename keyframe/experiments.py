@@ -103,6 +103,65 @@ def _ablation_name(feature_set: str, model: str, shop_test: bool, fold: int | No
     return f"ablation_{feature_set}_{model}{suffix}{fold_part}.parquet"
 
 
+def run_pruning(
+    df: pd.DataFrame,
+    feature_set: str,
+    model: str,
+    fold: int,
+    *,
+    force: bool = False,
+    output_dir: Path = paths.PROCESSED / "experiments",
+) -> Path:
+    """Prune ``feature_set``'s columns inside one outer LOLO fold's training set only
+    (correlation, then grouped permutation importance on inner folds; R13), then score
+    the pruned set on that outer fold. Writes predictions plus the dropped-feature list.
+    """
+    out_path = output_dir / _pruning_name(feature_set, model, fold)
+    if out_path.exists() and not force:
+        return out_path
+
+    spec = features.FEATURE_SETS[feature_set]
+    all_columns = spec.columns(df)
+    train_df = df[df["load_bin"] != fold]
+    healthy = train_df[train_df["label"] == "Normal"]
+    # The residual model's inputs (speed, brake load, fuel flow) are never pruned: residual
+    # feature sets need them, and they tell every model the operating point.
+    protected = [c for c in all_columns if c in features.RESIDUAL_INPUTS]
+    corr_kept = features.prune_correlated(healthy, all_columns)
+    corr_kept = protected + [c for c in corr_kept if c not in protected]
+
+    def factory() -> Pipeline:
+        return features.build_pipeline(feature_set, MODEL_FACTORIES[model]())
+
+    importance = features.inner_permutation_importance(factory, train_df, corr_kept)
+    mean_importance = importance.groupby("feature")["importance"].mean()
+    pruned_columns = [c for c in corr_kept if c in protected or mean_importance.get(c, 0.0) > 0]
+    dropped = sorted(set(all_columns) - set(pruned_columns))
+
+    predictions = evaluate.lolo_predict(factory, df, pruned_columns, only_folds=[fold])
+    predictions["dropped_feature"] = ",".join(dropped)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    predictions.to_parquet(out_path)
+    return out_path
+
+
+def _pruning_name(feature_set: str, model: str, fold: int) -> str:
+    return f"pruning_{feature_set}_{model}_fold{fold}.parquet"
+
+
+def load_pruning(
+    feature_set: str,
+    model: str,
+    output_dir: Path = paths.PROCESSED / "experiments",
+) -> pd.DataFrame | None:
+    """Pruning predictions stitched over every outer fold, or None unless all are cached."""
+    parts = [output_dir / _pruning_name(feature_set, model, fold) for fold in splits.LOAD_BINS]
+    if not all(part.exists() for part in parts):
+        return None
+    return pd.concat(pd.read_parquet(part) for part in parts).sort_index()
+
+
 def load_ablation(
     feature_set: str,
     model: str,
@@ -137,17 +196,34 @@ def main(argv: list[str] | None = None) -> None:
         "--fold", type=int, choices=splits.LOAD_BINS, help="run one held-out load only"
     )
 
+    pruning = subparsers.add_parser(
+        "pruning", help="Prune one feature set inside a training fold, then score it."
+    )
+    pruning.add_argument("--feature-set", required=True, choices=sorted(features.FEATURE_SETS))
+    pruning.add_argument("--model", required=True, choices=sorted(MODEL_FACTORIES))
+    pruning.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    pruning.add_argument("--force", action="store_true")
+
     args = parser.parse_args(argv)
 
     table = load_feature_table()
-    out_path = run_ablation(
-        table,
-        args.feature_set,
-        args.model,
-        shop_test=args.shop_test,
-        force=args.force,
-        fold=args.fold,
-    )
+    if args.experiment == "ablation":
+        out_path = run_ablation(
+            table,
+            args.feature_set,
+            args.model,
+            shop_test=args.shop_test,
+            force=args.force,
+            fold=args.fold,
+        )
+    else:
+        out_path = run_pruning(
+            table,
+            args.feature_set,
+            args.model,
+            args.fold,
+            force=args.force,
+        )
     print(out_path)
 
 

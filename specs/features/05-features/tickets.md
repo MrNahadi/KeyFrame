@@ -82,7 +82,7 @@ Notes:
 
 ## T-007: Notebook 03 part 2: pruning inside the training folds
 
-Status: open
+Status: in-progress
 Blocked by: T-006
 Slice: Near-duplicate and useless features dropped using training-fold statistics only, and the pruned set rescored.
 Test seam: `keyframe.features.prune_correlated`, `keyframe.features.inner_permutation_importance`; `uv run python -m keyframe.experiments pruning --feature-set <best> --model <best> --fold <bin>`; executing the notebook
