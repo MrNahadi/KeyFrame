@@ -1,5 +1,5 @@
 metric,value,target,met,experiment,date,git_commit
-"Macro F1, held-out loads",0.7174869560358137,0.8,False,04_targets,2026-09-28,cd04d49
-Lowest per-class recall,0.1944940096864644,0.7,False,04_targets,2026-09-28,cd04d49
-False alarm rate,0.1223093673520513,0.05,False,04_targets,2026-09-28,cd04d49
-Detection delay (median of detected runs),563.0,600.0,False,04_targets,2026-09-28,cd04d49
+"Macro F1, held-out loads",0.7174869560358137,0.8,False,04_targets,2026-09-28,cf36458
+Lowest per-class recall,0.1944940096864644,0.7,False,04_targets,2026-09-28,cf36458
+False alarm rate,0.1223093673520513,0.05,False,04_targets,2026-09-28,cf36458
+Detection delay (median of detected runs),563.0,600.0,False,04_targets,2026-09-28,cf36458
