@@ -2,14 +2,14 @@
 
 ## T-001: EDA helpers for matched baselines, shifts, windows and physics quantities
 
-Status: open
+Status: done
 Blocked by:
 Slice: Tested helpers that give, for any fault run, its matched healthy baseline, per-channel shifts, a window around switch-on, time-based rolling std, and the checklist's physics quantities.
 Test seam: `keyframe.eda.matched_healthy`, `fault_shift`, `around_switch_on`, `rolling_std`, and the physics functions
 Context: requirements R1-R5; `grep -n '^def ' keyframe/load.py keyframe/audit.py keyframe/splits.py`; tests/conftest.py; tech-stack.md "Data and leakage"
 Acceptance:
-- [ ] Synthetic tests with known answers for each helper (a +2 std step gives shift 2.0; rolling std over 60 s uses time, not rows, and resets at run boundaries; cooler effectiveness of a known triple)
-- [ ] `matched_healthy` never returns rows from another fault run
+- [x] Synthetic tests with known answers for each helper (a +2 std step gives shift 2.0; rolling std over 60 s uses time, not rows, and resets at run boundaries; cooler effectiveness of a known triple)
+- [x] `matched_healthy` never returns rows from another fault run
 Notes:
 
 ## T-002: Notebook 01 part 1: coverage and load versus fault shifts
