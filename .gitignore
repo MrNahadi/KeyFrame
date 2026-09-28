@@ -23,3 +23,5 @@ web/dist/
 .DS_Store
 .vscode/
 .idea/
+.ralph/loop.pid
+.ralph/iteration.pgid
