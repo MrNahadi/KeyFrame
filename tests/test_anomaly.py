@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from keyframe import SEED
-from keyframe.anomaly import IsolationForestDetector
+from keyframe.anomaly import IsolationForestDetector, PCADetector
 
 
 def _healthy_cloud(n: int = 200) -> pd.DataFrame:
@@ -38,3 +38,47 @@ def test_imputation_and_standardisation_use_only_training_healthy_rows() -> None
 
     np.testing.assert_array_equal(detector.imputer_.statistics_, frozen_median)
     np.testing.assert_array_equal(detector.scaler_.mean_, frozen_mean)
+
+
+def _correlated_healthy_cloud(n: int = 500) -> pd.DataFrame:
+    # a and b are almost perfectly correlated, so PCA (at 95% variance) keeps a
+    # component spanning their shared direction plus the independent column c,
+    # and drops the tiny-variance residual direction (a - b).
+    rng = np.random.default_rng(SEED)
+    a = rng.normal(0, 1, n)
+    b = a + rng.normal(0, 0.01, n)
+    c = rng.normal(0, 1, n)
+    return pd.DataFrame({"a": a, "b": b, "c": c})
+
+
+def test_shift_along_retained_component_raises_t2_more_than_q() -> None:
+    detector = PCADetector().fit(_correlated_healthy_cloud())
+
+    # c aligns with a retained component; a shift here should move mostly the
+    # in-subspace T2 score, not the residual Q score.
+    along_retained = pd.DataFrame({"a": [0.0], "b": [0.0], "c": [10.0]})
+    parts = detector.score_parts(along_retained).iloc[0]
+
+    assert parts["t2"] > parts["q"]
+
+
+def test_shift_orthogonal_to_retained_components_raises_q_more_than_t2() -> None:
+    detector = PCADetector().fit(_correlated_healthy_cloud())
+
+    # a and -b move opposite while their sum (the retained direction) stays put,
+    # so this shift lands in the dropped residual direction (a - b).
+    orthogonal = pd.DataFrame({"a": [10.0], "b": [-10.0], "c": [0.0]})
+    parts = detector.score_parts(orthogonal).iloc[0]
+
+    assert parts["q"] > parts["t2"]
+
+
+def test_combined_score_is_max_of_parts_normalised_by_training_99th_percentiles() -> None:
+    detector = PCADetector().fit(_correlated_healthy_cloud())
+
+    probe = pd.DataFrame({"a": [3.0], "b": [-4.0], "c": [7.0]})
+    parts = detector.score_parts(probe).iloc[0]
+
+    expected = max(parts["t2"] / detector.t2_p99_, parts["q"] / detector.q_p99_)
+    assert parts["score"] == pytest.approx(expected)
+    assert detector.score(probe)[0] == pytest.approx(expected)

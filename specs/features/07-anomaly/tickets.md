@@ -14,14 +14,14 @@ Notes:
 
 ## T-002: PCA with Hotelling T² and Q
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: A PCA detector that reports T², Q and their combined score.
 Test seam: `keyframe.anomaly.PCADetector`
 Context: requirements R2; `grep -n 'class IsolationForestDetector' -A40 keyframe/anomaly.py`
 Acceptance:
-- [ ] Synthetic test: a shift along a retained component raises T²; a shift orthogonal to them raises Q
-- [ ] Combined score normalised by training 99th percentiles (test)
+- [x] Synthetic test: a shift along a retained component raises T²; a shift orthogonal to them raises Q
+- [x] Combined score normalised by training 99th percentiles (test)
 Notes:
 
 ## T-003: Autoencoder detector
