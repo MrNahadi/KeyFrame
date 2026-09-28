@@ -79,12 +79,12 @@ Notes:
 
 ## T-007: Targets review (milestone 4 gate)
 
-Status: open
+Status: done
 Blocked by: T-006
 Slice: `reports/targets.md` records the one allowed target revision or that none was needed, decided by the answerer on EDA evidence alone.
 Test seam: `grep -c 'Targets final as of' reports/targets.md`
 Context: requirements R14; `sed -n '/^## Goals and success metrics/,/^## Validation protocol/p' specs/brief.md`; notebook 01's first markdown cell (`sed -n '1,40p' notebooks/01_eda.py`); `reports/results/01_*.csv` headers only
 Acceptance:
-- [ ] `reports/targets.md` has the target table, the EDA evidence per target, the decision and the ADR it links to
-- [ ] Ends with "Targets final as of <date>."
+- [x] `reports/targets.md` has the target table, the EDA evidence per target, the decision and the ADR it links to
+- [x] Ends with "Targets final as of <date>."
 Notes:
