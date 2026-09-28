@@ -2,15 +2,15 @@
 
 ## T-001: Read one dataset CSV with its three-row header
 
-Status: open
+Status: done
 Blocked by:
 Slice: Read any release CSV into a DataFrame keyed by full names, with a ColumnInfo table of symbols, units and raw-voltage flags.
 Test seam: `keyframe.load.read_csv_with_header(path)` (public interface only)
 Context: requirements R1-R3; tech-stack.md "Python" and "Data and leakage"; `head -3 data/raw/AC_Fouling/AC_Fouling_85_Load.csv | cut -c1-400`; `head -3 data/raw/Reference_Data.csv | cut -c1-300`
 Acceptance:
-- [ ] A synthetic fixture CSV with repeated symbols, a `°C` unit and an empty column round-trips: full-name keys, NaN for empty cells, float dtypes, int `Anomaly State`
-- [ ] ColumnInfo marks exactly the six `Pl_*` channels as raw voltage in a real scenario file (data-marked test)
-- [ ] Shared test fixtures that write synthetic three-row-header CSVs live in `tests/conftest.py`
+- [x] A synthetic fixture CSV with repeated symbols, a `°C` unit and an empty column round-trips: full-name keys, NaN for empty cells, float dtypes, int `Anomaly State`
+- [x] ColumnInfo marks exactly the six `Pl_*` channels as raw voltage in a real scenario file (data-marked test)
+- [x] Shared test fixtures that write synthetic three-row-header CSVs live in `tests/conftest.py`
 Notes:
 
 ## T-002: Load runs with metadata into one table
