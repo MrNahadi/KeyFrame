@@ -82,7 +82,7 @@ Notes:
 
 ## T-007: Notebook 03 part 2: pruning inside the training folds
 
-Status: open
+Status: done
 Blocked by: T-006
 Slice: Near-duplicate and useless features dropped using training-fold statistics only, and the pruned set rescored.
 Test seam: `keyframe.features.prune_correlated`, `keyframe.features.inner_permutation_importance`; `uv run python -m keyframe.experiments pruning --feature-set <best> --model <best> --fold <bin>`; executing the notebook
@@ -92,8 +92,8 @@ Acceptance:
 - [x] Permutation importance is grouped by source channel (a channel, its residual, its rolling statistics and physics features count as their own groups), permuting each group together with `n_repeats=3`; features of groups with mean importance ≤ 0 across inner folds are dropped. Per-column permutation over hundreds of correlated columns is neither affordable nor meaningful (brief: "Grouping features by system before explaining keeps the story readable and more honest")
 - [x] One invocation per outer fold (`--fold`), each under 9 minutes
 - [x] Pruning and the pruned set's LOLO score run as a cached experiment (`uv run python -m keyframe.experiments pruning ...`), under 9 minutes per invocation
-- [ ] `reports/results/03_pruning.csv` lists features dropped per outer fold; pruned set scored and logged
-- [ ] Notebook executes and is committed
+- [x] `reports/results/03_pruning.csv` lists features dropped per outer fold; pruned set scored and logged
+- [x] Notebook executes and is committed
 Notes:
 - Planner (validation): code finished in 7366db4; pruning outputs for the best arm, `raw+physics+rolling` × `lightgbm`, exist for all four folds (read with `keyframe.experiments.load_pruning`; the dropped features are in the `dropped_feature` column). Do not rerun experiments. Remaining: `reports/results/03_pruning.csv` and the notebook section.
 
