@@ -1,0 +1,16 @@
+run,fixed_load,agreement_share,bin_counts
+AC_Fouling_40_Load,True,1.0,
+AC_Fouling_60_Load,True,1.0,
+AC_Fouling_75_Load,True,1.0,
+AC_Fouling_85_Load,True,1.0,
+AF_Clogging_40_Load,True,1.0,
+AF_Clogging_60_Load,True,1.0,
+AF_Clogging_75_Load,True,1.0,
+AF_Clogging_85_Load,True,1.0,
+Clogged_Injector_Nozzle1_40_60_85_Load,False,,"{40: 1596, 60: 2338, 75: 61, 85: 2497}"
+CW_Pump_Cavitation_60_Load,True,1.0,
+CW_Pump_Cavitation_85_Load,True,1.0,
+Reference_Data,False,,"{40: 9236, 60: 6487, 75: 6116, 85: 3463}"
+Turbine_Degradation_40_Load,True,1.0,
+Turbine_Degradation_60_Load,True,1.0,
+Turbine_Degradation_85_Load,True,1.0,

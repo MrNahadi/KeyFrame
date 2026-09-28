@@ -68,15 +68,15 @@ Notes:
 
 ## T-006: Notebook 00, part 2: switch-on points, load bins and findings
 
-Status: open
+Status: done
 Blocked by: T-005
 Slice: Notebook 00 locates every switch-on, shows load-bin agreement, writes the clean table and opens with a findings summary for an engine engineer.
 Test seam: executing `notebooks/00_data_audit.py` with jupytext
 Context: requirements R9-R11, R13-R15; `grep -n '^# %%' notebooks/00_data_audit.py` then read only the last section and the first cell
 Acceptance:
-- [ ] Switch-on table saved to `reports/results/00_switch_on_points.csv`; figure `reports/figures/00_switch_on.png` shows one key channel per fixed-load run with the switch-on marked
-- [ ] Load-bin table saved to `reports/results/00_load_bins.csv`
-- [ ] `data/processed/clean.parquet` written by the notebook
-- [ ] The first markdown cell states the findings in plain words with the real numbers; the last section lists what the audit means for the next notebooks
-- [ ] Notebook executes and the executed `.ipynb` is committed
+- [x] Switch-on table saved to `reports/results/00_switch_on_points.csv`; figure `reports/figures/00_switch_on.png` shows one key channel per fixed-load run with the switch-on marked
+- [x] Load-bin table saved to `reports/results/00_load_bins.csv`
+- [x] `data/processed/clean.parquet` written by the notebook
+- [x] The first markdown cell states the findings in plain words with the real numbers; the last section lists what the audit means for the next notebooks
+- [x] Notebook executes and the executed `.ipynb` is committed
 Notes:
