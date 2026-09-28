@@ -26,15 +26,15 @@ Notes:
 
 ## T-003: Notebook 01 part 2: each fault around its switch-on
 
-Status: open
+Status: done
 Blocked by: T-002
 Slice: Five figures showing the checklist's key channels around switch-on for every run of each fault.
 Test seam: executing `notebooks/01_eda.py`
 Context: requirements R9; `grep -n 'Expected top 5' reports/engineering_checklist.md` (the key channels per fault); `grep -n '^# %%' notebooks/01_eda.py`
 Acceptance:
-- [ ] `01_switch_on_AC.png`, `_AF`, `_CW`, `_TD`, and `01_injector_vs_reference.png`
-- [ ] A short markdown finding under each figure, in engine terms
-- [ ] Notebook executes and the executed `.ipynb` is committed
+- [x] `01_switch_on_AC.png`, `_AF`, `_CW`, `_TD`, and `01_injector_vs_reference.png`
+- [x] A short markdown finding under each figure, in engine terms
+- [x] Notebook executes and the executed `.ipynb` is committed
 Notes:
 
 ## T-004: Notebook 01 part 3: the cavitation puzzle
