@@ -244,9 +244,16 @@ class HealthyEngineResiduals(BaseEstimator, TransformerMixin):
         self.degree = degree
         self.alpha = alpha
 
-    def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray) -> HealthyEngineResiduals:
+    def fit(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series | np.ndarray,
+        extra_healthy: pd.DataFrame | None = None,
+    ) -> HealthyEngineResiduals:
         y = pd.Series(np.asarray(y), index=X.index)
         healthy = X.loc[y == "Normal"]
+        if extra_healthy is not None:
+            healthy = pd.concat([healthy, extra_healthy])
 
         self.targets_ = (
             list(self.targets)

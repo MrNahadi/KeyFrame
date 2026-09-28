@@ -40,15 +40,15 @@ Notes:
 
 ## T-004: Shop-test hook for the residual model
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: The shop-test variant can give the residual model the held-out load's reference rows without the classifier ever seeing them.
 Test seam: `keyframe.evaluate.lolo_predict(..., extra_healthy=...)`
 Context: requirements R9; `grep -n 'def lolo_predict' -A35 keyframe/evaluate.py`; `grep -n 'class HealthyEngineResiduals' -A40 keyframe/features.py`
 Acceptance:
-- [ ] Test with a spy classifier: its training rows are identical with and without `extra_healthy`
-- [ ] Test: the residual step saw the extra rows when `extra_healthy` is given
-- [ ] Default behaviour (no hook) is unchanged; existing tests pass
+- [x] Test with a spy classifier: its training rows are identical with and without `extra_healthy`
+- [x] Test: the residual step saw the extra rows when `extra_healthy` is given
+- [x] Default behaviour (no hook) is unchanged; existing tests pass
 Notes:
 
 ## T-005: Feature-set registry
