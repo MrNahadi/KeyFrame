@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from keyframe import SEED
-from keyframe.anomaly import IsolationForestDetector, PCADetector
+from keyframe.anomaly import AutoencoderDetector, IsolationForestDetector, PCADetector
 
 
 def _healthy_cloud(n: int = 200) -> pd.DataFrame:
@@ -82,3 +82,22 @@ def test_combined_score_is_max_of_parts_normalised_by_training_99th_percentiles(
     expected = max(parts["t2"] / detector.t2_p99_, parts["q"] / detector.q_p99_)
     assert parts["score"] == pytest.approx(expected)
     assert detector.score(probe)[0] == pytest.approx(expected)
+
+
+def test_autoencoder_scores_off_manifold_points_higher_than_healthy_ones() -> None:
+    detector = AutoencoderDetector().fit(_correlated_healthy_cloud())
+
+    healthy_like = pd.DataFrame({"a": [0.1, -0.1], "b": [0.1, -0.1], "c": [0.2, -0.2]})
+    off_manifold = pd.DataFrame({"a": [10.0, -10.0], "b": [-10.0, 10.0], "c": [0.0, 0.0]})
+
+    assert detector.score(off_manifold).mean() > detector.score(healthy_like).mean()
+
+
+def test_autoencoder_fit_is_reproducible_with_the_project_seed() -> None:
+    healthy = _correlated_healthy_cloud()
+    probe = pd.DataFrame({"a": [3.0], "b": [-4.0], "c": [7.0]})
+
+    first = AutoencoderDetector().fit(healthy).score(probe)
+    second = AutoencoderDetector().fit(healthy).score(probe)
+
+    np.testing.assert_array_equal(first, second)

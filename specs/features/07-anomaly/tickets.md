@@ -26,13 +26,13 @@ Notes:
 
 ## T-003: Autoencoder detector
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: A small MLP autoencoder that scores reconstruction error.
 Test seam: `keyframe.anomaly.AutoencoderDetector`
 Context: requirements R2; `grep -n 'class IsolationForestDetector' -A40 keyframe/anomaly.py`
 Acceptance:
-- [ ] Synthetic test: off-manifold points reconstruct worse than healthy ones; seeded fit is reproducible
+- [x] Synthetic test: off-manifold points reconstruct worse than healthy ones; seeded fit is reproducible
 Notes:
 
 ## T-004: Anomaly experiment and all runs

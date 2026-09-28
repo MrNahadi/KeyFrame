@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.impute import SimpleImputer
+from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
 from keyframe import SEED
@@ -39,6 +40,38 @@ class IsolationForestDetector:
     def score(self, X: pd.DataFrame) -> np.ndarray:
         scaled = self._prepare(X, fit_scaler=False)
         return -self.model_.score_samples(scaled)
+
+    def _prepare(self, X: pd.DataFrame, *, fit_scaler: bool) -> np.ndarray:
+        imputed = self.imputer_.transform(X)
+        if fit_scaler:
+            self.scaler_ = StandardScaler().fit(imputed)
+        return self.scaler_.transform(imputed)
+
+
+class AutoencoderDetector:
+    """Bottlenecked MLP autoencoder over standardised, median-imputed inputs.
+
+    Score is the mean squared reconstruction error, so rows the network cannot
+    compress and rebuild from the healthy manifold score higher.
+    """
+
+    def __init__(self, hidden_layer_sizes: tuple[int, ...] = (64, 16, 64)) -> None:
+        self.hidden_layer_sizes = hidden_layer_sizes
+
+    def fit(self, X_healthy: pd.DataFrame) -> AutoencoderDetector:
+        self.imputer_ = SimpleImputer(strategy="median").fit(X_healthy)
+        scaled_healthy = self._prepare(X_healthy, fit_scaler=True)
+        self.model_ = MLPRegressor(
+            hidden_layer_sizes=self.hidden_layer_sizes,
+            early_stopping=True,
+            random_state=SEED,
+        ).fit(scaled_healthy, scaled_healthy)
+        return self
+
+    def score(self, X: pd.DataFrame) -> np.ndarray:
+        scaled = self._prepare(X, fit_scaler=False)
+        reconstructed = self.model_.predict(scaled)
+        return np.mean((scaled - reconstructed) ** 2, axis=1)
 
     def _prepare(self, X: pd.DataFrame, *, fit_scaler: bool) -> np.ndarray:
         imputed = self.imputer_.transform(X)
