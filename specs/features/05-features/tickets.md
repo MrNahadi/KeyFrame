@@ -99,15 +99,15 @@ Notes:
 
 ## T-008: Shop-test score, findings and the decision
 
-Status: open
+Status: done
 Blocked by: T-007
 Slice: Notebook 03 reports the shop-test score for the best set, states which families earned their place, and records the feature set going forward.
 Test seam: executing the notebook; the ADR file
 Context: requirements R14-R15; `reports/results/03_ablation.csv`, `reports/results/03_pruning.csv` (read with pandas, summary only); `grep -n '^# %%' notebooks/03_feature_engineering.py`
 Acceptance:
-- [ ] Shop-test score computed via `uv run python -m keyframe.experiments ablation --feature-set <best> --model <best> --shop-test`, reported next to the main score and logged
-- [ ] First cell summarises findings with numbers and spread; ADR records the chosen set
-- [ ] Notebook executes and is committed
+- [x] Shop-test score computed via `uv run python -m keyframe.experiments ablation --feature-set <best> --model <best> --shop-test`, reported next to the main score and logged
+- [x] First cell summarises findings with numbers and spread; ADR records the chosen set
+- [x] Notebook executes and is committed
 Notes:
 - Planner: the best arm has no residual step, so its shop-test score is undefined. The shop-test score is reported for the best residual arm, `residuals+physics` × `logreg` (outputs exist: `load_ablation('residuals+physics', 'logreg', shop_test=True)`), next to that arm's main score. Do not rerun experiments.
 - Planner check, false alarm rate on Normal rows for `residuals+physics` × `logreg`, by source and held-out fold:
