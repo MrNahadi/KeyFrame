@@ -539,3 +539,79 @@ plt.show()
 # dropped, since their *shape* around switch-on can still carry fault
 # information (as it does for AF above). `Sea Cooling Water Press.` is not a
 # day marker on this evidence and can be kept as-is.
+
+# %% [markdown]
+# ## Completing the checklist: the derived physics quantities
+#
+# The Expected tables also name quantities that are not raw channels:
+# cooler effectiveness, the exhaust/Pmax/indicated-work spreads, cooling
+# water rise and the turbine temperature drop. `keyframe.eda` already has a
+# pure function for each; add them as columns and reuse `eda.fault_shift`
+# so they get the same standardised shift and std ratio as everything else.
+# `Loss in Charge Air IC` (Qrej_air), `Charge Air IC Cooling Water Temp. Out`
+# (T17), `Charge Air Press.` (Pturb), `Fuel Flow`, `Indicated Efficiency`
+# and `Effective Efficiency` are already raw channels.
+
+# %%
+full_table["Cooler Effectiveness"] = eda.cooler_effectiveness(full_table)
+full_table["Exhaust Temp Spread"] = eda.exhaust_temp_spread(full_table)
+full_table["Pmax Spread"] = eda.pmax_spread(full_table)
+full_table["Indicated Work Spread"] = eda.indicated_work_spread(full_table)
+full_table["Turbine Temp Drop"] = eda.turbine_temp_drop(full_table)
+full_table["Cooling Water Rise"] = eda.cooling_water_rise(full_table)
+full_table["Fuel Flow per kW"] = eda.fuel_flow_per_kw(full_table)
+
+DERIVED_CHECKLIST_CHANNELS = [
+    "Cooler Effectiveness",
+    "Loss in Charge Air IC",
+    "Charge Air IC Cooling Water Temp. Out",
+    "Fuel Flow per kW",
+    "Exhaust Temp Spread",
+    "Pmax Spread",
+    "Indicated Work Spread",
+    "Indicated Efficiency",
+    "Effective Efficiency",
+    "Cooling Water Rise",
+    "Turbine Temp Drop",
+]
+
+derived_shift_frames = []
+for run in FAULT_RUNS:
+    shift_table = eda.fault_shift(full_table, run, DERIVED_CHECKLIST_CHANNELS)
+    shift_table.insert(0, "run", run)
+    derived_shift_frames.append(shift_table)
+derived_shifts = pd.concat(derived_shift_frames, ignore_index=True)
+derived_shifts.to_csv(paths.RESULTS / "01_checklist_derived_shifts.csv", index=False)
+derived_shifts
+
+# %% [markdown]
+# CW's checklist row also asks for the *rolling* std ratio of `Pl_water1`
+# (Fresh Cooling Water Press.) and `Qw_eng` (Engine Cooling water flow), not
+# the whole-window std ratio: `01_cavitation_rolling_std.png` already showed
+# whole-window std ratios below 1 even though the fault is a fluctuation
+# effect, because a single std over the last 30 minutes averages the jump
+# away. Rolling std (60 s window, same helper as the cavitation section)
+# measures the fluctuation directly instead.
+
+# %%
+cw_rolling_rows = []
+for run in cw_runs:
+    own = full_table[full_table["run"] == run].sort_values("t")
+    faulty = own[own["label"] != "Normal"]
+    healthy = eda.matched_healthy(full_table, run)
+    t_max = faulty["t"].max()
+    last30 = faulty[faulty["t"] >= t_max - 30 * 60]
+    for label in ["Fresh Cooling Water Press.", "Engine Cooling water flow"]:
+        healthy_roll = eda.rolling_std(healthy[label], healthy["t"], window_s=60)
+        last30_roll = eda.rolling_std(last30[label], last30["t"], window_s=60)
+        cw_rolling_rows.append(
+            {
+                "run": run,
+                "channel": label,
+                "healthy_rolling_std_mean": healthy_roll.mean(),
+                "last30_rolling_std_mean": last30_roll.mean(),
+                "last30_rolling_std_ratio": last30_roll.mean() / healthy_roll.mean(),
+            }
+        )
+cw_rolling = pd.DataFrame(cw_rolling_rows)
+cw_rolling

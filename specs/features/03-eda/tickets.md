@@ -91,15 +91,15 @@ Notes:
 
 ## T-008: Complete the Observed checklist with the physics quantities
 
-Status: open
+Status: done
 Blocked by: T-007
 Slice: Every row of every "Expected" table in the checklist gets an Observed row, including the derived physics quantities, and the CW paragraph gives a sound explanation.
 Test seam: `tests/test_checklist.py`; `keyframe.eda` physics functions and `fault_shift`
 Context: requirements R5, R13; `grep -n '^def ' keyframe/eda.py`; `sed -n '/^## Observed in the EDA/,$p' reports/engineering_checklist.md`; `grep -n '^| ' reports/engineering_checklist.md | head -60` (the Expected rows); `head -5 reports/results/01_cavitation_shifts.csv`
 Acceptance:
-- [ ] Observed rows added for the derived quantities the Expected tables name: AC cooler effectiveness and Loss in Charge Air IC (Qrej_air) plus T17; AF turbocharger pressure ratio proxy (Pturb) and fuel flow per kW; INJ exhaust temperature spread, Pmax spread and indicated work spread (computed as spreads, not per cylinder only) and indicated/effective efficiency; CW cooling water temperature rise (mean T7–T9 minus T6) and the rolling standard deviation ratios of Pl_water1 and Qw_eng (from the cavitation analysis, 60 s window); TD turbine temperature drop T4 − T5
-- [ ] Shifts computed with the existing `keyframe.eda` helpers and saved to `reports/results/01_checklist_derived_shifts.csv` from a notebook 01 cell (the notebook is re-executed and committed)
-- [ ] The CW paragraph is rewritten: whole-window std ratios below 1 are not evidence against fluctuation (rolling std is), and moves in the combustion/air path during CW runs are checked against warm-up drift in the pre-fault segment (compare the last 15 minutes of the pre-fault segment with the first 15 minutes after switch-on) before being called a fault effect
-- [ ] Each fault's paragraph notes when the pre-fault segment is not at steady state (warm-up drift visible in `reports/figures/00_switch_on.png`, e.g. CW 85% steps at ~20 min)
-- [ ] Nothing above "## Observed in the EDA" changes (`tests/test_checklist.py` passes)
+- [x] Observed rows added for the derived quantities the Expected tables name: AC cooler effectiveness and Loss in Charge Air IC (Qrej_air) plus T17; AF turbocharger pressure ratio proxy (Pturb) and fuel flow per kW; INJ exhaust temperature spread, Pmax spread and indicated work spread (computed as spreads, not per cylinder only) and indicated/effective efficiency; CW cooling water temperature rise (mean T7–T9 minus T6) and the rolling standard deviation ratios of Pl_water1 and Qw_eng (from the cavitation analysis, 60 s window); TD turbine temperature drop T4 − T5
+- [x] Shifts computed with the existing `keyframe.eda` helpers and saved to `reports/results/01_checklist_derived_shifts.csv` from a notebook 01 cell (the notebook is re-executed and committed)
+- [x] The CW paragraph is rewritten: whole-window std ratios below 1 are not evidence against fluctuation (rolling std is), and moves in the combustion/air path during CW runs are checked against warm-up drift in the pre-fault segment (compare the last 15 minutes of the pre-fault segment with the first 15 minutes after switch-on) before being called a fault effect
+- [x] Each fault's paragraph notes when the pre-fault segment is not at steady state (warm-up drift visible in `reports/figures/00_switch_on.png`, e.g. CW 85% steps at ~20 min)
+- [x] Nothing above "## Observed in the EDA" changes (`tests/test_checklist.py` passes)
 Notes:
