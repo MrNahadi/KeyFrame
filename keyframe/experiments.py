@@ -12,6 +12,7 @@ from pathlib import Path
 
 import lightgbm as lgb
 import pandas as pd
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -19,7 +20,11 @@ from sklearn.preprocessing import StandardScaler
 from keyframe import SEED, evaluate, features, paths, splits
 
 MODEL_FACTORIES = {
+    # The imputer fills the rare NaNs (a rolling std or slope over a run's first row,
+    # a physics ratio with a zero denominator); it is fitted per fold like the scaler.
+    # LightGBM handles NaN natively.
     "logreg": lambda: make_pipeline(
+        SimpleImputer(strategy="median"),
         StandardScaler(),
         LogisticRegression(class_weight="balanced", max_iter=2000, random_state=SEED),
     ),
