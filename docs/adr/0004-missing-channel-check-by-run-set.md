@@ -1,0 +1,8 @@
+# 0004. The dPf/dPex empty-run check compares run sets, not a count of 5
+
+Status: accepted
+Decided-by: answerer (inferred)
+Question: T-004 (02-data-audit): `missing_by_channel` raises on data/raw because only 4 of the 5 README-named runs are present; the 5th is the lockbox run. Assert the raise, loosen the count, or read the lockbox?
+Decision: `keyframe.audit` holds `EXPECTED_EMPTY_RUNS`, the five runs whose `data/raw/dataset_index.csv` notes say "Compressor Filter Loss (dPf) and Turbine Back Pressure (dPex) not recorded in this run". `missing_by_channel` raises unless, for each channel, the set of scenario runs fully empty in it equals `EXPECTED_EMPTY_RUNS` intersected with the runs present in `df`. Runs whose file lacks the column entirely (`Reference_Data` for dPex) are not counted as "empty". On data/raw the expected set is 4 runs. The lockbox run, `Clogged_Injector_Nozzle2_LoadProgram`, is confirmed as the fifth from index metadata only.
+Basis: R8 "fully empty in exactly the five runs the dataset README names"; R5 "It never reads `data/lockbox/`"; tech-stack.md "The lockbox file is never read except by the final evaluation ticket"; dataset_index.csv notes list AC_Fouling_85, Clogged_Injector_Nozzle1, Clogged_Injector_Nozzle2_LoadProgram, CW_Pump_Cavitation_60 and _85. The old count check passed dPex only because it counted Reference_Data's missing column as the fifth run.
+Consequences: The check is exact for any subset of runs, including the full 15-run table at final evaluation. A data test confirms that `EXPECTED_EMPTY_RUNS` matches the index notes. Nothing in the build reads the lockbox.

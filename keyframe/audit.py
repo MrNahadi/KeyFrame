@@ -10,6 +10,15 @@ import pandas as pd
 from keyframe import paths
 
 MISSING_CHANNELS = {"Compressor Filter Loss", "Turbine Back Pressure"}
+EXPECTED_EMPTY_RUNS = frozenset(
+    {
+        "AC_Fouling_85_Load",
+        "Clogged_Injector_Nozzle1_40_60_85_Load",
+        "Clogged_Injector_Nozzle2_LoadProgram",
+        "CW_Pump_Cavitation_60_Load",
+        "CW_Pump_Cavitation_85_Load",
+    }
+)
 GAP_THRESHOLD_S = 4
 _FIXED_LOAD = re.compile(r"^\d+%$")
 
@@ -47,16 +56,23 @@ def missing_by_channel(df: pd.DataFrame) -> pd.DataFrame:
                 rows.append({"run": run, "channel": channel, "missing_share": share})
     result = pd.DataFrame(rows, columns=["run", "channel", "missing_share"])
 
+    runs_present = set(df["run"].unique()) - {"Reference_Data"}
+    expected_present = EXPECTED_EMPTY_RUNS & runs_present
     for channel in MISSING_CHANNELS:
         if channel not in channels:
             continue
-        fully_empty_runs = result.loc[
-            (result["channel"] == channel) & (result["missing_share"] == 1.0), "run"
-        ]
-        if len(fully_empty_runs) != 5:
+        fully_empty_runs = set(
+            result.loc[
+                (result["channel"] == channel)
+                & (result["missing_share"] == 1.0)
+                & (result["run"] != "Reference_Data"),
+                "run",
+            ]
+        )
+        if fully_empty_runs != expected_present:
             raise ValueError(
-                f"missing_by_channel: expected 5 runs fully missing {channel!r}, "
-                f"got {len(fully_empty_runs)}: {sorted(fully_empty_runs)}"
+                f"missing_by_channel: expected runs fully missing {channel!r} to be "
+                f"{sorted(expected_present)}, got {sorted(fully_empty_runs)}"
             )
 
     return result

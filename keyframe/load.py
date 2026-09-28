@@ -124,9 +124,15 @@ def load_run(path: str | Path, dataset_index: pd.DataFrame | None = None) -> pd.
 
 
 def load_all(raw_dir: str | Path = paths.RAW) -> pd.DataFrame:
-    """Concatenate every run listed in ``dataset_index.csv`` into one table."""
+    """Concatenate every run listed in ``dataset_index.csv`` that is present under ``raw_dir``.
+
+    The lockbox run (``download.LOCKBOX_FILE``) stays listed in the index but lives
+    under ``data/lockbox``, not ``data/raw``, so it is skipped here.
+    """
     raw_dir = Path(raw_dir)
     dataset_index = pd.read_csv(raw_dir / "dataset_index.csv")
-    file_paths = sorted(raw_dir / name for name in dataset_index["file_name"])
+    file_paths = sorted(
+        raw_dir / name for name in dataset_index["file_name"] if (raw_dir / name).exists()
+    )
     frames = [load_run(file_path, dataset_index=dataset_index) for file_path in file_paths]
     return pd.concat(frames, ignore_index=True, sort=False)

@@ -40,18 +40,18 @@ Notes:
 
 ## T-004: Check the real files against the dataset index
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: Data-marked tests prove the one table matches the release exactly; the clean Parquet table is written.
 Test seam: `keyframe.load.load_all()`, `keyframe.audit.switch_on_points`, `keyframe.audit.missing_by_channel`
 Context: requirements R8, R12; `data/raw/dataset_index.csv`; tests/test_download.py (skip pattern for missing data)
 Acceptance:
-- [ ] Per-file row counts equal `data_rows` in the index; 73 columns per scenario file, 70 for the reference
-- [ ] Class totals equal R12 exactly (107,979 rows in total)
-- [ ] Every fixed-load run has exactly one switch-on and never returns to 0; injector run has none
-- [ ] dPf and dPex are fully empty in exactly the five runs named in R8
-- [ ] Tests skip cleanly when `data/raw` is absent
-Notes:
+- [x] Per-file row counts equal `data_rows` in the index; 73 columns per scenario file, 70 for the reference
+- [x] Class totals equal R12 exactly (107,979 rows in total)
+- [x] Every fixed-load run has exactly one switch-on and never returns to 0; injector run has none
+- [x] dPf and dPex are fully empty in exactly the five runs named in R8
+- [x] Tests skip cleanly when `data/raw` is absent
+Notes: ADR 0004 — missing_by_channel now compares the set of README-named runs against runs present, not a hardcoded count of 5, since the lockbox run (one of the five) is never loaded from data/raw.
 
 ## T-005: Notebook 00, part 1: files, units, sampling and missing channels
 
