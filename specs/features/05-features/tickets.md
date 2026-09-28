@@ -53,15 +53,15 @@ Notes:
 
 ## T-005: Feature-set registry
 
-Status: open
+Status: done
 Blocked by: T-001, T-002, T-003
 Slice: Named feature sets that build the column list and the pipeline for any model, used by the ablation.
 Test seam: `keyframe.features.FEATURE_SETS`, `keyframe.features.build_pipeline(feature_set, model)`
 Context: requirements R10-R11; `grep -n '^def \|^class \|^[A-Z_]* =' keyframe/features.py`; `head -20 reports/results/01_day_markers.csv`; `grep -n -i 'day.marker' -A8 notebooks/01_eda.py | head -40`
 Acceptance:
-- [ ] Every set excludes every column in EXCLUDED_COLUMNS (test over all sets on a synthetic table)
-- [ ] Residual sets replace day-marker temperature channels by their residuals as notebook 01 recommended
-- [ ] `build_pipeline` returns an unfitted sklearn Pipeline usable with `lolo_predict`
+- [x] Every set excludes every column in EXCLUDED_COLUMNS (test over all sets on a synthetic table)
+- [x] Residual sets replace day-marker temperature channels by their residuals as notebook 01 recommended
+- [x] `build_pipeline` returns an unfitted sklearn Pipeline usable with `lolo_predict`
 Notes:
 
 ## T-006: Notebook 03 part 1: the ablation

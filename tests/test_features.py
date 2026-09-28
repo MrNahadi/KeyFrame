@@ -294,3 +294,84 @@ def test_rolling_features_full_table_under_two_minutes():
     elapsed = time.perf_counter() - start
 
     assert elapsed < 120
+
+
+def _synthetic_feature_table(n=40, seed=4):
+    rng = np.random.default_rng(seed)
+    df = pd.DataFrame(
+        {
+            "Engine Speed": rng.uniform(1000, 2000, n),
+            "Water Brake Weight": rng.uniform(50, 500, n),
+            "Fuel Flow": rng.uniform(5, 20, n),
+            "LO Cooling Water Temp. In": rng.uniform(10, 20, n),
+            "Charge Air IC Cooling Water Temp. In": rng.uniform(10, 20, n),
+            "Fuel Temp.": rng.uniform(10, 20, n),
+            "Fuel Oil Temp. Flow meter In": rng.uniform(10, 20, n),
+            "Sea Cooling Water Press.": rng.uniform(1, 3, n),
+            "Engine room Temp.": rng.uniform(15, 35, n),
+            "phys_pressure_ratio": rng.uniform(1, 2, n),
+            "Exhaust Temp 1_roll_60s_mean": rng.uniform(300, 400, n),
+            "roll_warmup_60": np.zeros(n),
+            "Time": np.arange(n),
+            "run": [f"run{i % 4}" for i in range(n)],
+            "label": np.where(rng.random(n) < 0.2, "AC", "Normal"),
+        }
+    )
+    return df
+
+
+def test_every_feature_set_excludes_excluded_columns():
+    df = _synthetic_feature_table()
+    for name, spec in features.FEATURE_SETS.items():
+        cols = spec.columns(df)
+        assert not (set(cols) & features.EXCLUDED_COLUMNS), name
+
+
+def test_residual_feature_sets_replace_day_markers_with_residual_columns():
+    from sklearn.dummy import DummyClassifier
+
+    df = _synthetic_feature_table()
+    y = df["label"]
+    for name in ["residuals", "residuals+physics", "residuals+physics+rolling"]:
+        spec = features.FEATURE_SETS[name]
+        assert spec.residuals
+        cols = spec.columns(df)
+        assert set(features.DAY_MARKER_RESIDUAL_CHANNELS) <= set(cols), name
+
+        pipeline = features.build_pipeline(name, DummyClassifier(strategy="most_frequent"))
+        transformed = pipeline[:-1].fit_transform(df[cols], y)
+        assert not (set(transformed.columns) & set(features.DAY_MARKER_RESIDUAL_CHANNELS)), name
+        assert {f"resid_{c}" for c in features.DAY_MARKER_RESIDUAL_CHANNELS} <= set(
+            transformed.columns
+        )
+
+    for name in ["raw", "raw+physics", "raw+physics+rolling"]:
+        spec = features.FEATURE_SETS[name]
+        cols = spec.columns(df)
+        assert set(features.DAY_MARKER_RESIDUAL_CHANNELS) <= set(cols), name
+        assert not spec.residuals
+
+
+def test_build_pipeline_unfitted_and_usable_with_lolo_predict():
+    from sklearn.dummy import DummyClassifier
+
+    from keyframe import evaluate
+
+    df = _synthetic_feature_table()
+    df["load_bin"] = np.tile([0, 1, 2, 3], len(df) // 4)
+    feature_set = "residuals"
+    spec = features.FEATURE_SETS[feature_set]
+    training_columns = spec.columns(df)
+
+    def model_factory():
+        return features.build_pipeline(feature_set, DummyClassifier(strategy="most_frequent"))
+
+    pipeline = model_factory()
+    assert isinstance(pipeline, features.Pipeline)
+    from sklearn.exceptions import NotFittedError
+
+    with pytest.raises(NotFittedError):
+        pipeline.predict(df[training_columns])
+
+    result = evaluate.lolo_predict(model_factory, df, training_columns)
+    assert len(result) == len(df)

@@ -4,14 +4,15 @@ plus the physics features derived from a single row of the clean table.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, PolynomialFeatures, StandardScaler
 
 EXCLUDED_COLUMNS: frozenset[str] = frozenset(
     {
@@ -30,6 +31,16 @@ EXCLUDED_COLUMNS: frozenset[str] = frozenset(
         "nominal_load",
     }
 )
+
+
+DAY_MARKER_RESIDUAL_CHANNELS: tuple[str, ...] = (
+    "LO Cooling Water Temp. In",
+    "Charge Air IC Cooling Water Temp. In",
+    "Fuel Temp.",
+    "Fuel Oil Temp. Flow meter In",
+)
+"""Day-marker temperature channels notebook 01 recommended residualising (`Engine room
+Temp.` is already excluded; `Sea Cooling Water Press.` stays raw as load-linked)."""
 
 
 def raw_sensor_columns(df: pd.DataFrame) -> list[str]:
@@ -283,3 +294,76 @@ class HealthyEngineResiduals(BaseEstimator, TransformerMixin):
     def get_feature_names_out(self, input_features=None) -> np.ndarray:
         base = list(input_features) if input_features is not None else []
         return np.asarray(base + [f"resid_{target}" for target in self.targets_])
+
+
+def _physics_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if c.startswith("phys_")]
+
+
+def _rolling_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if "_roll_" in c or c.startswith("roll_warmup_")]
+
+
+def _drop_day_markers(X: pd.DataFrame) -> pd.DataFrame:
+    """Post-residual pipeline step: drop the raw day-marker channels, keeping their
+    ``resid_`` replacements (and every other column) added by ``HealthyEngineResiduals``.
+    """
+    return X.drop(columns=list(DAY_MARKER_RESIDUAL_CHANNELS))
+
+
+def _feature_columns(*, physics: bool, rolling: bool) -> Callable[[pd.DataFrame], list[str]]:
+    def columns(df: pd.DataFrame) -> list[str]:
+        all_raw = raw_sensor_columns(df)
+        phys_columns = set(_physics_columns(df))
+        roll_columns = set(_rolling_columns(df))
+        result = [c for c in all_raw if c not in phys_columns and c not in roll_columns]
+        if physics:
+            result += [c for c in all_raw if c in phys_columns]
+        if rolling:
+            result += [c for c in all_raw if c in roll_columns]
+        return [c for c in result if c not in EXCLUDED_COLUMNS]
+
+    return columns
+
+
+@dataclass(frozen=True)
+class FeatureSet:
+    """One named ablation arm: the ``features`` list to pass to ``lolo_predict`` and
+    whether ``build_pipeline`` should residualise the day-marker channels.
+    """
+
+    columns: Callable[[pd.DataFrame], list[str]]
+    residuals: bool
+
+
+FEATURE_SETS: dict[str, FeatureSet] = {
+    "raw": FeatureSet(_feature_columns(physics=False, rolling=False), residuals=False),
+    "raw+physics": FeatureSet(_feature_columns(physics=True, rolling=False), residuals=False),
+    "residuals": FeatureSet(_feature_columns(physics=False, rolling=False), residuals=True),
+    "residuals+physics": FeatureSet(_feature_columns(physics=True, rolling=False), residuals=True),
+    "residuals+physics+rolling": FeatureSet(
+        _feature_columns(physics=True, rolling=True), residuals=True
+    ),
+    "raw+physics+rolling": FeatureSet(
+        _feature_columns(physics=True, rolling=True), residuals=False
+    ),
+}
+
+
+def build_pipeline(feature_set: str, model: BaseEstimator) -> Pipeline:
+    """Unfitted ``Pipeline`` for ``feature_set``, usable as a ``lolo_predict`` factory
+    result: with the residuals flag set, a ``HealthyEngineResiduals`` step (targets are
+    the day-marker channels) is fitted first and the raw day-marker columns are dropped
+    before ``model`` sees the data; call with ``FEATURE_SETS[feature_set].columns(df)``
+    as the ``features`` argument to ``lolo_predict`` so the residual step has its inputs.
+    """
+    spec = FEATURE_SETS[feature_set]
+    if not spec.residuals:
+        return Pipeline([("model", model)])
+    return Pipeline(
+        [
+            ("residuals", HealthyEngineResiduals(targets=list(DAY_MARKER_RESIDUAL_CHANNELS))),
+            ("drop_day_markers", FunctionTransformer(_drop_day_markers)),
+            ("model", model),
+        ]
+    )
