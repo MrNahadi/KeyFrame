@@ -14,14 +14,14 @@ Notes:
 
 ## T-002: Leave-one-load-out splitter and its nested inner loop
 
-Status: open
+Status: done
 Blocked by:
 Slice: The validation protocol as code, with tests that no split mixes loads.
 Test seam: `keyframe.splits.lolo_folds(df)`, `keyframe.splits.inner_lolo_folds(train_df)`
 Context: requirements R4-R6; `sed -n '/^## Validation protocol/,/^## Workflow/p' specs/brief.md`; `grep -n 'def ' keyframe/splits.py`
 Acceptance:
-- [ ] R6 tests pass on a synthetic table with a stepped run spanning bins
-- [ ] Data-marked test: four folds on the real table; the 75% fold's test set has no CW or TD rows
+- [x] R6 tests pass on a synthetic table with a stepped run spanning bins
+- [x] Data-marked test: four folds on the real table; the 75% fold's test set has no CW or TD rows
 Notes:
 
 ## T-003: Metrics and the results log
