@@ -8,12 +8,28 @@
 #
 # **Main findings:** logistic regression wins on pooled macro F1 (0.440),
 # ahead of LightGBM (0.389), random forest (0.285) and the majority-class
-# dummy (0.108). None of the four generalise well to an unseen load: the best
+# dummy (0.108). Its per-fold macro F1 swings from 0.30 (40% load held out)
+# to 0.55 (75% load held out), so the pooled number hides real fold-to-fold
+# spread. None of the four generalise well to an unseen load: the best
 # model's worst per-class recall is 0.13 (TD), and LightGBM and random forest
 # both collapse to near-zero recall on at least one class when that load is
 # held out. Raw-sensor baselines with no load-aware features are not enough;
 # later notebooks need features that separate the fault signal from the load
 # shift itself.
+#
+# **Against the brief's first check:** the brief's first raw-sensor baseline
+# scored macro F1 0.52, with turbine degradation (TD) recall of 0.00 and a
+# false alarm rate of 29.8%. Our best model lands lower on macro F1 (0.44 vs
+# 0.52) but higher on TD recall (0.13 vs 0.00) and lower on false alarms
+# (22.5% vs 29.8%). The gap is material. The first check's code is not in
+# this repository, so its cause can't be pinned down; the candidates are
+# (a) channels this project excludes on purpose (Compressor Filter Loss and
+# Turbine Back Pressure, which are the fault settings themselves, Engine room
+# Temp., time columns), (b) how rows were binned into loads and whether the
+# stepped injector run and the reference file were included, and (c) model
+# settings such as class weights. None of these is added back or tuned here
+# to chase 0.52: the protocol in `keyframe.splits` is the one every later
+# score uses, so this 0.44 is the honest starting point.
 
 # %%
 import lightgbm as lgb
@@ -133,3 +149,29 @@ plt.show()
 # ## What this means for the next notebooks
 #
 # Numbers above are read from the executed run, not tuned to hit a target.
+#
+# **What the baselines get wrong.** Turbine degradation (TD) is the weakest
+# class across every baseline: the best model's TD recall is 0.13, and
+# LightGBM's pooled worst-class recall (also TD) is 0.0025 — the model
+# almost never calls a TD row correctly once its load is held out. TD has
+# only three runs in the dataset (`specs/brief.md`), so there is little
+# signal to generalise from, and 75% load has no TD or cavitation runs at
+# all, which thins the per-fold evidence further. False alarms are the
+# other weak spot: logistic regression's pooled false alarm rate is 22.5%,
+# and it spikes to 53.6% on the 60% load fold and 39.7% on 75%, meaning that
+# on some loads the model flags more than a third of healthy running as
+# faulty. Both weaknesses point the same way — raw sensor levels shift with
+# load, and the model is confusing a load shift for a fault (or a subtle
+# fault for a load shift) because nothing here separates the two.
+#
+# **What feature engineering should target.** Healthy-engine residuals
+# (notebook 03) should attack the false alarm rate directly, since a
+# reading's deviation from its load-conditioned expectation should not move
+# just because the load changed. Physics features (turbocharger pressure
+# ratio, turbine inlet-outlet temperature spread) target TD specifically,
+# since they encode the turbine behaviour that raw sensor levels alone did
+# not separate from load. Rolling-window features may help less here since
+# TD's problem looks like too little data rather than a signal that needs
+# smoothing, so the ablation table in notebook 03 should watch TD recall and
+# the false alarm rate, not just pooled macro F1, when judging whether a
+# feature set earns its place.

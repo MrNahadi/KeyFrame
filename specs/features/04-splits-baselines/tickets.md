@@ -62,12 +62,12 @@ Notes:
 
 ## T-006: Notebook 02 findings against the brief's first check
 
-Status: open
+Status: done
 Blocked by: T-005
 Slice: Notebook 02 opens and closes with findings for an engine engineer, comparing against the 0.52 first-check baseline.
 Test seam: executing `notebooks/02_baselines.py`
 Context: requirements R14; `reports/results/02_baselines.csv`; `grep -n '^# %%' notebooks/02_baselines.py`
 Acceptance:
-- [ ] First cell: what the notebook answers and the headline numbers with spread; last section: what the baselines get wrong (weakest class, false alarms) and what feature engineering should target
-- [ ] Notebook executes and the executed `.ipynb` is committed
+- [x] First cell: what the notebook answers and the headline numbers with spread; last section: what the baselines get wrong (weakest class, false alarms) and what feature engineering should target
+- [x] Notebook executes and the executed `.ipynb` is committed
 Notes:
