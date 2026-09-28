@@ -1,0 +1,14 @@
+{
+  "model": "random_forest",
+  "fold": 85,
+  "best_params": {
+    "n_estimators": 57,
+    "max_depth": 4,
+    "min_samples_leaf": 44,
+    "max_features": 0.40055750587160444,
+    "max_samples": 0.5832290311184182
+  },
+  "best_inner_score": 0.3690047694728224,
+  "n_trials": 4,
+  "git_commit": "5c24139"
+}

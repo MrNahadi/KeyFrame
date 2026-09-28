@@ -255,7 +255,24 @@ def run_modelling(
     predictions = pd.concat(parts).loc[df.index]
     output_dir.mkdir(parents=True, exist_ok=True)
     predictions.to_parquet(out_path)
+    _log_modelling_summary(model, predictions)
     return out_path
+
+
+def _log_modelling_summary(model: str, predictions: pd.DataFrame) -> None:
+    """Merge ``model``'s summary into ``reports/results/04_models.csv`` (R5).
+
+    Each CLI invocation tunes/fits one model, so the row for that model is replaced
+    in place rather than the whole file, keeping earlier models' rows.
+    """
+    summary = evaluate.summarise(predictions)
+    summary.insert(0, "model", model)
+    results_path = paths.RESULTS / "04_models.csv"
+    if results_path.exists():
+        existing = pd.read_csv(results_path)
+        existing = existing[existing["model"] != model]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results("04_models", summary)
 
 
 def load_modelling(

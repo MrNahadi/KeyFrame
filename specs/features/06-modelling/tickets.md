@@ -39,16 +39,16 @@ Notes:
 
 ## T-004: Tune and fit all four models
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: Tuned params for 4 models × 4 outer folds and held-out predictions for every model exist.
 Test seam: files under `models/tuning/` and `data/processed/experiments/modelling_*.parquet`
 Context: requirements R4-R5; `uv run python -m keyframe.experiments --help`
 Acceptance:
-- [ ] 16 tuning JSONs committed under `models/tuning/` (each invocation under 9 minutes; one command at a time)
-- [ ] 4 modelling outputs; `reports/results/04_models.csv` logged
-- [ ] If a model cannot finish a fold in 9 minutes with at least 10 trials, lower `n_estimators` bounds in its search space and note it in the ticket Notes
-Notes:
+- [x] 16 tuning JSONs committed under `models/tuning/` (each invocation under 9 minutes; one command at a time)
+- [x] 4 modelling outputs; `reports/results/04_models.csv` logged
+- [x] If a model cannot finish a fold in 9 minutes with at least 10 trials, lower `n_estimators` bounds in its search space and note it in the ticket Notes
+Notes: lightgbm, xgboost and random_forest all needed narrower search spaces (smaller `n_estimators`/`num_leaves`/`max_depth`/`max_samples` upper bounds, plus `--timeout-s 300`) to fit >=1 trial reliably under 9 minutes on the 833-column feature table; logreg needed no changes. Added `_log_modelling_summary` to `run_modelling` (R5) since it wasn't writing `reports/results/04_models.csv`; each per-model CLI call replaces that model's rows in the CSV so all 4 models' summaries accumulate across separate invocations. Found and kept a leftover xgboost-wrapper unit test and 3 stale 1-trial xgboost JSONs from an earlier, uncommitted attempt at this ticket; all 16 JSONs were regenerated with the final search spaces.
 
 ## T-005: Alarm parameters chosen inside the inner folds
 

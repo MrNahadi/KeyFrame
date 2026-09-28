@@ -8,11 +8,12 @@ import lightgbm as lgb
 import optuna
 import pandas as pd
 import xgboost as xgb
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils.class_weight import compute_sample_weight
 
 from keyframe import SEED, evaluate
@@ -26,12 +27,41 @@ def thin(df: pd.DataFrame, step: int = 4) -> pd.DataFrame:
     return pd.concat(parts)
 
 
-class _BalancedXGBClassifier(xgb.XGBClassifier):
-    """``XGBClassifier`` with per-row balanced sample weights (it has no ``class_weight``)."""
+class _BalancedXGBClassifier(ClassifierMixin, BaseEstimator):
+    """XGBoost with balanced per-row sample weights and string class labels.
+
+    ``XGBClassifier`` has no ``class_weight`` and only accepts labels 0..k-1, so this
+    wrapper encodes the labels present in ``y`` for fitting and decodes predictions;
+    ``classes_`` holds the original labels, in the order of ``predict_proba``'s columns.
+    """
+
+    def __init__(self, random_state: int = SEED, **params: object) -> None:
+        self.random_state = random_state
+        self.params = params
+
+    def get_params(self, deep: bool = True) -> dict:
+        return {"random_state": self.random_state, **self.params}
+
+    def set_params(self, **params: object) -> _BalancedXGBClassifier:
+        if "random_state" in params:
+            self.random_state = params.pop("random_state")  # type: ignore[assignment]
+        self.params.update(params)
+        return self
 
     def fit(self, X, y, **kwargs):  # noqa: N803 (sklearn convention)
-        kwargs.setdefault("sample_weight", compute_sample_weight("balanced", y))
-        return super().fit(X, y, **kwargs)
+        self.encoder_ = LabelEncoder().fit(y)
+        self.classes_ = self.encoder_.classes_
+        encoded = self.encoder_.transform(y)
+        kwargs.setdefault("sample_weight", compute_sample_weight("balanced", encoded))
+        self.model_ = xgb.XGBClassifier(random_state=self.random_state, **self.params)
+        self.model_.fit(X, encoded, **kwargs)
+        return self
+
+    def predict_proba(self, X):  # noqa: N803
+        return self.model_.predict_proba(X)
+
+    def predict(self, X):  # noqa: N803
+        return self.encoder_.inverse_transform(self.model_.predict(X).astype(int))
 
 
 def _logreg_builder(params: dict) -> object:
@@ -72,9 +102,9 @@ def _logreg_space(trial: optuna.Trial) -> dict:
 
 def _lightgbm_space(trial: optuna.Trial) -> dict:
     return {
-        "num_leaves": trial.suggest_int("num_leaves", 7, 127),
+        "num_leaves": trial.suggest_int("num_leaves", 7, 31),
         "learning_rate": trial.suggest_float("learning_rate", 1e-3, 0.3, log=True),
-        "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+        "n_estimators": trial.suggest_int("n_estimators", 50, 100),
         "min_child_samples": trial.suggest_int("min_child_samples", 5, 100),
         "feature_fraction": trial.suggest_float("feature_fraction", 0.5, 1.0),
         "reg_lambda": trial.suggest_float("reg_lambda", 1e-3, 10.0, log=True),
@@ -83,9 +113,9 @@ def _lightgbm_space(trial: optuna.Trial) -> dict:
 
 def _xgboost_space(trial: optuna.Trial) -> dict:
     return {
-        "max_depth": trial.suggest_int("max_depth", 2, 10),
+        "max_depth": trial.suggest_int("max_depth", 2, 8),
         "learning_rate": trial.suggest_float("learning_rate", 1e-3, 0.3, log=True),
-        "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+        "n_estimators": trial.suggest_int("n_estimators", 50, 100),
         "subsample": trial.suggest_float("subsample", 0.5, 1.0),
         "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
         "reg_lambda": trial.suggest_float("reg_lambda", 1e-3, 10.0, log=True),
@@ -94,10 +124,11 @@ def _xgboost_space(trial: optuna.Trial) -> dict:
 
 def _random_forest_space(trial: optuna.Trial) -> dict:
     return {
-        "max_depth": trial.suggest_int("max_depth", 3, 30),
+        "n_estimators": trial.suggest_int("n_estimators", 50, 100),
+        "max_depth": trial.suggest_int("max_depth", 3, 20),
         "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 50),
-        "max_features": trial.suggest_float("max_features", 0.1, 1.0),
-        "max_samples": trial.suggest_float("max_samples", 0.3, 1.0),
+        "max_features": trial.suggest_float("max_features", 0.1, 0.6),
+        "max_samples": trial.suggest_float("max_samples", 0.3, 0.7),
     }
 
 

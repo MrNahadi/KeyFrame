@@ -76,3 +76,19 @@ def test_tune_is_reproducible() -> None:
     best_params_2, _ = tuning.tune("logreg", train_df, ["x1", "x2"], n_trials=3)
 
     assert best_params_1 == best_params_2
+
+
+def test_xgboost_wrapper_takes_string_labels_and_returns_them():
+    import numpy as np
+    import pandas as pd
+
+    from keyframe import tuning
+
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame({"a": rng.normal(size=60), "b": rng.normal(size=60)})
+    y = np.where(X["a"] > 0.5, "AC", np.where(X["a"] < -0.5, "TD", "Normal"))
+    model = tuning.MODEL_BUILDERS["xgboost"]({"n_estimators": 10, "max_depth": 2})
+    model.fit(X, y)
+    assert set(model.predict(X)) <= {"AC", "Normal", "TD"}
+    assert list(model.classes_) == ["AC", "Normal", "TD"]
+    assert model.predict_proba(X).shape == (60, 3)

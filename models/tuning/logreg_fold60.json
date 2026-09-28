@@ -1,0 +1,10 @@
+{
+  "model": "logreg",
+  "fold": 60,
+  "best_params": {
+    "C": 4.5705630998014515
+  },
+  "best_inner_score": 0.4427022819823894,
+  "n_trials": 15,
+  "git_commit": "5c24139"
+}
