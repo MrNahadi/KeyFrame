@@ -77,13 +77,13 @@ Notes:
 
 ## T-007: Findings and the best-model decision
 
-Status: open
+Status: done
 Blocked by: T-006
 Slice: The best model and its settings are recorded, and notebook 04 opens with honest findings.
 Test seam: `reports/results/04_best_model.csv`; the ADR
 Context: requirements R13; `reports/results/04_models.csv` and `04_alarms.csv` (pandas summary only); `grep -n '^# %%' notebooks/04_modelling.py`
 Acceptance:
-- [ ] `04_best_model.csv` with model, per-fold params, pooled and per-fold scores
-- [ ] ADR recording the choice and tie-breaks; first notebook cell summarises findings against targets
-- [ ] Notebook executes and is committed
+- [x] `04_best_model.csv` with model, per-fold params, pooled and per-fold scores
+- [x] ADR recording the choice and tie-breaks; first notebook cell summarises findings against targets
+- [x] Notebook executes and is committed
 Notes:

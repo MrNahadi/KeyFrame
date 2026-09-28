@@ -225,6 +225,27 @@ evaluate.log_results("04_targets", target_table)
 target_table
 
 # %% [markdown]
+# ## Best model recorded: `04_best_model.csv`
+#
+# R13: pick by pooled macro F1, tie-broken by lowest per-class recall then
+# false alarm rate. XGBoost leads on macro F1 alone (0.717 vs 0.667 for the
+# next model), so no tie-break is needed. Its per-fold tuned params and
+# scores are the record of the decision
+# (`docs/adr/0007-best-model-for-detection.md`).
+
+# %%
+best_scores = models_results[models_results["model"] == best_model][
+    ["fold", "macro_f1", "accuracy", "false_alarm_rate", "worst_recall", "worst_recall_class"]
+].copy()
+best_params = tuned_params[tuned_params["model"] == best_model].drop(columns=["model"]).copy()
+best_params = best_params.dropna(axis="columns", how="all")
+best_params["fold"] = best_params["fold"].astype(str)
+best_model_table = best_scores.merge(best_params, on="fold", how="left")
+best_model_table.insert(0, "model", best_model)
+evaluate.log_results("04_best_model", best_model_table)
+best_model_table
+
+# %% [markdown]
 # ## What this means for the next notebook
 #
 # **Findings:**
