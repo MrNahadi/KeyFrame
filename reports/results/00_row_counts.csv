@@ -1,0 +1,16 @@
+run,data_rows,actual_rows,rows_match,columns
+Reference_Data,25302,25302,True,70
+AC_Fouling_40_Load,4678,4678,True,73
+AC_Fouling_60_Load,6698,6698,True,73
+AC_Fouling_75_Load,6354,6354,True,73
+AC_Fouling_85_Load,5801,5801,True,73
+AF_Clogging_40_Load,4820,4820,True,73
+AF_Clogging_60_Load,6819,6819,True,73
+AF_Clogging_75_Load,5918,5918,True,73
+AF_Clogging_85_Load,6398,6398,True,73
+Clogged_Injector_Nozzle1_40_60_85_Load,6492,6492,True,73
+CW_Pump_Cavitation_60_Load,5845,5845,True,73
+CW_Pump_Cavitation_85_Load,6263,6263,True,73
+Turbine_Degradation_40_Load,6397,6397,True,73
+Turbine_Degradation_60_Load,4905,4905,True,73
+Turbine_Degradation_85_Load,5289,5289,True,73
