@@ -70,6 +70,7 @@ keyframe/
 - Build the executed copy with `uv run jupytext --set-kernel python3 --to ipynb --execute notebooks/NN_name.py`, and commit both files so reviewers see outputs on GitHub.
 - Each notebook opens with a markdown cell that says, for the primary user, what question it answers and what it found. Headings are questions or findings, not "Section 2".
 - Static matplotlib figures, saved to `reports/figures/NN_*.png` at 150 dpi. Keep the executed notebook under about 5 MB.
+- **Heavy experiments run outside the notebook.** Any computation over about 3 minutes (LOLO over several models or feature sets, tuning, SHAP over many rows) lives in `keyframe/experiments.py` as a named experiment, run with `uv run python -m keyframe.experiments <name> [options]`. Each invocation must finish in under 9 minutes (split by feature set, model or fold if needed), writes its per-row predictions to `data/processed/experiments/<name>.parquet` and its summary via `log_results`, and skips work whose output already exists unless `--force`. Notebooks read those outputs and only call an experiment if its output is missing. This keeps every loop command under the 10-minute tool limit and keeps notebook execution fast.
 - Results tables go to `reports/results/*.csv` with the fold, class and metric columns needed to show spread across folds.
 
 ### Front end
