@@ -82,19 +82,20 @@ Notes:
 
 ## T-007: Notebook 03 part 2: pruning inside the training folds
 
-Status: in-progress
+Status: open
 Blocked by: T-006
 Slice: Near-duplicate and useless features dropped using training-fold statistics only, and the pruned set rescored.
 Test seam: `keyframe.features.prune_correlated`, `keyframe.features.inner_permutation_importance`; `uv run python -m keyframe.experiments pruning --feature-set <best> --model <best> --fold <bin>`; executing the notebook
 Context: requirements R13; `grep -n 'def inner_lolo_folds' -A10 keyframe/splits.py`; `grep -n '^# %%' notebooks/03_feature_engineering.py`
 Acceptance:
-- [ ] Unit tests: `prune_correlated` drops one of a perfectly correlated pair and keeps uncorrelated ones; permutation importance uses only inner-fold rows (spy test)
-- [ ] Permutation importance is grouped by source channel (a channel, its residual, its rolling statistics and physics features count as their own groups), permuting each group together with `n_repeats=3`; features of groups with mean importance ≤ 0 across inner folds are dropped. Per-column permutation over hundreds of correlated columns is neither affordable nor meaningful (brief: "Grouping features by system before explaining keeps the story readable and more honest")
-- [ ] One invocation per outer fold (`--fold`), each under 9 minutes
-- [ ] Pruning and the pruned set's LOLO score run as a cached experiment (`uv run python -m keyframe.experiments pruning ...`), under 9 minutes per invocation
+- [x] Unit tests: `prune_correlated` drops one of a perfectly correlated pair and keeps uncorrelated ones; permutation importance uses only inner-fold rows (spy test)
+- [x] Permutation importance is grouped by source channel (a channel, its residual, its rolling statistics and physics features count as their own groups), permuting each group together with `n_repeats=3`; features of groups with mean importance ≤ 0 across inner folds are dropped. Per-column permutation over hundreds of correlated columns is neither affordable nor meaningful (brief: "Grouping features by system before explaining keeps the story readable and more honest")
+- [x] One invocation per outer fold (`--fold`), each under 9 minutes
+- [x] Pruning and the pruned set's LOLO score run as a cached experiment (`uv run python -m keyframe.experiments pruning ...`), under 9 minutes per invocation
 - [ ] `reports/results/03_pruning.csv` lists features dropped per outer fold; pruned set scored and logged
 - [ ] Notebook executes and is committed
 Notes:
+- Planner (validation): code finished in 7366db4; pruning outputs for the best arm, `raw+physics+rolling` × `lightgbm`, exist for all four folds (read with `keyframe.experiments.load_pruning`; the dropped features are in the `dropped_feature` column). Do not rerun experiments. Remaining: `reports/results/03_pruning.csv` and the notebook section.
 
 ## T-008: Shop-test score, findings and the decision
 
@@ -108,3 +109,4 @@ Acceptance:
 - [ ] First cell summarises findings with numbers and spread; ADR records the chosen set
 - [ ] Notebook executes and is committed
 Notes:
+- Planner: the best arm has no residual step, so its shop-test score is undefined. The shop-test score is reported for the best residual arm, `residuals+physics` × `logreg` (outputs exist: `load_ablation('residuals+physics', 'logreg', shop_test=True)`), next to that arm's main score. Do not rerun experiments.
