@@ -7,7 +7,39 @@
 # its switch-on, and two puzzles (cavitation's weak mean shift, the injector
 # and test-day runs). Findings are filled in once every part is done.
 #
-# **Main findings:** (filled in once T-006 is done).
+# **Main findings:**
+#
+# - **AC** (air cooler fouling) matches the checklist cleanly: Charge Air IC
+#   Air Temp. Out rises far more than anything else in the data (standardised
+#   shift +29.8), and the exhaust chain rises with it. The only weak
+#   prediction, a flat Charge Air Press., holds (shift -0.47).
+# - **AF** (air filter clogging) shows the predicted boost loss (Charge Air
+#   Press. shift -1.62) but *not* the predicted rise in exhaust temperature:
+#   T1, T2 and Turbine In fall slightly instead of rising over the last 30
+#   minutes. The "richer mixture raises exhaust temperature" mechanism does
+#   not show up at this load range in this dataset.
+# - **INJ** (injector clogging) does the one thing the checklist asks of it:
+#   the three cylinders stop agreeing. No.3 Exh.Gas Temp. drops 2.1 standard
+#   deviations below healthy while No.1 rises, a 2.5 SD spread that dwarfs
+#   every other fault, while the air path stays close to flat as predicted.
+# - **CW** (cavitation) is a genuine puzzle: the combustion and air path,
+#   predicted untouched, move by a moderate amount (Charge Air Press. shift
+#   -1.19). The mean-shift table alone looks like an artefact, but the
+#   dedicated rolling-std analysis below finds a real, non-artefactual
+#   variance signature instead — cavitation shows up as instability, not a
+#   level shift, exactly as the checklist's "strength: fluctuation" column
+#   predicted.
+# - **TD** (turbine degradation) is the cleanest match of all five faults:
+#   every strong and moderate prediction lands in the right direction, with
+#   Charge Air Press. and the whole exhaust chain moving together.
+# - The test-day puzzle: the injector run is *not* a day outlier
+#   (|z| < 1 on every day-marker channel); the warm reference run and the two
+#   cold 75%-load runs are the real day outliers. Recommend residualising the
+#   four non-excluded temperature channels against `matched_healthy` and
+#   keeping Sea Cooling Water Press. as load-linked rather than day-linked.
+#
+# Full per-fault tables and Agree/Disagree/Unclear calls are in
+# `reports/engineering_checklist.md`, under "## Observed in the EDA".
 
 # %%
 import matplotlib.pyplot as plt

@@ -66,15 +66,15 @@ Notes:
 
 ## T-006: Observed checklist and the notebook's findings summary
 
-Status: open
+Status: done
 Blocked by: T-004, T-005
 Slice: The checklist gains its Observed section, protected by a test, and notebook 01 opens with its findings.
 Test seam: `tests/test_checklist.py`; executing `notebooks/01_eda.py`
 Context: requirements R6, R13; `reports/results/01_fault_shifts.csv` (read with pandas, filter to checklist channels); `sed -n '/^## Observed in the EDA/,$p' reports/engineering_checklist.md`
 Acceptance:
-- [ ] Observed tables and surprise paragraphs appended below "## Observed in the EDA"
-- [ ] A test asserts everything above that heading is byte-identical to `git show 57ecbea:reports/engineering_checklist.md` up to the same heading
-- [ ] First cell of notebook 01 summarises the findings with real numbers; notebook executes and is committed
+- [x] Observed tables and surprise paragraphs appended below "## Observed in the EDA"
+- [x] A test asserts everything above that heading is byte-identical to `git show 57ecbea:reports/engineering_checklist.md` up to the same heading
+- [x] First cell of notebook 01 summarises the findings with real numbers; notebook executes and is committed
 Notes:
 
 ## T-007: Targets review (milestone 4 gate)
