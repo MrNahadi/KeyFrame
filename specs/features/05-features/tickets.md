@@ -110,3 +110,8 @@ Acceptance:
 - [ ] Notebook executes and is committed
 Notes:
 - Planner: the best arm has no residual step, so its shop-test score is undefined. The shop-test score is reported for the best residual arm, `residuals+physics` × `logreg` (outputs exist: `load_ablation('residuals+physics', 'logreg', shop_test=True)`), next to that arm's main score. Do not rerun experiments.
+- Planner check, false alarm rate on Normal rows for `residuals+physics` × `logreg`, by source and held-out fold:
+  main: reference rows 0.017 / 0.000 / 0.127 / 0.000 and pre-fault rows 0.334 / 0.192 / 1.000 / 0.280 (folds 40/60/75/85);
+  shop-test: reference rows 0.607 / 0.000 / 0.127 / 0.000 and pre-fault rows 0.950 / 0.332 / 1.000 / 0.295.
+  Report both honestly: (1) every pre-fault healthy row at 75% is flagged even in the main score, which fits notebook 01's finding that the two 75% runs are cold test-day outliers; (2) the shop-test is worse, not better, and the damage is in the 40% fold, where adding reference rows down to 56 kW reshapes the degree-2 healthy-engine model at the edge of its range. State these as observations with their likely explanation, not as proven causes, and say what feature 06 should try (e.g. restricting the healthy-engine model's training rows to the 40–85% operating range, or a lower-degree fit).
+
