@@ -1,0 +1,95 @@
+.figure {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.caption {
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--text-secondary);
+}
+
+.steps {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: minmax(0, 10.5rem) minmax(3rem, 1fr) 5.25rem;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-callout);
+  line-height: var(--leading-callout);
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--group);
+}
+
+.track {
+  position: relative;
+  height: 14px;
+}
+
+.zero {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--border-strong);
+}
+
+.bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+}
+
+.towards {
+  background: var(--group);
+}
+
+.away {
+  border: 1.5px solid var(--group);
+  background: var(--surface);
+}
+
+.value {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.direction {
+  color: var(--text-secondary);
+}
+
+.total {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-weight: var(--weight-semibold);
+}
+
+.mark {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 1px;
+  background: var(--text);
+}

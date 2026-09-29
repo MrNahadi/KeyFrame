@@ -32,25 +32,30 @@ const make = (max: number): Replay => ({
 
 describe('ExplainPanel', () => {
   it('shows the explanation when paused', () => {
-    render(<ExplainPanel replay={make(0.9)} index={0} playing={false} width={300} height={200} />)
+    render(<ExplainPanel replay={make(0.9)} index={0} playing={false} />)
     expect(screen.getByRole('heading', { name: /Why the model reads this as/ })).toBeTruthy()
     expect(screen.getByText(/Air path readings pushed the most towards/)).toBeTruthy()
     expect(screen.getByText(/Charge air pressure/)).toBeTruthy()
     expect(screen.getByText(/Oil temp/)).toBeTruthy()
     expect(screen.queryByText(/Extra/)).toBeNull()
     expect(screen.getByText('Sensors move together, so credit between groups is approximate.')).toBeTruthy()
-    expect(screen.queryByText('Pause to see why')).toBeNull()
+    // The waterfall: every group named in words, with a signed push and its direction.
+    const steps = screen.getAllByRole('listitem').map((li) => li.textContent)
+    expect(steps).toContain('Air path+0.60 towards')
+    expect(steps).toContain('Cooling−0.20 away')
+    expect(steps).toContain('Model’s score+0.50')
+    expect(screen.queryByText(/Pause to see why/)).toBeNull()
     expect(screen.queryByText(/barely confident/)).toBeNull()
   })
 
   it('shows a hint while playing', () => {
     render(<ExplainPanel replay={make(0.9)} index={0} playing={true} />)
-    expect(screen.getByText('Pause to see why')).toBeTruthy()
+    expect(screen.getByText(/Pause to see why/)).toBeTruthy()
     expect(screen.queryByRole('heading')).toBeNull()
   })
 
   it('says the model is barely confident when applicable', () => {
-    render(<ExplainPanel replay={make(0.3)} index={0} playing={false} width={300} height={200} />)
+    render(<ExplainPanel replay={make(0.3)} index={0} playing={false} />)
     expect(screen.getByText(/describes a model that is barely confident/)).toBeTruthy()
   })
 })

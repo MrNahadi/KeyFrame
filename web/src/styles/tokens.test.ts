@@ -21,4 +21,21 @@ describe('design tokens', () => {
       .map((f) => relative(SRC, f))
     expect(offenders).toEqual([])
   })
+
+  it('only uses tokens that tokens.css defines', () => {
+    const defined = new Set(
+      [...readFileSync(join(SRC, 'styles', 'tokens.css'), 'utf8').matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]),
+    )
+    // Set per element by a component (the sensor group's colour), not a global token.
+    const local = new Set(['--group'])
+    const unknown = files(SRC)
+      .filter((f) => /\.(css|tsx?)$/.test(f) && !f.includes('.test.'))
+      .flatMap((f) =>
+        [...readFileSync(f, 'utf8').matchAll(/var\((--[\w-]+)/g)]
+          .map((m) => m[1])
+          .filter((name) => !defined.has(name) && !local.has(name))
+          .map((name) => `${relative(SRC, f)}: ${name}`),
+      )
+    expect(unknown).toEqual([])
+  })
 })

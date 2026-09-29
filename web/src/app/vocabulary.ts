@@ -9,14 +9,23 @@ export const FAULT_NAMES: Record<string, string> = {
   TD: 'Turbine degradation',
 }
 
+/** Long class labels used by the dataset and older fixtures, mapped to the codes. */
+const FAULT_ALIASES: Record<string, string> = {
+  'AC Fouling': 'AC',
+  'AF Clogging': 'AF',
+  'Clogged Injector': 'INJ',
+  'CW Pump': 'CW',
+  'Turbine Degradation': 'TD',
+}
+
 /** Sentence-case fault name for a class code; unknown codes pass through. */
 export function faultName(code: string): string {
-  return FAULT_NAMES[code] ?? code
+  return FAULT_NAMES[FAULT_ALIASES[code] ?? code] ?? code
 }
 
 /** Lower-case form for use inside a sentence. */
 export function faultPhrase(code: string): string {
-  const name = FAULT_NAMES[code]
+  const name = FAULT_NAMES[FAULT_ALIASES[code] ?? code]
   return name ? name.charAt(0).toLowerCase() + name.slice(1) : code
 }
 
@@ -68,6 +77,22 @@ const SENSOR_GROUP: Record<string, string> = {
   'Fresh Cooling Water Press.': 'cooling',
   'Engine Cooling water flow': 'cooling',
   'Fuel Flow': 'fuel system',
+}
+
+/** Shorter labels where the replay file's own label is too long for a chart title. */
+const SENSOR_LABELS: Record<string, string> = {
+  exhaust_temp_spread: 'Exhaust temperature spread, cylinders 1 to 3',
+  fresh_cooling_water_pressure: 'Fresh cooling water pressure (sensor voltage)',
+}
+
+export function sensorLabel(key: string, fallback: string): string {
+  return SENSOR_LABELS[key] ?? fallback
+}
+
+/** Index of a group in the fixed display order; unknown groups sort last. */
+export function groupOrder(key: string): number {
+  const i = GROUPS.findIndex((g) => g.key === key.toLowerCase())
+  return i === -1 ? GROUPS.length : i
 }
 
 export function sensorGroup(sensor: string): SensorGroup {

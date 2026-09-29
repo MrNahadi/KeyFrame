@@ -63,3 +63,13 @@ export function clock(seconds: number): string {
   const m = Math.floor((s % 3600) / 60)
   return h > 0 ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`
 }
+
+/** Decimals an axis needs so that ticks across `range` stay distinct (0 to 4). */
+export function axisDecimals(range: number): number {
+  if (!Number.isFinite(range) || range <= 0) return 2
+  return Math.min(4, Math.max(0, Math.ceil(-Math.log10(range)) + 1))
+}
+
+export function fixed(value: number, decimals: number): string {
+  return value.toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}

@@ -6,6 +6,8 @@ describe('vocabulary', () => {
     expect(faultName('AC')).toBe('Air cooler fouling')
     expect(faultPhrase('TD')).toBe('turbine degradation')
     expect(faultName('XYZ')).toBe('XYZ')
+    expect(faultName('AC Fouling')).toBe('Air cooler fouling')
+    expect(faultPhrase('Normal')).toBe('normal running')
   })
 
   it('keeps the validated fixed group order', () => {

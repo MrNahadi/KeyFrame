@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clock, delay, length, number, reading, signed } from './format'
+import { axisDecimals, clock, delay, fixed, length, number, reading, signed } from './format'
 
 describe('format', () => {
   it('writes readings at a sensible precision with proper units', () => {
@@ -18,5 +18,13 @@ describe('format', () => {
     expect(clock(3870)).toBe('1:04:30')
     expect(clock(3201)).toBe('53:21')
     expect(signed(-0.384)).toBe('−0.38')
+  })
+
+  it('gives axes enough decimals to keep ticks distinct', () => {
+    expect(axisDecimals(0.04)).toBe(3)
+    expect(axisDecimals(0.4)).toBe(2)
+    expect(axisDecimals(4)).toBe(1)
+    expect(axisDecimals(400)).toBe(0)
+    expect(fixed(12.6612, 2)).toBe('12.66')
   })
 })
