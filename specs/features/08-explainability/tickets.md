@@ -50,15 +50,15 @@ Notes:
 
 ## T-005: Cross-checks: permutation importance, PDP/ICE, one LIME comparison
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: Independent checks on the SHAP story.
 Test seam: executing `notebooks/06_explainability.py`
 Context: requirements R7-R9; `grep -n '^# %%' notebooks/06_explainability.py`; `grep -n 'def inner_permutation_importance' -A10 keyframe/features.py`
 Acceptance:
-- [ ] Rank correlation between grouped permutation importance and grouped SHAP per fold, in `reports/results/06_crosscheck.csv`
-- [ ] PDP/ICE figures and the LIME comparison for 3 moments
-- [ ] Notebook executes and is committed (heavy parts cached; under 5 minutes)
+- [x] Rank correlation between grouped permutation importance and grouped SHAP per fold, in `reports/results/06_crosscheck.csv`
+- [x] PDP/ICE figures and the LIME comparison for 3 moments
+- [x] Notebook executes and is committed (heavy parts cached; under 5 minutes)
 Notes:
 
 ## T-006: Notebook 06 findings

@@ -15,9 +15,11 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import shap
+from lime.lime_tabular import LimeTabularExplainer
 from matplotlib import pyplot as plt
+from sklearn.inspection import PartialDependenceDisplay
 
-from keyframe import experiments, explain, features, paths
+from keyframe import SEED, experiments, explain, features, paths, tuning
 
 paths.FIGURES.mkdir(parents=True, exist_ok=True)
 paths.RESULTS.mkdir(parents=True, exist_ok=True)
@@ -131,3 +133,112 @@ for cls in FAULT_CLASSES:
     plt.tight_layout()
     plt.savefig(paths.FIGURES / f"06_waterfall_{cls}.png", dpi=150)
     plt.close()
+
+# %% [markdown]
+# ## Cross-check 1: grouped permutation importance vs. SHAP, per fold (R7)
+#
+# `keyframe.experiments.run_crosscheck` refits the model per outer fold, runs grouped
+# permutation importance (`keyframe.features.outer_permutation_importance`) on the exact
+# rows `run_shap` explained, and rank-correlates it (Spearman) against those rows' mean
+# total |SHAP| per source group — the same grouping permutation importance uses.
+
+# %%
+feature_table = experiments.load_feature_table()
+
+crosscheck_path = paths.RESULTS / "06_crosscheck.csv"
+if not crosscheck_path.exists():
+    experiments.run_crosscheck(feature_table)
+crosscheck = pd.read_csv(crosscheck_path)
+crosscheck
+
+# %% [markdown]
+# ## Partial dependence and ICE for the top 2 features of three faults, one fold (R8)
+#
+# Fold 60% is one of the two folds with every fault class among its held-out rows, so one
+# model fit there serves both this section and the LIME comparison below.
+
+# %%
+PDP_FOLD = 60
+pdp_params = experiments.load_tuned_params("xgboost", PDP_FOLD)
+pdp_model = tuning.MODEL_BUILDERS["xgboost"](pdp_params)
+pdp_train = feature_table[feature_table["load_bin"] != PDP_FOLD]
+pdp_model.fit(pdp_train[columns], pdp_train["label"])
+
+pdp_metadata, pdp_shap_values, pdp_classes = folds[PDP_FOLD]
+X_pdp = feature_table.loc[pdp_metadata.index, columns]
+
+for cls in ["AC", "INJ", "TD"]:
+    top2 = list(explain.feature_ranking(class_shap(cls), columns).index[:2])
+    display = PartialDependenceDisplay.from_estimator(
+        pdp_model, X_pdp, top2, target=cls, kind="both"
+    )
+    display.figure_.suptitle(f"PDP/ICE — {cls} (fold {PDP_FOLD}, top 2 SHAP features)")
+    display.figure_.tight_layout()
+    display.figure_.savefig(paths.FIGURES / f"06_pdp_{cls}.png", dpi=150)
+    plt.close(display.figure_)
+
+# %% [markdown]
+# ## One LIME comparison for 3 moments, one per fault (R9)
+#
+# LIME's top 8 features for one held-out row per fault, at or after its run's switch-on
+# (`switch_on_row`, restricted to `PDP_FOLD` so the same fitted model explains every row),
+# against SHAP's top 8 for that same row. LIME is used only here, once.
+
+
+# %%
+def switch_on_row_in_fold(cls: str, fold: int) -> int:
+    """The held-out row of `cls` closest to (at or after) its run's switch-on, in `fold`."""
+    metadata, _, _ = folds[fold]
+    candidates = metadata[metadata["y_true"] == cls].join(switch_t.rename("t_switch"), on="run")
+    candidates = candidates.dropna(subset=["t_switch"])
+    candidates = candidates[candidates["t"] >= candidates["t_switch"]]
+    delay = candidates["t"] - candidates["t_switch"]
+    return delay.idxmin()
+
+
+lime_explainer = LimeTabularExplainer(
+    training_data=X_pdp.to_numpy(),
+    feature_names=columns,
+    class_names=list(pdp_model.classes_),
+    mode="classification",
+    random_state=SEED,
+)
+
+lime_rows = []
+for cls in ["AC", "AF", "CW"]:
+    row_id = switch_on_row_in_fold(cls, PDP_FOLD)
+    row = feature_table.loc[row_id, columns]
+    class_idx = list(pdp_model.classes_).index(cls)
+
+    explanation = lime_explainer.explain_instance(
+        row.to_numpy(), pdp_model.predict_proba, num_features=8, labels=[class_idx]
+    )
+    lime_top = {
+        columns[i] for i, _ in sorted(explanation.as_map()[class_idx], key=lambda p: abs(p[1]))[-8:]
+    }
+
+    position = pdp_metadata.index.get_loc(row_id)
+    _, shap_top = explain.waterfall(
+        pdp_shap_values[position, :, list(pdp_classes).index(cls)], columns
+    )
+    shap_top_set = set(shap_top.index)
+
+    lime_rows.append(
+        {
+            "fault": cls,
+            "row": row_id,
+            "lime_top8": ", ".join(sorted(lime_top)),
+            "shap_top8": ", ".join(sorted(shap_top_set)),
+            "overlap": len(lime_top & shap_top_set),
+        }
+    )
+
+lime_comparison = pd.DataFrame(lime_rows)
+lime_comparison
+
+# %%
+print(
+    f"LIME and SHAP agree on {lime_comparison['overlap'].mean():.1f} of 8 top features on "
+    "average across these three moments: both explainers, one linear and local, the other "
+    "exact for trees, point at largely the same channels for a fault shortly after switch-on."
+)

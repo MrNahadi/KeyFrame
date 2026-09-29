@@ -375,6 +375,61 @@ def run_shap(
     return out_path
 
 
+def run_crosscheck(
+    df: pd.DataFrame,
+    *,
+    model: str = "xgboost",
+    force: bool = False,
+    tuning_dir: Path = paths.MODELS / "tuning",
+    shap_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Grouped permutation importance vs. the SHAP ranking, per outer fold (R7).
+
+    Each fold's SHAP output (`run_shap`) must already exist. Refits ``model`` on that
+    fold's training rows, then runs `features.outer_permutation_importance` on the exact
+    rows `run_shap` scored, and rank-correlates it (Spearman) against those rows'
+    mean total |SHAP| per source group.
+    """
+    out_path = results_dir / "06_crosscheck.csv"
+    if out_path.exists() and not force:
+        return out_path
+
+    columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+    groups = features.group_columns_by_source(columns)
+
+    rows = []
+    for fold in splits.LOAD_BINS:
+        npz = np.load(shap_dir / f"shap_fold{fold}.npz", allow_pickle=True)
+        selected = pd.Index(npz["row_index"])
+
+        params = load_tuned_params(model, fold, tuning_dir)
+        train_df = df[df["load_bin"] != fold]
+        fitted = cast(tuning._BalancedXGBClassifier, tuning.MODEL_BUILDERS[model](params))
+        fitted.fit(train_df[columns], train_df["label"])
+
+        X_test = df.loc[selected, columns]
+        y_test = df.loc[selected, "label"]
+        perm_importance = features.outer_permutation_importance(
+            fitted, X_test, y_test, columns, random_state=SEED
+        )
+
+        per_feature_shap = pd.Series(
+            np.abs(npz["shap_values"]).sum(axis=-1).mean(axis=0), index=columns
+        )
+        shap_importance = pd.Series(
+            {group: per_feature_shap[cols].sum() for group, cols in groups.items()}
+        )
+
+        common = perm_importance.index
+        rho = perm_importance.corr(shap_importance.reindex(common), method="spearman")
+        rows.append({"fold": fold, "n_groups": len(common), "spearman_r": rho})
+
+    table = pd.DataFrame(rows)
+    evaluate.log_results("06_crosscheck", table, results_dir=results_dir)
+    return out_path
+
+
 def run_alarm(
     df: pd.DataFrame,
     model: str,
@@ -698,6 +753,14 @@ def main(argv: list[str] | None = None) -> None:
     shap_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
     shap_parser.add_argument("--force", action="store_true")
 
+    crosscheck_parser = subparsers.add_parser(
+        "crosscheck", help="Permutation importance vs. SHAP ranking, per outer fold."
+    )
+    crosscheck_parser.add_argument(
+        "--model", default="xgboost", choices=sorted(tuning.MODEL_BUILDERS)
+    )
+    crosscheck_parser.add_argument("--force", action="store_true")
+
     anomaly_alarm_parser = subparsers.add_parser(
         "anomaly-alarm", help="Threshold one detector and score its detection delay."
     )
@@ -746,6 +809,8 @@ def main(argv: list[str] | None = None) -> None:
         )
     elif args.experiment == "shap":
         out_path = run_shap(table, args.fold, force=args.force)
+    elif args.experiment == "crosscheck":
+        out_path = run_crosscheck(table, model=args.model, force=args.force)
     else:
         out_path = run_anomaly_alarms(table, args.detector, inputs=args.inputs, force=args.force)
     print(out_path)

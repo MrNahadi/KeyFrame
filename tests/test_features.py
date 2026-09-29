@@ -463,6 +463,31 @@ def test_inner_permutation_importance_only_uses_inner_fold_rows():
     assert set(importance["fold"]) == {40, 60, 75}
 
 
+def test_outer_permutation_importance_groups_related_columns_and_ranks_the_signal_first():
+    from sklearn.tree import DecisionTreeClassifier
+
+    rng = np.random.default_rng(0)
+    n = 200
+    signal = rng.normal(size=n)
+    noise = rng.normal(size=n)
+    X = pd.DataFrame(
+        {
+            "Engine Speed": signal,
+            "Engine Speed_roll_mean_60": signal,  # same source group as Engine Speed
+            "Fuel Flow": noise,
+        }
+    )
+    y = pd.Series(np.where(signal > 0, "AC", "Normal"))
+    model = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+    importance = features.outer_permutation_importance(
+        model, X, y, list(X.columns), n_repeats=3, random_state=0
+    )
+
+    assert set(importance.index) == {"Engine Speed", "Fuel Flow"}
+    assert importance["Engine Speed"] > importance["Fuel Flow"]
+
+
 def test_stratified_subsample_keeps_class_shares_and_is_seeded():
     labels = pd.Series(["Normal"] * 800 + ["AC"] * 200)
     first = features._stratified_subsample(labels, 100, np.random.default_rng(0))
