@@ -2,13 +2,13 @@
 
 ## T-001: Waterfall data from a frame
 
-Status: open
+Status: done
 Blocked by:
 Slice: A frame's grouped SHAP becomes ordered waterfall steps from base value to output.
 Test seam: `web/src/replay/waterfall.ts`
 Context: requirements R1; `head -c 3000 web/public/replays/AC_Fouling_60_Load.json` (after `npm --prefix web run sync-replays`); `grep -n 'shap\|Shap' web/src/replay/types.ts`
 Acceptance:
-- [ ] Tests: steps sum from base to output; ordered by absolute size; signs; plain group names
+- [x] Tests: steps sum from base to output; ordered by absolute size; signs; plain group names
 Notes:
 
 ## T-002: Explain panel on pause
