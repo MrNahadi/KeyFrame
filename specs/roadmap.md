@@ -16,4 +16,4 @@ Each item is one feature, one branch (`feature/NN-slug`), one folder in `specs/f
 - [x] 12. **Web demo: replay** [M13, part 1]: framework chosen (ADR), app scaffold following the design manifesto, replay view with traces, probabilities, alarm and delay.
 - [x] 13. **Web demo: explain, what-if and model card** [M13, part 2]: grouped SHAP waterfall on pause, what-if sliders, model card page.
 - [x] 14. **Front-end overhaul** [owner request, 29 Sep 2026]: a full design pass over every screen using the frontend-design skill (`.claude/skills/frontend-design/`), `docs/design/manifesto.md` and `docs/design/saas-ui.md`: a design plan reviewed against both, then every screen rebuilt and critiqued with screenshots.
-- [ ] 15. **Write-up** [M14]: README with results, figures, dataset citation and reproduction steps; drafts of the LinkedIn post and the Marine AIMS README link for the owner to publish.
+- [x] 15. **Write-up** [M14]: README with results, figures, dataset citation and reproduction steps; drafts of the LinkedIn post and the Marine AIMS README link for the owner to publish.

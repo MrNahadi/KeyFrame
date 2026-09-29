@@ -8,11 +8,20 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Data: rebuilt with `uv run python -m keyframe.download`
-data/
+/data/
 
 # Front end
 web/node_modules/
 web/dist/
+
+# Paper build products (main.pdf is kept)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
 
 # Ralph loop runtime state
 .ralph/logs/
