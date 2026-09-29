@@ -361,25 +361,30 @@ def run_anomaly(
     detector: str,
     fold: int,
     *,
+    inputs: str = "raw",
     force: bool = False,
     output_dir: Path = paths.PROCESSED / "experiments",
     results_dir: Path = paths.RESULTS,
 ) -> Path:
     """Fit one healthy-only detector on the training loads' Normal rows and score the
-    held-out load, including its fault rows (R3-R5)."""
-    out_path = output_dir / f"anomaly_{detector}_fold{fold}.parquet"
+    held-out load, including its fault rows (R3-R5). ``inputs`` selects the arm
+    (``raw`` or ``residual``, R1b/ADR 0008); the residual view is fitted once on the
+    training fold before scoring either the thinned fit rows or the held-out fold."""
+    suffix = "" if inputs == "raw" else f"_{inputs}"
+    out_path = output_dir / f"anomaly_{detector}{suffix}_fold{fold}.parquet"
     if out_path.exists() and not force:
         return out_path
 
-    columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+    _, fit_view = anomaly.detector_inputs(df, inputs)
     train_df = df[df["load_bin"] != fold]
     healthy = train_df[train_df["label"] == "Normal"]
     thinned = healthy.groupby("run", group_keys=False).apply(lambda g: g.iloc[::2])
+    view = fit_view(train_df, train_df["label"])
 
-    model = DETECTOR_FACTORIES[detector]().fit(thinned[columns])
+    model = DETECTOR_FACTORIES[detector]().fit(view(thinned))
 
     test_index = df.index[df["load_bin"] == fold]
-    X_test = df.loc[test_index, columns]
+    X_test = view(df.loc[test_index])
     result = pd.DataFrame(
         {
             "run": df.loc[test_index, "run"],
@@ -399,7 +404,7 @@ def run_anomaly(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     result.to_parquet(out_path)
-    _log_anomaly_summary(detector, output_dir, results_dir)
+    _log_anomaly_summary(detector, inputs, output_dir, results_dir)
     return out_path
 
 
@@ -428,11 +433,15 @@ def _anomaly_slice(fold: object, labels: pd.Series, scores: pd.Series) -> dict[s
 
 
 def _log_anomaly_summary(
-    detector: str, output_dir: Path, results_dir: Path = paths.RESULTS
+    detector: str, inputs: str, output_dir: Path, results_dir: Path = paths.RESULTS
 ) -> None:
-    """Merge ``detector``'s AUROC summary into ``reports/results/05_anomaly.csv`` (R5),
-    once every held-out load's score file for it exists."""
-    parts = [output_dir / f"anomaly_{detector}_fold{fold}.parquet" for fold in splits.LOAD_BINS]
+    """Merge ``detector``'s AUROC summary for input arm ``inputs`` into
+    ``reports/results/05_anomaly.csv`` (R5), once every held-out load's score file for
+    that detector/arm pair exists."""
+    suffix = "" if inputs == "raw" else f"_{inputs}"
+    parts = [
+        output_dir / f"anomaly_{detector}{suffix}_fold{fold}.parquet" for fold in splits.LOAD_BINS
+    ]
     if not all(part.exists() for part in parts):
         return
 
@@ -444,12 +453,15 @@ def _log_anomaly_summary(
             _anomaly_slice(fold, predictions.loc[mask, "label"], predictions.loc[mask, "score"])
         )
     summary = pd.DataFrame(rows)
+    summary.insert(0, "inputs", inputs)
     summary.insert(0, "detector", detector)
 
     results_path = results_dir / "05_anomaly.csv"
     if results_path.exists():
         existing = pd.read_csv(results_path)
-        existing = existing[existing["detector"] != detector]
+        if "inputs" not in existing.columns:
+            existing["inputs"] = "raw"
+        existing = existing[~((existing["detector"] == detector) & (existing["inputs"] == inputs))]
         summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
     evaluate.log_results("05_anomaly", summary, results_dir=results_dir)
 
@@ -509,6 +521,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     anomaly_parser.add_argument("--detector", required=True, choices=sorted(DETECTOR_FACTORIES))
     anomaly_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    anomaly_parser.add_argument("--inputs", choices=["raw", "residual"], default="raw")
     anomaly_parser.add_argument("--force", action="store_true")
 
     args = parser.parse_args(argv)
@@ -545,7 +558,9 @@ def main(argv: list[str] | None = None) -> None:
     elif args.experiment == "alarm":
         out_path = run_alarm(table, args.model, force=args.force)
     else:
-        out_path = run_anomaly(table, args.detector, args.fold, force=args.force)
+        out_path = run_anomaly(
+            table, args.detector, args.fold, inputs=args.inputs, force=args.force
+        )
     print(out_path)
 
 

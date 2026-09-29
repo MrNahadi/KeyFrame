@@ -50,15 +50,15 @@ Notes:
 
 ## T-008: Residual input arm for the detectors
 
-Status: open
+Status: done
 Blocked by: T-004
 Slice: Every detector can run on load-normalised inputs; all 12 residual runs exist and the AUROC table covers both arms.
 Test seam: `keyframe.anomaly.detector_inputs(df, arm)`; `uv run python -m keyframe.experiments anomaly --detector <d> --fold <bin> --inputs residual`
 Context: requirements R1b, R4-R5; `docs/adr/0008-anomaly-detector-inputs.md`; `grep -n 'class HealthyEngineResiduals' -A12 keyframe/features.py`; `grep -n 'def run_anomaly' -A45 keyframe/experiments.py`
 Acceptance:
-- [ ] Test: the residual arm's columns contain no raw level, no rolling mean and none of the three residual inputs; the residual model is fitted on training-fold healthy rows only (spy)
-- [ ] 12 residual score files written (one foreground command each, under 9 minutes)
-- [ ] `reports/results/05_anomaly.csv` has an `inputs` column with rows for both arms
+- [x] Test: the residual arm's columns contain no raw level, no rolling mean and none of the three residual inputs; the residual model is fitted on training-fold healthy rows only (spy)
+- [x] 12 residual score files written (one foreground command each, under 9 minutes)
+- [x] `reports/results/05_anomaly.csv` has an `inputs` column with rows for both arms
 Notes:
 
 ## T-005: Thresholds, alarms and detection delay
@@ -85,4 +85,6 @@ Acceptance:
 - [ ] `05_roc.png`, `05_detection_delay.png`, `05_scores_switch_on.png`
 - [ ] Targets marked met / not met; comparison with notebook 04's classifier delays
 - [ ] Executes under 5 minutes; committed
+- [ ] Diagnostic section (selects nothing, changes no score): AUROC per detector and arm with "healthy" restricted to reference-file rows (steady running) versus with "healthy" restricted to pre-fault segments, plus score distributions by source (reference, pre-fault, faulty) per fold (`05_scores_by_source.png`)
 Notes:
+- Planner: both arms land near chance (pooled AUROC raw 0.50-0.56, residual 0.42-0.53) and several per-class AUROCs are below 0.5 (AF, CW), i.e. faulty rows look more normal than healthy ones. Hypothesis to test in the diagnostic: the healthy rows at the held-out load include pre-fault warm-up segments that are not at steady state (see `reports/figures/00_switch_on.png`), and the detectors correctly flag that non-steady running. Report the outcome either way; ADR 0008's pre-declared primary arm (residual) stays primary regardless of which scores better. State the brief's AUROC target (0.95) as not met if it is not met.

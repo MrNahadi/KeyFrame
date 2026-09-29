@@ -2,8 +2,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from keyframe import SEED
-from keyframe.anomaly import AutoencoderDetector, IsolationForestDetector, PCADetector
+from keyframe import SEED, features
+from keyframe.anomaly import (
+    AutoencoderDetector,
+    IsolationForestDetector,
+    PCADetector,
+    detector_inputs,
+)
 
 
 def _healthy_cloud(n: int = 200) -> pd.DataFrame:
@@ -101,3 +106,59 @@ def test_autoencoder_fit_is_reproducible_with_the_project_seed() -> None:
     second = AutoencoderDetector().fit(healthy).score(probe)
 
     np.testing.assert_array_equal(first, second)
+
+
+def _residual_arm_table() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "Engine Speed": [1000.0, 1010.0, 1020.0, 1005.0],
+            "Water Brake Weight": [50.0, 51.0, 52.0, 50.5],
+            "Fuel Flow": [5.0, 5.1, 5.2, 5.05],
+            "Oil Temp": [80.0, 81.0, 82.0, 95.0],
+            "phys_load": [0.5, 0.6, 0.7, 0.55],
+            "Oil Temp_roll_5_mean": [80.0, 80.5, 81.0, 90.0],
+            "Oil Temp_roll_5_std": [0.1, 0.2, 0.15, 1.2],
+            "Oil Temp_roll_5_slope": [0.01, 0.02, -0.01, 0.5],
+            "label": ["Normal", "Normal", "Normal", "AC"],
+        }
+    )
+
+
+def test_detector_inputs_residual_arm_excludes_raw_levels_and_rolling_means() -> None:
+    df = _residual_arm_table()
+
+    columns, fit_view = detector_inputs(df, "residual")
+
+    assert "resid_Oil Temp" in columns
+    assert "phys_load" in columns
+    assert "Oil Temp_roll_5_std" in columns
+    assert "Oil Temp_roll_5_slope" in columns
+    for raw_level in ("Oil Temp", "Engine Speed", "Water Brake Weight", "Fuel Flow"):
+        assert raw_level not in columns
+    assert "Oil Temp_roll_5_mean" not in columns
+
+    view = fit_view(df, df["label"])
+    projected = view(df)
+    assert set(projected.columns) == set(columns)
+
+
+def test_detector_inputs_residual_arm_fits_on_training_fold_healthy_rows_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    df = _residual_arm_table()
+    seen_healthy_index: list[pd.Index] = []
+    real_fit = features.HealthyEngineResiduals.fit
+
+    def spy_fit(self, X, y, extra_healthy=None):
+        y = pd.Series(np.asarray(y), index=X.index)
+        seen_healthy_index.append(X.index[y == "Normal"])
+        return real_fit(self, X, y, extra_healthy=extra_healthy)
+
+    monkeypatch.setattr(features.HealthyEngineResiduals, "fit", spy_fit, raising=True)
+
+    _, fit_view = detector_inputs(df, "residual")
+    fit_view(df, df["label"])
+
+    assert seen_healthy_index
+    assert set(df.loc[seen_healthy_index[0], "label"]) == {"Normal"}
+    assert len(seen_healthy_index[0]) == 3

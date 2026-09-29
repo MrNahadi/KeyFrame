@@ -4,6 +4,8 @@ higher-is-more-anomalous values for any input.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -12,7 +14,48 @@ from sklearn.impute import SimpleImputer
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
-from keyframe import SEED
+from keyframe import SEED, features
+
+RAW_FEATURE_SET = "raw+physics+rolling"
+
+
+def detector_inputs(
+    df: pd.DataFrame, arm: str
+) -> tuple[list[str], Callable[[pd.DataFrame, pd.Series], Callable[[pd.DataFrame], pd.DataFrame]]]:
+    """Column list for input ``arm`` (``"raw"`` or ``"residual"``, ADR 0008) and a function
+    that fits the arm's view on training rows and returns a projector for any frame.
+
+    ``raw`` selects ``FEATURE_SETS["raw+physics+rolling"]`` unchanged. ``residual`` fits
+    ``HealthyEngineResiduals`` on the training frame's healthy rows (it filters internally)
+    and keeps every ``resid_`` column, every ``phys_`` column and every rolling ``_std``/
+    ``_slope`` column; raw levels, rolling means and the residual inputs themselves never
+    appear.
+    """
+    if arm == "raw":
+        columns = features.FEATURE_SETS[RAW_FEATURE_SET].columns(df)
+
+        def fit_raw_view(train_df: pd.DataFrame, train_labels: pd.Series) -> Callable:
+            return lambda X: X[columns]
+
+        return columns, fit_raw_view
+
+    if arm == "residual":
+        targets = [c for c in features.sensor_channels(df) if c not in features.RESIDUAL_INPUTS]
+        phys_columns = [c for c in df.columns if c.startswith("phys_") and "_roll_" not in c]
+        rolling_columns = [
+            c for c in df.columns if "_roll_" in c and ("_std" in c or "_slope" in c)
+        ]
+        columns = [f"resid_{target}" for target in targets] + phys_columns + rolling_columns
+
+        def fit_residual_view(train_df: pd.DataFrame, train_labels: pd.Series) -> Callable:
+            residualiser = features.HealthyEngineResiduals(
+                inputs=features.RESIDUAL_INPUTS, targets=targets
+            ).fit(train_df, train_labels)
+            return lambda X: residualiser.transform(X)[columns]
+
+        return columns, fit_residual_view
+
+    raise ValueError(f"unknown detector input arm: {arm!r}")
 
 
 class IsolationForestDetector:
