@@ -1,0 +1,5 @@
+scope,load_bin,label,n_rows,share,timestamp,experiment,date,git_commit
+all,,INJ,6791,1.0,2026-09-29T02:21:29+00:00,07_lockbox,2026-09-29,4da84a8
+load_bin,40.0,INJ,2286,1.0,2026-09-29T02:21:29+00:00,07_lockbox,2026-09-29,4da84a8
+load_bin,60.0,INJ,2648,1.0,2026-09-29T02:21:29+00:00,07_lockbox,2026-09-29,4da84a8
+load_bin,75.0,INJ,1857,1.0,2026-09-29T02:21:29+00:00,07_lockbox,2026-09-29,4da84a8

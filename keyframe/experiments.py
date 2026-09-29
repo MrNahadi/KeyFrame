@@ -867,6 +867,14 @@ def run_runs(
     return evaluate.log_results("07_runs", table, results_dir=results_dir)
 
 
+def run_lockbox(results_dir: Path = paths.RESULTS) -> Path:
+    """The one lockbox evaluation (R6); a stored result is returned without refitting."""
+    from keyframe import lockbox
+
+    lockbox.evaluate_lockbox(force_first_run=True, results_dir=results_dir)
+    return results_dir / "07_lockbox.csv"
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="python -m keyframe.experiments")
     subparsers = parser.add_subparsers(dest="experiment", required=True)
@@ -922,6 +930,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     calibration_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
     calibration_parser.add_argument("--force", action="store_true")
+
+    subparsers.add_parser("lockbox", help="Score the lockbox run once (refuses to run twice).")
 
     runs_parser = subparsers.add_parser("runs", help="Per-run error table for XGBoost.")
     runs_parser.add_argument("--force", action="store_true")
@@ -994,6 +1004,8 @@ def main(argv: list[str] | None = None) -> None:
         )
     elif args.experiment == "calibration":
         out_path = run_calibration(table, args.fold, force=args.force)
+    elif args.experiment == "lockbox":
+        out_path = run_lockbox()
     elif args.experiment == "runs":
         out_path = run_runs(force=args.force)
     elif args.experiment == "sensitivity":

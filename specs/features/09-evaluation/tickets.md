@@ -49,14 +49,14 @@ Notes:
 
 ## T-004: The lockbox, once
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: The two-hole injector run is scored once by a model trained on all loads, and the result is stored and guarded.
 Test seam: `keyframe.lockbox.evaluate_lockbox`; `uv run python -m keyframe.experiments lockbox`
 Context: requirements R5-R6; `grep -n 'LOCKBOX' keyframe/*.py`; `grep -n 'def load_run\|def build_feature_table\|def load_tuned_params' keyframe/*.py`
 Acceptance:
-- [ ] Tests (without reading the real lockbox): the guard returns the stored result and does not refit when the CSV exists; no module besides `download.py` and `lockbox.py` references the lockbox path
-- [ ] Run once; `reports/results/07_lockbox.csv` committed in this ticket's commit
+- [x] Tests (without reading the real lockbox): the guard returns the stored result and does not refit when the CSV exists; no module besides `download.py` and `lockbox.py` references the lockbox path
+- [x] Run once; `reports/results/07_lockbox.csv` committed in this ticket's commit
 Notes:
 
 ## T-005: Notebook 07
