@@ -23,7 +23,18 @@ from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from keyframe import SEED, alarm, anomaly, audit, evaluate, features, paths, splits, tuning
+from keyframe import (
+    SEED,
+    alarm,
+    anomaly,
+    audit,
+    calibration,
+    evaluate,
+    features,
+    paths,
+    splits,
+    tuning,
+)
 
 MODELLING_FEATURE_SET = "raw+physics+rolling"
 
@@ -484,6 +495,146 @@ def run_alarm(
     return out_path
 
 
+ECE_RECALIBRATION_THRESHOLD = 0.05
+
+
+def _proba_columns(predictions: pd.DataFrame) -> tuple[list[str], list[str]]:
+    columns = [c for c in predictions.columns if c.startswith("proba_")]
+    return columns, [c.removeprefix("proba_") for c in columns]
+
+
+def run_calibration(
+    df: pd.DataFrame,
+    fold: int,
+    model: str = "xgboost",
+    *,
+    force: bool = False,
+    tuning_dir: Path = paths.MODELS / "tuning",
+    modelling_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+    inner_predict: Callable[..., pd.DataFrame] = evaluate.lolo_predict,
+    fit: Callable[..., Any] | None = None,
+) -> Path:
+    """ECE and macro F1 before/after recalibrating one outer fold (R3).
+
+    Recalibration happens only if the pooled ECE over every outer fold exceeds 0.05.
+    The calibrator is fitted on the outer training rows' inner-fold predictions
+    (``train_df`` excludes the fold), never on the fold's own rows.
+    """
+    out_path = results_dir / "07_calibration.csv"
+    if out_path.exists() and not force and fold in pd.read_csv(out_path)["fold"].unique():
+        return out_path
+
+    fit = fit or calibration.fit_calibrator
+    outer = pd.read_parquet(modelling_dir / f"modelling_{model}.parquet")
+    proba_columns, classes = _proba_columns(outer)
+    pooled_ece = calibration.expected_calibration_error(
+        outer["y_true"], outer[proba_columns].to_numpy(), classes
+    )
+    held_out = outer[outer["fold"] == fold]
+    proba = held_out[proba_columns].to_numpy()
+    ece_before = calibration.expected_calibration_error(held_out["y_true"], proba, classes)
+    f1_before = evaluate.macro_f1(held_out["y_true"], held_out["y_pred"])
+
+    row: dict[str, object] = {
+        "model": model,
+        "fold": fold,
+        "pooled_ece_before": pooled_ece,
+        "recalibrated": pooled_ece > ECE_RECALIBRATION_THRESHOLD,
+        "temperature": 1.0,
+        "ece_before": ece_before,
+        "ece_after": ece_before,
+        "macro_f1_before": f1_before,
+        "macro_f1_after": f1_before,
+    }
+    if row["recalibrated"]:
+        columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+        train_df = df[df["load_bin"] != fold]
+        params = load_tuned_params(model, fold, tuning_dir)
+        inner = inner_predict(lambda: tuning.MODEL_BUILDERS[model](params), train_df, columns)
+        inner_columns, inner_classes = _proba_columns(inner)
+        calibrator = fit(inner["y_true"], inner[inner_columns].to_numpy(), inner_classes)
+        recalibrated = calibrator.transform(proba)
+        after_pred = pd.Series(
+            np.asarray(classes)[recalibrated.argmax(axis=1)], index=held_out.index
+        )
+        row["temperature"] = calibrator.temperature
+        row["ece_after"] = calibration.expected_calibration_error(
+            held_out["y_true"], recalibrated, classes
+        )
+        row["macro_f1_after"] = evaluate.macro_f1(held_out["y_true"], after_pred)
+
+    summary = pd.DataFrame([row])
+    if out_path.exists():
+        existing = pd.read_csv(out_path)
+        existing = existing[existing["fold"] != fold]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results("07_calibration", summary.sort_values("fold"), results_dir=results_dir)
+    return out_path
+
+
+def run_sensitivity(
+    df: pd.DataFrame,
+    fold: int,
+    model: str = "xgboost",
+    *,
+    force: bool = False,
+    tuning_dir: Path = paths.MODELS / "tuning",
+    modelling_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Re-score ``model`` on one held-out load without day-dependent channels (R4b).
+
+    Same tuned params and training rows as the headline; only the columns differ. Writes
+    headline vs no-day-channel macro F1 and per-class recall to ``07_sensitivity.csv``.
+    """
+    out_path = results_dir / "07_sensitivity.csv"
+    if out_path.exists() and not force and fold in pd.read_csv(out_path)["fold"].unique():
+        return out_path
+
+    all_columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+    columns = features.without_day_channels(all_columns)
+    params = load_tuned_params(model, fold, tuning_dir)
+    reduced = evaluate.lolo_predict(
+        lambda: tuning.MODEL_BUILDERS[model](params), df, columns, only_folds=[fold]
+    )
+    headline = pd.read_parquet(modelling_dir / f"modelling_{model}.parquet")
+    headline = headline[headline["fold"] == fold]
+    reduced = reduced[reduced["fold"] == fold]
+
+    recall_head = evaluate.per_class_recall(headline["y_true"], headline["y_pred"])
+    recall_red = evaluate.per_class_recall(reduced["y_true"], reduced["y_pred"])
+    scores = {
+        "macro_f1": (
+            evaluate.macro_f1(headline["y_true"], headline["y_pred"]),
+            evaluate.macro_f1(reduced["y_true"], reduced["y_pred"]),
+        ),
+        **{
+            f"recall_{cls}": (recall_head[cls], recall_red.get(cls, float("nan")))
+            for cls in recall_head.index
+        },
+    }
+    summary = pd.DataFrame(
+        {
+            "model": model,
+            "fold": fold,
+            "metric": metric,
+            "headline": head,
+            "no_day_channels": red,
+            "n_features_dropped": len(all_columns) - len(columns),
+        }
+        for metric, (head, red) in scores.items()
+    )
+    if out_path.exists():
+        existing = pd.read_csv(out_path)
+        existing = existing[existing["fold"] != fold]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results(
+        "07_sensitivity", summary.sort_values("fold", kind="stable"), results_dir=results_dir
+    )
+    return out_path
+
+
 def _log_alarm_summary(model: str, summary: pd.DataFrame, out_path: Path) -> None:
     """Merge ``model``'s per-run alarm rows into ``reports/results/04_alarms.csv`` (R10).
 
@@ -697,6 +848,33 @@ def load_modelling(
     return pd.read_parquet(out_path) if out_path.exists() else None
 
 
+def run_runs(
+    model: str = "xgboost",
+    *,
+    force: bool = False,
+    modelling_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Per-run error table for ``model`` (R4), from its saved LOLO predictions."""
+    out_path = results_dir / "07_runs.csv"
+    if out_path.exists() and not force:
+        return out_path
+    predictions = pd.read_parquet(modelling_dir / f"modelling_{model}.parquet")
+    predictions["t"] = pd.read_parquet(paths.PROCESSED / "clean.parquet", columns=["t"])["t"]
+    switch_on = pd.read_csv(results_dir / "00_switch_on_points.csv")
+    alarms = pd.read_csv(results_dir / "04_alarms.csv")
+    table = evaluate.per_run_errors(predictions, switch_on, alarms[alarms["model"] == model])
+    return evaluate.log_results("07_runs", table, results_dir=results_dir)
+
+
+def run_lockbox(results_dir: Path = paths.RESULTS) -> Path:
+    """The one lockbox evaluation (R6); a stored result is returned without refitting."""
+    from keyframe import lockbox
+
+    lockbox.evaluate_lockbox(force_first_run=True, results_dir=results_dir)
+    return results_dir / "07_lockbox.csv"
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="python -m keyframe.experiments")
     subparsers = parser.add_subparsers(dest="experiment", required=True)
@@ -746,6 +924,23 @@ def main(argv: list[str] | None = None) -> None:
     anomaly_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
     anomaly_parser.add_argument("--inputs", choices=["raw", "residual"], default="raw")
     anomaly_parser.add_argument("--force", action="store_true")
+
+    calibration_parser = subparsers.add_parser(
+        "calibration", help="ECE and macro F1 before/after recalibrating one outer fold."
+    )
+    calibration_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    calibration_parser.add_argument("--force", action="store_true")
+
+    subparsers.add_parser("lockbox", help="Score the lockbox run once (refuses to run twice).")
+
+    runs_parser = subparsers.add_parser("runs", help="Per-run error table for XGBoost.")
+    runs_parser.add_argument("--force", action="store_true")
+
+    sensitivity_parser = subparsers.add_parser(
+        "sensitivity", help="Best model on one held-out load without day-dependent channels."
+    )
+    sensitivity_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    sensitivity_parser.add_argument("--force", action="store_true")
 
     shap_parser = subparsers.add_parser(
         "shap", help="SHAP TreeExplainer values for the best model on one held-out load."
@@ -807,6 +1002,14 @@ def main(argv: list[str] | None = None) -> None:
         out_path = run_anomaly(
             table, args.detector, args.fold, inputs=args.inputs, force=args.force
         )
+    elif args.experiment == "calibration":
+        out_path = run_calibration(table, args.fold, force=args.force)
+    elif args.experiment == "lockbox":
+        out_path = run_lockbox()
+    elif args.experiment == "runs":
+        out_path = run_runs(force=args.force)
+    elif args.experiment == "sensitivity":
+        out_path = run_sensitivity(table, args.fold, force=args.force)
     elif args.experiment == "shap":
         out_path = run_shap(table, args.fold, force=args.force)
     elif args.experiment == "crosscheck":

@@ -168,3 +168,43 @@ def log_results(name: str, table: pd.DataFrame, results_dir: Path = paths.RESULT
     out_path = results_dir / f"{name}.csv"
     out.to_csv(out_path, index=False)
     return out_path
+
+
+def per_run_errors(
+    predictions: pd.DataFrame,
+    switch_on: pd.DataFrame,
+    alarms: pd.DataFrame,
+    window_s: float = 600.0,
+) -> pd.DataFrame:
+    """One row per run: how often the model is right, how it is wrong, and when.
+
+    ``predictions`` has ``run``, ``t``, ``y_true``, ``y_pred``; ``switch_on`` has ``run``,
+    ``t`` (NaN when a run has no switch-on); ``alarms`` has ``run``, ``delay_s``, ``class``
+    for the chosen alarm rule. Recall is the share of truly faulty rows predicted correctly,
+    inside the first ``window_s`` seconds from switch-on versus after that (NaN if none).
+    """
+    switch_t = switch_on.set_index("run")["t"]
+    alarm_by_run = alarms.set_index("run")
+    rows = []
+    for run, group in predictions.groupby("run", sort=True):
+        correct = group["y_true"] == group["y_pred"]
+        wrong = group.loc[~correct, "y_pred"]
+        top = wrong.value_counts()
+        faulty = group["y_true"] != "Normal"
+        since = group["t"] - switch_t.get(run, float("nan"))
+        early = faulty & (since >= 0) & (since < window_s)
+        late = faulty & (since >= window_s)
+        rows.append(
+            {
+                "run": run,
+                "rows": len(group),
+                "share_correct": float(correct.mean()),
+                "top_wrong_label": top.index[0] if len(top) else None,
+                "top_wrong_share": float(top.iloc[0] / len(wrong)) if len(top) else np.nan,
+                "recall_first_10_min": float(correct[early].mean()) if early.any() else np.nan,
+                "recall_after": float(correct[late].mean()) if late.any() else np.nan,
+                "alarm_delay_s": alarm_by_run["delay_s"].get(run, np.nan),
+                "alarm_class": alarm_by_run["class"].get(run, None),
+            }
+        )
+    return pd.DataFrame(rows)

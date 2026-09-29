@@ -127,7 +127,7 @@ def load_all(raw_dir: str | Path = paths.RAW) -> pd.DataFrame:
     """Concatenate every run listed in ``dataset_index.csv`` that is present under ``raw_dir``.
 
     The lockbox run (``download.LOCKBOX_FILE``) stays listed in the index but lives
-    under ``data/lockbox``, not ``data/raw``, so it is skipped here.
+    in the lockbox folder, not ``data/raw``, so it is skipped here.
     """
     raw_dir = Path(raw_dir)
     dataset_index = pd.read_csv(raw_dir / "dataset_index.csv")
