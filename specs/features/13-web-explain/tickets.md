@@ -37,13 +37,13 @@ Notes:
 
 ## T-004: What-if API client
 
-Status: open
+Status: done
 Blocked by:
 Slice: A typed client for baselines and explain that turns every failure into a typed result.
 Test seam: `web/src/whatif/api.ts`
 Context: requirements R4; `grep -n 'class PredictRequest' -A30 api/main.py`; `grep -n '@app.post("/explain")' -A40 api/main.py`; `grep -n '@app.get("/whatif/baselines")' -A12 api/main.py`; `head -c 1500 models/whatif_baselines.json`
 Acceptance:
-- [ ] Tests with a mocked `fetch`: success shapes, unreachable, 422 message, unexpected shape
+- [x] Tests with a mocked `fetch`: success shapes, unreachable, 422 message, unexpected shape
 Notes:
 
 ## T-005: What-if screen
