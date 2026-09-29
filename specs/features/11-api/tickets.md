@@ -25,13 +25,13 @@ Notes:
 
 ## T-003: Explain
 
-Status: open
+Status: done
 Blocked by: T-002
 Slice: The same input returns grouped SHAP, top features and base value.
 Test seam: `POST /explain`
 Context: requirements R6; `grep -n 'def explain' -A30 keyframe/predict.py`
 Acceptance:
-- [ ] Additivity test within 1e-4; five groups; top 8 features with source channel and group
+- [x] Additivity test within 1e-4; five groups; top 8 features with source channel and group
 Notes:
 
 ## T-004: What-if baselines and steady-state mode

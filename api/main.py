@@ -35,6 +35,32 @@ def _cors_origins() -> list[str]:
     return [DEV_ORIGIN, *(o.strip() for o in extra.split(",") if o.strip())]
 
 
+def _prepare(body: PredictRequest) -> tuple[pd.DataFrame, list[str]]:
+    """Validate a window; return it ordered by time, plus warnings for the caller."""
+    frame = pd.DataFrame(body.rows)
+    required = list(explain.SENSOR_GROUPS)
+    missing = [c for c in required if c not in frame.columns]
+    if missing:
+        raise HTTPException(
+            status_code=422, detail=f"Missing required channels: {', '.join(missing)}"
+        )
+    if "t" not in frame.columns:
+        raise HTTPException(status_code=422, detail="Each row needs a time `t` in seconds.")
+    warns = [
+        f"Ignored unknown channel '{c}'."
+        for c in frame.columns
+        if c not in explain.SENSOR_GROUPS and c not in EXCLUDED_COLUMNS
+    ]
+    frame = frame[[*required, "t"]].astype(float).sort_values("t").reset_index(drop=True)
+    span = float(frame["t"].iloc[-1] - frame["t"].iloc[0])
+    if span < WINDOW_S:
+        warns.append(
+            f"Window covers {span / 60:.1f} min, shorter than 15 min: "
+            "long-window features are still warming up."
+        )
+    return frame, warns
+
+
 def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
     """Build the app; the model and replay index load once at startup from `models_dir`."""
     state: dict[str, Any] = {"model": None, "version": None, "index": []}
@@ -87,27 +113,7 @@ def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
         model: KeyframeModel | None = state["model"]
         if model is None:
             raise HTTPException(status_code=503, detail="Model files missing.")
-        frame = pd.DataFrame(body.rows)
-        required = list(explain.SENSOR_GROUPS)
-        missing = [c for c in required if c not in frame.columns]
-        if missing:
-            raise HTTPException(
-                status_code=422, detail=f"Missing required channels: {', '.join(missing)}"
-            )
-        if "t" not in frame.columns:
-            raise HTTPException(status_code=422, detail="Each row needs a time `t` in seconds.")
-        warns = [
-            f"Ignored unknown channel '{c}'."
-            for c in frame.columns
-            if c not in explain.SENSOR_GROUPS and c not in EXCLUDED_COLUMNS
-        ]
-        frame = frame[[*required, "t"]].astype(float).sort_values("t").reset_index(drop=True)
-        span = float(frame["t"].iloc[-1] - frame["t"].iloc[0])
-        if span < WINDOW_S:
-            warns.append(
-                f"Window covers {span / 60:.1f} min, shorter than 15 min: "
-                "long-window features are still warming up."
-            )
+        frame, warns = _prepare(body)
         proba = model.predict_proba(frame)
         preds = proba.add_prefix("proba_").assign(
             run="run", t=frame["t"], y_pred=proba.idxmax(axis=1)
@@ -124,6 +130,18 @@ def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
             "alarm_settings": model.alarm,
             "warnings": warns,
         }
+
+    @app.post("/explain")
+    def explain_window(body: PredictRequest) -> dict[str, Any]:
+        model: KeyframeModel | None = state["model"]
+        if model is None:
+            raise HTTPException(status_code=503, detail="Model files missing.")
+        frame, warns = _prepare(body)
+        result = model.explain(frame, len(frame) - 1)
+        for item in result["top_features"]:
+            item["source_channels"] = list(explain.source_channel(item["feature"]))
+            item["group"] = explain.group_of(item["feature"])
+        return {"mode": "window", **result, "warnings": warns}
 
     return app
 
