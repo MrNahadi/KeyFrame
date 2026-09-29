@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { axisDecimals, clock, delay, fixed, length, number, reading, signed } from './format'
+import { axisDecimals, clock, delay, fixed, length, number, precise, reading, signed } from './format'
 
 describe('format', () => {
   it('writes readings at a sensible precision with proper units', () => {
@@ -26,5 +26,11 @@ describe('format', () => {
     expect(axisDecimals(4)).toBe(1)
     expect(axisDecimals(400)).toBe(0)
     expect(fixed(12.6612, 2)).toBe('12.66')
+  })
+
+  it('shows narrow-range control values with enough decimals', () => {
+    expect(precise(12.7498, 0.05, 'm3/h')).toBe('12.750 m³/h')
+    expect(precise(37.04, 9.5, 'degC')).toBe('37.0 °C')
+    expect(precise(0.2113, 0.15)).toBe('0.211')
   })
 })

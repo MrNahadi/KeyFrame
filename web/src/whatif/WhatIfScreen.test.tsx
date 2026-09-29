@@ -34,6 +34,9 @@ const explanation = (predicted: string): api.Explanation => ({
   warnings: ['Check the sensor range.'],
 })
 
+/** The verdict line, whose name and percentage sit in separate elements. */
+const verdict = (text: string) => (_: string, el: Element | null) => el?.tagName === 'P' && el.textContent === text
+
 const slider = () => screen.getByRole('slider') as HTMLInputElement
 
 beforeEach(() => {
@@ -72,10 +75,35 @@ describe('WhatIfScreen', () => {
     render(<WhatIfScreen />)
     await waitFor(() => expect(api.explainWindow).toHaveBeenCalledTimes(1))
     fireEvent.change(slider(), { target: { value: '312' } })
-    await screen.findByText(/^The model reads this as air cooler fouling/)
+    await screen.findByText(verdict('Air cooler fouling 30%'))
     releaseFirst({ ok: true, value: explanation('Normal') })
     await new Promise((r) => setTimeout(r, 20))
-    expect(screen.getByText(/^The model reads this as air cooler fouling/)).toBeTruthy()
+    expect(screen.getByText(verdict('Air cooler fouling 30%'))).toBeTruthy()
+  })
+
+  it('shows each reading with its unit and how far it has moved from healthy', async () => {
+    const withUnits: api.Baselines = {
+      load_bins: [40],
+      loads: {
+        '40': {
+          reading: { 'Fuel Flow': 28 },
+          sliders: { 'Fuel Flow': { label: 'Fuel flow', min: 20, max: 60 } },
+        },
+      },
+    }
+    vi.mocked(api.fetchBaselines).mockResolvedValue({ ok: true, value: withUnits })
+    render(<WhatIfScreen />)
+    await waitFor(() => expect(slider().value).toBe('28'))
+    await screen.findByText(verdict('Normal running 70%'))
+    expect(screen.getByRole('group', { name: 'Fuel system' })).toBeTruthy()
+    expect(slider().getAttribute('aria-valuetext')).toBe('28.0 m³/h')
+    expect(screen.getByText('Healthy 28.0')).toBeTruthy()
+    const reset = screen.getByRole('button', { name: 'Reset to healthy baseline' }) as HTMLButtonElement
+    expect(reset.disabled).toBe(true)
+    fireEvent.change(slider(), { target: { value: '31' } })
+    expect(await screen.findByText('+3.00 m³/h from healthy')).toBeTruthy()
+    fireEvent.click(reset)
+    await waitFor(() => expect(slider().value).toBe('28'))
   })
 
   it('shows the API warnings', async () => {

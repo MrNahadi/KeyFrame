@@ -83,6 +83,7 @@ const SENSOR_GROUP: Record<string, string> = {
 const SENSOR_LABELS: Record<string, string> = {
   exhaust_temp_spread: 'Exhaust temperature spread, cylinders 1 to 3',
   fresh_cooling_water_pressure: 'Fresh cooling water pressure (sensor voltage)',
+  'Fresh Cooling Water Press.': 'Fresh cooling water pressure (sensor voltage)',
 }
 
 export function sensorLabel(key: string, fallback: string): string {
@@ -93,6 +94,24 @@ export function sensorLabel(key: string, fallback: string): string {
 export function groupOrder(key: string): number {
   const i = GROUPS.findIndex((g) => g.key === key.toLowerCase())
   return i === -1 ? GROUPS.length : i
+}
+
+/** Units of the what-if channels, as the replay files state them for the same sensors. */
+const CHANNEL_UNITS: Record<string, string> = {
+  'Charge Air Press.': 'kgf/cm2',
+  'Charge Air IC Air Temp. Out': 'degC',
+  'Exh.Gas Temp. Turbine In': 'degC',
+  'Exh.Gas Temp. Turbine Out': 'degC',
+  'No.1 Exh.Gas Temp.': 'degC',
+  'No.2 Exh.Gas Temp.': 'degC',
+  'No.3 Exh.Gas Temp.': 'degC',
+  'Fresh Cooling Water Press.': 'V',
+  'Engine Cooling water flow': 'm3/h',
+  'Fuel Flow': 'm3/h',
+}
+
+export function channelUnit(channel: string): string {
+  return CHANNEL_UNITS[channel] ?? ''
 }
 
 export function sensorGroup(sensor: string): SensorGroup {

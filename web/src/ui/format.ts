@@ -11,11 +11,12 @@ export function unit(raw: string): string {
   return UNITS[raw] ?? raw
 }
 
+const sigDecimals = (abs: number) => (abs >= 100 ? 0 : abs >= 10 ? 1 : abs >= 1 ? 2 : 3)
+
 /** Three significant figures, never more than three decimals, no trailing float noise. */
 export function number(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '–'
-  const abs = Math.abs(value)
-  const decimals = abs >= 100 ? 0 : abs >= 10 ? 1 : abs >= 1 ? 2 : 3
+  const decimals = sigDecimals(Math.abs(value))
   return value.toLocaleString('en-GB', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -72,4 +73,11 @@ export function axisDecimals(range: number): number {
 
 export function fixed(value: number, decimals: number): string {
   return value.toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}
+
+/** A value on a control whose whole range is `range` wide: enough decimals to tell its steps apart. */
+export function precise(value: number, range: number, rawUnit = ''): string {
+  const text = fixed(value, Math.max(sigDecimals(Math.abs(value)), axisDecimals(range)))
+  const u = unit(rawUnit)
+  return u ? `${text} ${u}` : text
 }
