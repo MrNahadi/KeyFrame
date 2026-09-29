@@ -14,14 +14,14 @@ Notes:
 
 ## T-002: SHAP experiment per fold
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: SHAP values for the best model on each fold's held-out rows, cached per fold.
 Test seam: `uv run python -m keyframe.experiments shap --fold <bin>`
 Context: requirements R3; `ls docs/adr/ | tail -3` then the best-model ADR; `grep -n 'def run_modelling\|def run_tuning\|add_parser' keyframe/experiments.py`; `head -3 reports/results/04_best_model.csv`
 Acceptance:
-- [ ] Unit test on a tiny synthetic table: SHAP values plus base value reproduce the model's raw output for a sampled row (additivity)
-- [ ] Four fold outputs written, one foreground command each, under 9 minutes
+- [x] Unit test on a tiny synthetic table: SHAP values plus base value reproduce the model's raw output for a sampled row (additivity)
+- [x] Four fold outputs written, one foreground command each, under 9 minutes
 Notes:
 
 ## T-003: Grouped and per-class SHAP views

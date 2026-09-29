@@ -297,3 +297,36 @@ def test_run_anomaly_alarms_thresholds_from_training_healthy_rows_only(
     assert {"detector", "fold", "threshold", "min_duration_s", "false_alarm_rate"} <= set(
         result.columns
     )
+
+
+def test_run_shap_values_plus_base_reproduce_raw_output(tmp_path) -> None:
+    df = _synthetic_table()
+    tuning_dir = tmp_path / "tuning"
+    output_dir = tmp_path / "experiments"
+    fold = 85
+
+    experiments.run_tuning(df, "xgboost", fold, n_trials=2, output_dir=tuning_dir)
+    out_path = experiments.run_shap(df, fold, tuning_dir=tuning_dir, output_dir=output_dir)
+
+    assert out_path.exists()
+    metadata = pd.read_parquet(out_path)
+    npz = np.load(output_dir / f"shap_fold{fold}.npz", allow_pickle=True)
+    shap_values = npz["shap_values"]
+    base_values = npz["base_values"]
+    classes = npz["classes"]
+    row_index = npz["row_index"]
+
+    assert sorted(row_index) == sorted(metadata.index)
+    assert set(classes) >= {"Normal", "AC"}
+
+    columns = experiments.features.FEATURE_SETS[experiments.MODELLING_FEATURE_SET].columns(df)
+    params = experiments.load_tuned_params("xgboost", fold, tuning_dir)
+    train_df = df[df["load_bin"] != fold]
+    fitted = experiments.tuning.MODEL_BUILDERS["xgboost"](params)
+    fitted.fit(train_df[columns], train_df["label"])
+
+    X = df.loc[row_index, columns]
+    raw_margin = fitted.model_.predict(X, output_margin=True)
+    reconstructed = shap_values.sum(axis=1) + base_values
+
+    np.testing.assert_allclose(reconstructed, raw_margin, atol=1e-4)

@@ -11,11 +11,12 @@ import argparse
 import json
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+import shap
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
@@ -288,6 +289,90 @@ def _log_modelling_summary(
         existing = existing[existing["model"] != model]
         summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
     evaluate.log_results("04_models", summary, results_dir=results_dir)
+
+
+def _stratified_sample(labels: pd.Series, n: int, seed: int) -> pd.Index:
+    """Up to ``n`` of ``labels``' index, sampled proportionally per class."""
+    if len(labels) <= n:
+        return labels.index
+    rng = np.random.default_rng(seed)
+    frac = n / len(labels)
+    parts = []
+    for _, group in labels.groupby(labels):
+        take = min(len(group), max(1, round(len(group) * frac)))
+        parts.append(rng.choice(group.index.to_numpy(), size=take, replace=False))
+    return pd.Index(np.concatenate(parts)).unique()
+
+
+def _switch_on_window_rows(df: pd.DataFrame, test_index: pd.Index, window_s: float) -> pd.Index:
+    """``test_index`` rows within ``window_s`` seconds of their run's switch-on time,
+    where switch-on is the first non-``Normal`` row of the run anywhere in ``df``."""
+    switch_t = df.loc[df["label"] != "Normal"].groupby("run")["t"].min()
+    test_df = df.loc[test_index, ["run", "t"]].join(switch_t.rename("t_switch"), on="run")
+    test_df = test_df.dropna(subset=["t_switch"])
+    within = test_df[(test_df["t"] - test_df["t_switch"]).abs() <= window_s]
+    return within.index
+
+
+def run_shap(
+    df: pd.DataFrame,
+    fold: int,
+    *,
+    model: str = "xgboost",
+    sample_size: int = 3000,
+    window_s: float = 600.0,
+    force: bool = False,
+    tuning_dir: Path = paths.MODELS / "tuning",
+    output_dir: Path = paths.PROCESSED / "experiments",
+) -> Path:
+    """SHAP TreeExplainer values for ``model`` refit on ``fold``'s training rows (R3).
+
+    Scores a seeded, label-stratified sample of up to ``sample_size`` held-out rows,
+    plus every held-out row within ``window_s`` seconds of a switch-on in that fold.
+    Writes row metadata to ``shap_fold<fold>.parquet`` and the SHAP arrays (values,
+    base values, classes, row index) to ``shap_fold<fold>.npz`` alongside it.
+    """
+    out_path = output_dir / f"shap_fold{fold}.parquet"
+    npz_path = output_dir / f"shap_fold{fold}.npz"
+    if out_path.exists() and npz_path.exists() and not force:
+        return out_path
+
+    columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+    params = load_tuned_params(model, fold, tuning_dir)
+    train_df = df[df["load_bin"] != fold]
+    test_index = df.index[df["load_bin"] == fold]
+
+    fitted = cast(tuning._BalancedXGBClassifier, tuning.MODEL_BUILDERS[model](params))
+    fitted.fit(train_df[columns], train_df["label"])
+
+    sampled = _stratified_sample(df.loc[test_index, "label"], sample_size, SEED)
+    switch_on = _switch_on_window_rows(df, test_index, window_s)
+    selected = sampled.union(switch_on)
+
+    X = df.loc[selected, columns]
+    explanation = shap.TreeExplainer(fitted.model_)(X)
+
+    metadata = pd.DataFrame(
+        {
+            "run": df.loc[selected, "run"],
+            "load_bin": df.loc[selected, "load_bin"],
+            "t": df.loc[selected, "t"],
+            "y_true": df.loc[selected, "label"],
+            "y_pred": fitted.predict(X),
+        },
+        index=selected,
+    )
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    np.savez(
+        npz_path,
+        shap_values=explanation.values,
+        base_values=explanation.base_values,
+        classes=np.asarray(fitted.classes_),
+        row_index=selected.to_numpy(),
+    )
+    metadata.to_parquet(out_path)
+    return out_path
 
 
 def run_alarm(
@@ -607,6 +692,12 @@ def main(argv: list[str] | None = None) -> None:
     anomaly_parser.add_argument("--inputs", choices=["raw", "residual"], default="raw")
     anomaly_parser.add_argument("--force", action="store_true")
 
+    shap_parser = subparsers.add_parser(
+        "shap", help="SHAP TreeExplainer values for the best model on one held-out load."
+    )
+    shap_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    shap_parser.add_argument("--force", action="store_true")
+
     anomaly_alarm_parser = subparsers.add_parser(
         "anomaly-alarm", help="Threshold one detector and score its detection delay."
     )
@@ -653,6 +744,8 @@ def main(argv: list[str] | None = None) -> None:
         out_path = run_anomaly(
             table, args.detector, args.fold, inputs=args.inputs, force=args.force
         )
+    elif args.experiment == "shap":
+        out_path = run_shap(table, args.fold, force=args.force)
     else:
         out_path = run_anomaly_alarms(table, args.detector, inputs=args.inputs, force=args.force)
     print(out_path)
