@@ -786,6 +786,25 @@ def load_modelling(
     return pd.read_parquet(out_path) if out_path.exists() else None
 
 
+def run_runs(
+    model: str = "xgboost",
+    *,
+    force: bool = False,
+    modelling_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Per-run error table for ``model`` (R4), from its saved LOLO predictions."""
+    out_path = results_dir / "07_runs.csv"
+    if out_path.exists() and not force:
+        return out_path
+    predictions = pd.read_parquet(modelling_dir / f"modelling_{model}.parquet")
+    predictions["t"] = pd.read_parquet(paths.PROCESSED / "clean.parquet", columns=["t"])["t"]
+    switch_on = pd.read_csv(results_dir / "00_switch_on_points.csv")
+    alarms = pd.read_csv(results_dir / "04_alarms.csv")
+    table = evaluate.per_run_errors(predictions, switch_on, alarms[alarms["model"] == model])
+    return evaluate.log_results("07_runs", table, results_dir=results_dir)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="python -m keyframe.experiments")
     subparsers = parser.add_subparsers(dest="experiment", required=True)
@@ -841,6 +860,9 @@ def main(argv: list[str] | None = None) -> None:
     )
     calibration_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
     calibration_parser.add_argument("--force", action="store_true")
+
+    runs_parser = subparsers.add_parser("runs", help="Per-run error table for XGBoost.")
+    runs_parser.add_argument("--force", action="store_true")
 
     shap_parser = subparsers.add_parser(
         "shap", help="SHAP TreeExplainer values for the best model on one held-out load."
@@ -904,6 +926,8 @@ def main(argv: list[str] | None = None) -> None:
         )
     elif args.experiment == "calibration":
         out_path = run_calibration(table, args.fold, force=args.force)
+    elif args.experiment == "runs":
+        out_path = run_runs(force=args.force)
     elif args.experiment == "shap":
         out_path = run_shap(table, args.fold, force=args.force)
     elif args.experiment == "crosscheck":

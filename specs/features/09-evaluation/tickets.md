@@ -25,14 +25,14 @@ Notes:
 
 ## T-003: Run-by-run error analysis
 
-Status: open
+Status: done
 Blocked by:
 Slice: A per-run table showing where the model goes wrong and when.
 Test seam: `keyframe.evaluate.per_run_errors`
 Context: requirements R4; `head -3 reports/results/04_alarms.csv reports/results/00_switch_on_points.csv`
 Acceptance:
-- [ ] Test on a synthetic prediction table with a known per-run answer
-- [ ] `reports/results/07_runs.csv` written for XGBoost
+- [x] Test on a synthetic prediction table with a known per-run answer
+- [x] `reports/results/07_runs.csv` written for XGBoost
 Notes:
 
 ## T-007: Shortcut sensitivity without day-dependent channels
