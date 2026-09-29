@@ -3,7 +3,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { hrefFor } from '../app/routes'
 import { EmptyState } from '../ui/EmptyState'
 import { Icon } from '../ui/Icon'
-import { loadRun } from './data'
+import { loadIndex, loadRun } from './data'
 import {
   createPlayback,
   jumpToSwitchOn,
@@ -21,9 +21,9 @@ import {
 } from './playback'
 import { Probabilities } from './Probabilities'
 import styles from './ReplayScreen.module.css'
-import { duration } from './status'
+import { duration, lowConfidenceNote } from './status'
 import { Traces } from './Traces'
-import type { Replay } from './types'
+import type { Replay, RunSummary } from './types'
 
 type Action =
   | { type: 'reset'; state: PlaybackState }
@@ -75,20 +75,28 @@ const KEYS: Record<string, Action> = {
 interface ReplayScreenProps {
   runId: string
   load?: (id: string) => Promise<Replay>
+  loadTitles?: () => Promise<RunSummary[]>
 }
 
-type Load = { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'ready'; replay: Replay }
+type Load =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; replay: Replay; title: string }
 
-export function ReplayScreen({ runId, load = loadRun }: ReplayScreenProps) {
+export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: ReplayScreenProps) {
   const [state, setState] = useState<Load>({ kind: 'loading' })
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     let live = true
     setState({ kind: 'loading' })
-    load(runId).then(
-      (replay) => {
-        if (live) setState({ kind: 'ready', replay })
+    const title = loadTitles().then(
+      (runs) => runs.find((r) => r.id === runId)?.title,
+      () => undefined,
+    )
+    Promise.all([load(runId), title]).then(
+      ([replay, name]) => {
+        if (live) setState({ kind: 'ready', replay, title: name ?? replay.run })
       },
       (e: unknown) => {
         if (live) setState({ kind: 'error', message: e instanceof Error ? e.message : 'Unknown error' })
@@ -97,7 +105,7 @@ export function ReplayScreen({ runId, load = loadRun }: ReplayScreenProps) {
     return () => {
       live = false
     }
-  }, [runId, load, attempt])
+  }, [runId, load, loadTitles, attempt])
 
   const back = <a href={hrefFor({ page: 'replay', runId: null })}>Back to all runs</a>
 
@@ -141,10 +149,10 @@ export function ReplayScreen({ runId, load = loadRun }: ReplayScreenProps) {
     )
   }
 
-  return <Player replay={state.replay} />
+  return <Player replay={state.replay} title={state.title} />
 }
 
-function Player({ replay }: { replay: Replay }) {
+function Player({ replay, title }: { replay: Replay; title: string }) {
   const times = replay.frames.map((f) => f.t)
   const [pb, dispatch] = useReducer(
     reduce,
@@ -185,10 +193,12 @@ function Player({ replay }: { replay: Replay }) {
   }, [onKey])
 
   const last = times.length - 1
+  const lowNote = lowConfidenceNote(replay.frames)
   const elapsed = duration(times[pb.index] - times[0])
 
   return (
     <div className={styles.screen} ref={rootRef}>
+      <h1 className={styles.title}>{title}</h1>
       <div className={styles.controls} role="group" aria-label="Playback controls">
         <button type="button" className={styles.button} onClick={() => dispatch({ type: 'start' })} aria-label="Go to start">
           <Icon icon={SkipBack} size={20} />
@@ -250,6 +260,11 @@ function Player({ replay }: { replay: Replay }) {
         <Traces replay={replay} index={pb.index} />
         <Probabilities replay={replay} index={pb.index} />
       </div>
+      {lowNote && (
+        <p className={styles.lowNote}>
+          {lowNote} <a href={hrefFor({ page: 'model-card' })}>Model card</a>
+        </p>
+      )}
     </div>
   )
 }

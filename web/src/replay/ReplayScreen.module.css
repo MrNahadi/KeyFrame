@@ -3,6 +3,12 @@
   gap: var(--space-4);
 }
 
+.title,
+.lowNote {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;

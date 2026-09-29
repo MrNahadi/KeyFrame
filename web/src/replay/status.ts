@@ -1,5 +1,5 @@
 import { alarmTime } from './Traces'
-import type { Replay } from './types'
+import type { Replay, ReplayFrame } from './types'
 
 const CLASS_NAMES: Record<string, string> = {
   Normal: 'normal running',
@@ -68,4 +68,14 @@ export function alarmStatus(replay: Replay, index: number): string {
       : `Fault switched on ${duration(now - switchOn)} ago, no alarm yet`
   }
   return `Fault switched on ${duration(now - switchOn)} ago, no alarm yet`
+}
+
+const CONFIDENT = 0.4
+
+/** A plain sentence when the model never reaches 40% on any class in the whole run, else null. */
+export function lowConfidenceNote(frames: ReplayFrame[]): string | null {
+  if (frames.length === 0) return null
+  const max = frames.reduce((m, f) => Math.max(m, ...Object.values(f.probabilities)), 0)
+  if (max >= CONFIDENT) return null
+  return `The held-out model for this load is barely confident on any reading (at most ${Math.round(max * 100)}%). This is a known tuning defect, described on the model card; the scores shown are the locked ones.`
 }

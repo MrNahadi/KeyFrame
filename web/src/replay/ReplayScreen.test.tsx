@@ -55,6 +55,28 @@ describe('ReplayScreen', () => {
     expect(await screen.findByRole('button', { name: 'Play' })).toBeTruthy()
   })
 
+  it('titles the page with the plain run title from the index', async () => {
+    const titles = () =>
+      Promise.resolve([
+        { id: 'r', title: 'Air cooler fouling at 40% load', duration_s: 500, switch_on_t: 400, alarm_delay_s: null },
+      ])
+    render(<ReplayScreen runId="r" load={() => Promise.resolve(replay)} loadTitles={titles} />)
+    expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe('Air cooler fouling at 40% load')
+  })
+
+  it('shows the low-confidence note only when the model is never confident', async () => {
+    const weak: Replay = {
+      ...replay,
+      frames: replay.frames.map((f) => ({ ...f, probabilities: { Normal: 0.3, 'AC Fouling': 0.2 } })),
+    }
+    render(<ReplayScreen runId="r" load={() => Promise.resolve(weak)} loadTitles={() => Promise.resolve([])} />)
+    expect(await screen.findByText(/barely confident on any reading \(at most 30%\)/)).toBeTruthy()
+    cleanup()
+    render(<ReplayScreen runId="r" load={() => Promise.resolve(replay)} loadTitles={() => Promise.resolve([])} />)
+    await screen.findByRole('button', { name: 'Play' })
+    expect(screen.queryByText(/barely confident/)).toBeNull()
+  })
+
   it('gives the scrubber a text value', async () => {
     const { scrubber } = await setup()
     expect(scrubber.getAttribute('aria-valuetext')).toBe('0 s')
