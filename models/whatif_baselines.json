@@ -1,0 +1,502 @@
+{
+ "load_bins": [
+  40,
+  60,
+  75,
+  85
+ ],
+ "loads": {
+  "40": {
+   "reading": {
+    "Charge Air Press.": 0.211272661,
+    "Charge Air IC Air Temp. In": 46.8804,
+    "Charge Air IC Air Temp. Out": 34.1092,
+    "Charge Air IC Cooling Water Temp. In": 19.63078,
+    "Charge Air IC Cooling Water Temp. Out": 34.02451,
+    "Charge Air IC Cooling water flow": 0.5781,
+    "Loss in Charge Air IC": 70.33067178,
+    "Exh.Gas Temp. Turbine In": 464.2694,
+    "Exh.Gas Temp. Turbine Out": 417.0999,
+    "Exh.Gas Vol. Flow (From Engine Speed)": 8909.188463,
+    "Exh. Gas Mass Flow": 0.189379649,
+    "Exh.Gas Total Power": 93.25387235,
+    "Exh.Gas Power": 83.77220652,
+    "TCH Power": 9.682457568,
+    "Engine Speed": 310.6087043,
+    "Water Brake Weight": 464.8371258,
+    "Max. In-Cylinder Press. No.1": 7.4945,
+    "Min. In-Cylinder Press. No.1": 0.1013,
+    "Max. In-Cylinder Press. No.2": 7.323,
+    "Min. In-Cylinder Press. No.2": 0.1013,
+    "Max. In-Cylinder Press. No.3": 7.3401,
+    "Min. In-Cylinder Press. No.3": 0.1013,
+    "No.1 Exh.Gas Temp.": 381.089,
+    "No.2 Exh.Gas Temp.": 381.7617,
+    "No.3 Exh.Gas Temp.": 349.5247,
+    "Indicated Work No.1": 16170.57085,
+    "Indicated Work No.2": 14943.75483,
+    "Indicated Work No.3": 15480.76274,
+    "Total Indicated work": 46608.6094,
+    "Effective Work No.1": 41.775211,
+    "Effective Work No.2": 38.61256244,
+    "Effective Work No.3": 39.99477502,
+    "Total Effective Work": 120.4064196,
+    "Shaft Torque": 3261.669,
+    "Shaft Power": 106.0647166,
+    "Mechanical Loss": 14.4852,
+    "Mechanical Efficiency": 87.71822701,
+    "Indicated Efficiency": 37.04630575,
+    "Effective Efficiency": 32.584,
+    "Total Input Energy": 324.2637188,
+    "Other Loss": 0.0,
+    "Total Heat Loss in Heat Exchangers": 125.0645859,
+    "Fuel Flow": 27.95377,
+    "Fuel Temp.": 26.60485,
+    "Fuel transfer pump Press.": 2.519689366,
+    "Fuel Injector Cooling Oil Press.": -0.3783496,
+    "Fuel Oil Temp. Flow meter In": 24.65775,
+    "Cooling Water Temp. Engine In": 58.35814,
+    "Cooling Water Temp. Engine Out I": 59.95103,
+    "Cooling Water Temp. Engine Out II": 61.49212,
+    "Cooling Water Temp. Engine Out III": 59.90862,
+    "Fresh Cooling Water Press.": 1.107401649,
+    "Sea Cooling Water Press.": 0.8742,
+    "Engine Cooling water flow": 12.7498,
+    "Loss with cooling water": 30.11909999,
+    "LO Temp. Engine In": 46.63745,
+    "LO Temp. Engine Out": 53.79117,
+    "LO Cooling Water Temp. In": 19.55393,
+    "LO Cooling Water Temp. Out": 23.38935,
+    "LO Temp. TCH In": 35.89879,
+    "LO Temp. TCH Out": 52.96457,
+    "LO Circulating Pump Press.": 0.153315609,
+    "TCH LO pump Press.": 1.4172,
+    "LO Cooling water flow": 3.807704,
+    "TCH LO Cooling water flow": 0.8787,
+    "Loss with LO": 21.0123376,
+    "Loss with TCH LO": 0.0
+   },
+   "sliders": {
+    "Charge Air Press.": {
+     "label": "Charge air pressure",
+     "min": 0.1515,
+     "max": 0.3027
+    },
+    "Charge Air IC Air Temp. Out": {
+     "label": "Charge air temperature after cooler",
+     "min": 29.320691,
+     "max": 38.83686
+    },
+    "Exh.Gas Temp. Turbine In": {
+     "label": "Turbine inlet temperature",
+     "min": 422.56827000000004,
+     "max": 500.78285
+    },
+    "Exh.Gas Temp. Turbine Out": {
+     "label": "Turbine outlet temperature",
+     "min": 372.09113,
+     "max": 447.1442
+    },
+    "No.1 Exh.Gas Temp.": {
+     "label": "Cylinder 1 exhaust temperature",
+     "min": 348.0019,
+     "max": 411.4269
+    },
+    "No.2 Exh.Gas Temp.": {
+     "label": "Cylinder 2 exhaust temperature",
+     "min": 356.2538,
+     "max": 412.2732599999999
+    },
+    "No.3 Exh.Gas Temp.": {
+     "label": "Cylinder 3 exhaust temperature",
+     "min": 321.7776,
+     "max": 379.44822
+    },
+    "Fresh Cooling Water Press.": {
+     "label": "Fresh cooling water pressure",
+     "min": 1.06811074,
+     "max": 1.1443
+    },
+    "Engine Cooling water flow": {
+     "label": "Engine cooling water flow",
+     "min": 12.70553,
+     "max": 12.7558
+    },
+    "Fuel Flow": {
+     "label": "Fuel flow",
+     "min": 22.77366,
+     "max": 63.342642999999924
+    }
+   }
+  },
+  "60": {
+   "reading": {
+    "Charge Air Press.": 0.411184891,
+    "Charge Air IC Air Temp. In": 69.2997,
+    "Charge Air IC Air Temp. Out": 33.97302,
+    "Charge Air IC Cooling Water Temp. In": 18.57026,
+    "Charge Air IC Cooling Water Temp. Out": 30.53441,
+    "Charge Air IC Cooling water flow": 1.9566,
+    "Loss in Charge Air IC": 83.91197802,
+    "Exh.Gas Temp. Turbine In": 529.079,
+    "Exh.Gas Temp. Turbine Out": 468.5426,
+    "Exh.Gas Vol. Flow (From Engine Speed)": 11790.27018,
+    "Exh. Gas Mass Flow": 0.250621843,
+    "Exh.Gas Total Power": 139.0191974,
+    "Exh.Gas Power": 122.8591638,
+    "TCH Power": 16.27026629,
+    "Engine Speed": 352.915817,
+    "Water Brake Weight": 599.8230339,
+    "Max. In-Cylinder Press. No.1": 8.272686742,
+    "Min. In-Cylinder Press. No.1": 0.1013,
+    "Max. In-Cylinder Press. No.2": 8.11,
+    "Min. In-Cylinder Press. No.2": 0.1013,
+    "Max. In-Cylinder Press. No.3": 7.857647672,
+    "Min. In-Cylinder Press. No.3": 0.1013,
+    "No.1 Exh.Gas Temp.": 433.3286,
+    "No.2 Exh.Gas Temp.": 442.1761,
+    "No.3 Exh.Gas Temp.": 400.4257,
+    "Indicated Work No.1": 20342.55159,
+    "Indicated Work No.2": 19051.4601,
+    "Indicated Work No.3": 19588.62739,
+    "Total Indicated work": 58944.82996,
+    "Effective Work No.1": 59.7653,
+    "Effective Work No.2": 55.92976921,
+    "Effective Work No.3": 57.4026516,
+    "Total Effective Work": 173.2783888,
+    "Shaft Torque": 4208.838,
+    "Shaft Power": 155.4994988,
+    "Mechanical Loss": 17.60448926,
+    "Mechanical Efficiency": 89.47197659,
+    "Indicated Efficiency": 36.44496043,
+    "Effective Efficiency": 32.783,
+    "Total Input Energy": 472.3373,
+    "Other Loss": 0.0,
+    "Total Heat Loss in Heat Exchangers": 153.0387969,
+    "Fuel Flow": 40.71873,
+    "Fuel Temp.": 28.65806,
+    "Fuel transfer pump Press.": 2.240367208,
+    "Fuel Injector Cooling Oil Press.": -0.3768373,
+    "Fuel Oil Temp. Flow meter In": 24.09784,
+    "Cooling Water Temp. Engine In": 58.80504,
+    "Cooling Water Temp. Engine Out I": 60.93182,
+    "Cooling Water Temp. Engine Out II": 63.13565,
+    "Cooling Water Temp. Engine Out III": 61.08612,
+    "Fresh Cooling Water Press.": 1.103075012,
+    "Sea Cooling Water Press.": 0.730859468,
+    "Engine Cooling water flow": 12.731,
+    "Loss with cooling water": 42.51384575,
+    "LO Temp. Engine In": 46.71771,
+    "LO Temp. Engine Out": 55.00383,
+    "LO Cooling Water Temp. In": 18.91276,
+    "LO Cooling Water Temp. Out": 23.62172,
+    "LO Temp. TCH In": 44.32467,
+    "LO Temp. TCH Out": 61.47331,
+    "LO Circulating Pump Press.": 0.164680973,
+    "TCH LO pump Press.": 1.410948239,
+    "LO Cooling water flow": 6.169543,
+    "TCH LO Cooling water flow": 0.8852,
+    "Loss with LO": 26.52545879,
+    "Loss with TCH LO": 0.0
+   },
+   "sliders": {
+    "Charge Air Press.": {
+     "label": "Charge air pressure",
+     "min": 0.38596809775,
+     "max": 0.4687
+    },
+    "Charge Air IC Air Temp. Out": {
+     "label": "Charge air temperature after cooler",
+     "min": 32.943391,
+     "max": 43.143576
+    },
+    "Exh.Gas Temp. Turbine In": {
+     "label": "Turbine inlet temperature",
+     "min": 517.19169,
+     "max": 553.7482
+    },
+    "Exh.Gas Temp. Turbine Out": {
+     "label": "Turbine outlet temperature",
+     "min": 455.4561,
+     "max": 489.7503
+    },
+    "No.1 Exh.Gas Temp.": {
+     "label": "Cylinder 1 exhaust temperature",
+     "min": 423.82718,
+     "max": 459.628425
+    },
+    "No.2 Exh.Gas Temp.": {
+     "label": "Cylinder 2 exhaust temperature",
+     "min": 428.732055,
+     "max": 464.5118
+    },
+    "No.3 Exh.Gas Temp.": {
+     "label": "Cylinder 3 exhaust temperature",
+     "min": 354.56918,
+     "max": 416.8926
+    },
+    "Fresh Cooling Water Press.": {
+     "label": "Fresh cooling water pressure",
+     "min": 1.056855341,
+     "max": 1.149537583
+    },
+    "Engine Cooling water flow": {
+     "label": "Engine cooling water flow",
+     "min": 12.6992055,
+     "max": 12.7606
+    },
+    "Fuel Flow": {
+     "label": "Fuel flow",
+     "min": 39.06229,
+     "max": 59.67609
+    }
+   }
+  },
+  "75": {
+   "reading": {
+    "Charge Air Press.": 0.565073093,
+    "Charge Air IC Air Temp. In": 86.64368,
+    "Charge Air IC Air Temp. Out": 34.01286,
+    "Charge Air IC Cooling Water Temp. In": 20.7319,
+    "Charge Air IC Cooling Water Temp. Out": 26.27264,
+    "Charge Air IC Cooling water flow": 1.4335,
+    "Loss in Charge Air IC": 40.3788,
+    "Exh.Gas Temp. Turbine In": 559.6065,
+    "Exh.Gas Temp. Turbine Out": 487.7612,
+    "Exh.Gas Vol. Flow (From Engine Speed)": 14046.44037,
+    "Exh. Gas Mass Flow": 0.298580501,
+    "Exh.Gas Total Power": 177.3466584,
+    "Exh.Gas Power": 154.5311111,
+    "TCH Power": 22.92917224,
+    "Engine Speed": 380.5642195,
+    "Water Brake Weight": 693.661964,
+    "Max. In-Cylinder Press. No.1": 8.6047,
+    "Min. In-Cylinder Press. No.1": 0.1013,
+    "Max. In-Cylinder Press. No.2": 8.578,
+    "Min. In-Cylinder Press. No.2": 0.1013,
+    "Max. In-Cylinder Press. No.3": 8.2519,
+    "Min. In-Cylinder Press. No.3": 0.1013,
+    "No.1 Exh.Gas Temp.": 456.8322,
+    "No.2 Exh.Gas Temp.": 472.0922,
+    "No.3 Exh.Gas Temp.": 435.0615,
+    "Indicated Work No.1": 22808.23807,
+    "Indicated Work No.2": 22020.74954,
+    "Indicated Work No.3": 22669.4037,
+    "Total Indicated work": 67532.95979,
+    "Effective Work No.1": 72.62862628,
+    "Effective Work No.2": 70.09332824,
+    "Effective Work No.3": 72.062,
+    "Total Effective Work": 214.7102,
+    "Shaft Torque": 4867.287,
+    "Shaft Power": 194.2265103,
+    "Mechanical Loss": 20.9181,
+    "Mechanical Efficiency": 90.23131261,
+    "Indicated Efficiency": 36.55954499,
+    "Effective Efficiency": 33.0024,
+    "Total Input Energy": 584.952375,
+    "Other Loss": 0.0,
+    "Total Heat Loss in Heat Exchangers": 121.6317188,
+    "Fuel Flow": 50.42693,
+    "Fuel Temp.": 30.3022,
+    "Fuel transfer pump Press.": 2.0665,
+    "Fuel Injector Cooling Oil Press.": -0.378,
+    "Fuel Oil Temp. Flow meter In": 24.0154,
+    "Cooling Water Temp. Engine In": 58.35969,
+    "Cooling Water Temp. Engine Out I": 60.73894,
+    "Cooling Water Temp. Engine Out II": 64.1186,
+    "Cooling Water Temp. Engine Out III": 61.03519,
+    "Fresh Cooling Water Press.": 1.0895,
+    "Sea Cooling Water Press.": 0.714985755,
+    "Engine Cooling water flow": 12.7588,
+    "Loss with cooling water": 52.75514512,
+    "LO Temp. Engine In": 50.4888,
+    "LO Temp. Engine Out": 58.86049,
+    "LO Cooling Water Temp. In": 21.41735,
+    "LO Cooling Water Temp. Out": 25.3117,
+    "LO Temp. TCH In": 49.3236,
+    "LO Temp. TCH Out": 66.8429,
+    "LO Circulating Pump Press.": 0.1654,
+    "TCH LO pump Press.": 1.4226,
+    "LO Cooling water flow": 5.848352,
+    "TCH LO Cooling water flow": 0.7643044,
+    "Loss with LO": 27.8776,
+    "Loss with TCH LO": 0.0
+   },
+   "sliders": {
+    "Charge Air Press.": {
+     "label": "Charge air pressure",
+     "min": 0.5282246956,
+     "max": 0.6522
+    },
+    "Charge Air IC Air Temp. Out": {
+     "label": "Charge air temperature after cooler",
+     "min": 33.53152,
+     "max": 46.83105
+    },
+    "Exh.Gas Temp. Turbine In": {
+     "label": "Turbine inlet temperature",
+     "min": 545.1017,
+     "max": 583.5253399999999
+    },
+    "Exh.Gas Temp. Turbine Out": {
+     "label": "Turbine outlet temperature",
+     "min": 476.5852,
+     "max": 510.73
+    },
+    "No.1 Exh.Gas Temp.": {
+     "label": "Cylinder 1 exhaust temperature",
+     "min": 444.3094,
+     "max": 484.05559999999997
+    },
+    "No.2 Exh.Gas Temp.": {
+     "label": "Cylinder 2 exhaust temperature",
+     "min": 457.01284,
+     "max": 497.83162
+    },
+    "No.3 Exh.Gas Temp.": {
+     "label": "Cylinder 3 exhaust temperature",
+     "min": 412.6301,
+     "max": 456.06872
+    },
+    "Fresh Cooling Water Press.": {
+     "label": "Fresh cooling water pressure",
+     "min": 1.00372101,
+     "max": 1.1318
+    },
+    "Engine Cooling water flow": {
+     "label": "Engine cooling water flow",
+     "min": 12.664174000000001,
+     "max": 12.7631
+    },
+    "Fuel Flow": {
+     "label": "Fuel flow",
+     "min": 47.48014,
+     "max": 53.32416
+    }
+   }
+  },
+  "85": {
+   "reading": {
+    "Charge Air Press.": 0.719890885627128,
+    "Charge Air IC Air Temp. In": 97.60378,
+    "Charge Air IC Air Temp. Out": 33.19289,
+    "Charge Air IC Cooling Water Temp. In": 19.052895,
+    "Charge Air IC Cooling Water Temp. Out": 23.64428,
+    "Charge Air IC Cooling water flow": 5.42,
+    "Loss in Charge Air IC": 36.986112864999996,
+    "Exh.Gas Temp. Turbine In": 577.8622,
+    "Exh.Gas Temp. Turbine Out": 499.41935,
+    "Exh.Gas Vol. Flow (From Engine Speed)": 16174.4848182545,
+    "Exh. Gas Mass Flow": 0.343815632155696,
+    "Exh.Gas Total Power": 209.44228675,
+    "Exh.Gas Power": 181.0592126,
+    "TCH Power": 28.4787506361629,
+    "Engine Speed": 396.49309085000004,
+    "Water Brake Weight": 755.337004523808,
+    "Max. In-Cylinder Press. No.1": 8.8726623046875,
+    "Min. In-Cylinder Press. No.1": 0.1013,
+    "Max. In-Cylinder Press. No.2": 8.865948438,
+    "Min. In-Cylinder Press. No.2": 0.1013,
+    "Max. In-Cylinder Press. No.3": 8.5742,
+    "Min. In-Cylinder Press. No.3": 0.1013,
+    "No.1 Exh.Gas Temp.": 479.1607,
+    "No.2 Exh.Gas Temp.": 492.5884,
+    "No.3 Exh.Gas Temp.": 432.537,
+    "Indicated Work No.1": 25511.123913529198,
+    "Indicated Work No.2": 24185.631911687,
+    "Indicated Work No.3": 24418.7179148126,
+    "Total Indicated work": 74086.35435,
+    "Effective Work No.1": 83.96368620184316,
+    "Effective Work No.2": 79.89140515199526,
+    "Effective Work No.3": 80.46662932814905,
+    "Total Effective Work": 244.4193081,
+    "Shaft Torque": 5300.049,
+    "Shaft Power": 220.296215611337,
+    "Mechanical Loss": 22.94905,
+    "Mechanical Efficiency": 90.57931278000001,
+    "Indicated Efficiency": 36.2019743887763,
+    "Effective Efficiency": 32.763035,
+    "Total Input Energy": 666.6535,
+    "Other Loss": 0.0,
+    "Total Heat Loss in Heat Exchangers": 125.30375703125,
+    "Fuel Flow": 57.47013,
+    "Fuel Temp.": 28.53583,
+    "Fuel transfer pump Press.": 1.890547849,
+    "Fuel Injector Cooling Oil Press.": -0.37769085,
+    "Fuel Oil Temp. Flow meter In": 23.5896,
+    "Cooling Water Temp. Engine In": 58.44531,
+    "Cooling Water Temp. Engine Out I": 61.059305,
+    "Cooling Water Temp. Engine Out II": 64.12964500000001,
+    "Cooling Water Temp. Engine Out III": 61.47554,
+    "Fresh Cooling Water Press.": 1.102679674,
+    "Sea Cooling Water Press.": 0.731162973,
+    "Engine Cooling water flow": 12.73005,
+    "Loss with cooling water": 55.481852095,
+    "LO Temp. Engine In": 50.44401,
+    "LO Temp. Engine Out": 60.30684,
+    "LO Cooling Water Temp. In": 19.72275,
+    "LO Cooling Water Temp. Out": 23.62377,
+    "LO Temp. TCH In": 50.65944,
+    "LO Temp. TCH Out": 70.01343,
+    "LO Circulating Pump Press.": 0.167225646,
+    "TCH LO pump Press.": 1.419661311,
+    "LO Cooling water flow": 6.416489,
+    "TCH LO Cooling water flow": 1.01855,
+    "Loss with LO": 30.200769440000002,
+    "Loss with TCH LO": 0.0
+   },
+   "sliders": {
+    "Charge Air Press.": {
+     "label": "Charge air pressure",
+     "min": 0.69153045630455,
+     "max": 0.8028
+    },
+    "Charge Air IC Air Temp. Out": {
+     "label": "Charge air temperature after cooler",
+     "min": 32.66451,
+     "max": 45.63269
+    },
+    "Exh.Gas Temp. Turbine In": {
+     "label": "Turbine inlet temperature",
+     "min": 563.4073,
+     "max": 609.79105
+    },
+    "Exh.Gas Temp. Turbine Out": {
+     "label": "Turbine outlet temperature",
+     "min": 487.7206,
+     "max": 525.2753
+    },
+    "No.1 Exh.Gas Temp.": {
+     "label": "Cylinder 1 exhaust temperature",
+     "min": 463.6308,
+     "max": 508.1467
+    },
+    "No.2 Exh.Gas Temp.": {
+     "label": "Cylinder 2 exhaust temperature",
+     "min": 480.03445,
+     "max": 521.3994
+    },
+    "No.3 Exh.Gas Temp.": {
+     "label": "Cylinder 3 exhaust temperature",
+     "min": 376.4476,
+     "max": 457.6797
+    },
+    "Fresh Cooling Water Press.": {
+     "label": "Fresh cooling water pressure",
+     "min": 1.0595,
+     "max": 1.1504248905
+    },
+    "Engine Cooling water flow": {
+     "label": "Engine cooling water flow",
+     "min": 12.69244,
+     "max": 12.7599
+    },
+    "Fuel Flow": {
+     "label": "Fuel flow",
+     "min": 56.24527,
+     "max": 62.7446
+    }
+   }
+  }
+ }
+}

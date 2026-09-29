@@ -967,6 +967,8 @@ def main(argv: list[str] | None = None) -> None:
 
     subparsers.add_parser("export", help="Save the all-loads model and its reference prediction.")
 
+    subparsers.add_parser("whatif", help="Write models/whatif_baselines.json (healthy medians).")
+
     replay_parser = subparsers.add_parser(
         "replay", help="Write replay JSON files and the index under models/replays/."
     )
@@ -978,6 +980,12 @@ def main(argv: list[str] | None = None) -> None:
         from keyframe import predict
 
         print(predict.export_model())
+        return
+
+    if args.experiment == "whatif":
+        from keyframe import whatif
+
+        print(whatif.export_baselines())
         return
 
     table = load_feature_table()

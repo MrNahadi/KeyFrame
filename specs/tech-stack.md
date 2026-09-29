@@ -92,7 +92,7 @@ Run from the repo root. All must pass before any ticket is marked done.
 | Lint | `uv run ruff check .` |
 | Format | `uv run ruff format --check .` |
 | Typecheck | `uv run mypy` |
-| Test | `uv run pytest` |
+| Test | `uv run pytest` (API latency: `tests/test_api_latency.py`; run the API: `uv run uvicorn api.main:app`) |
 | Build | Python: none. Front end (from roadmap item 12): `npm --prefix web run build` |
 | E2E | Notebooks: `uv run jupytext --set-kernel python3 --to ipynb --execute notebooks/<name>.py` for each notebook the ticket touched. Front end (from roadmap item 12): `npm --prefix web test` |
 
