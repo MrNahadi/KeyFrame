@@ -2,13 +2,13 @@
 
 ## T-001: App skeleton, health and runs
 
-Status: open
+Status: done
 Blocked by:
 Slice: The API starts, reports its model, and serves the replay index and files.
 Test seam: `GET /health`, `GET /runs`, `GET /runs/{run_id}` via `fastapi.testclient.TestClient`
 Context: requirements R1-R3, R8; `ls models/ models/replays/ | head`; `grep -n 'def load\|class KeyframeModel' keyframe/predict.py`
 Acceptance:
-- [ ] Tests: health with and without model files (tmp dir); runs index; known and unknown run ids; path traversal rejected
+- [x] Tests: health with and without model files (tmp dir); runs index; known and unknown run ids; path traversal rejected
 Notes:
 
 ## T-002: Predict from a window
