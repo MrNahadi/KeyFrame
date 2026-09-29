@@ -1,3 +1,3 @@
 metric,value,target,met,experiment,date,git_commit
-"Fault detection AUROC, held-out loads",0.5283463414430039,0.95,False,05_targets,2026-09-29,de4ec55
-Detection delay (median of detected runs),2483.0,600.0,False,05_targets,2026-09-29,de4ec55
+"Fault detection AUROC, held-out loads",0.5283463414430039,0.95,False,05_targets,2026-09-29,9d4be89
+Detection delay (median of detected runs),2483.0,600.0,False,05_targets,2026-09-29,9d4be89
