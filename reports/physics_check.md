@@ -41,7 +41,7 @@ filter clogging either; flagged as a shortcut candidate, not a proxy.
 already expects CW's true signature to be the *rolling standard deviation* of Pl_water1
 and Qw_eng, not a mean-level channel — and the pre-registered checklist explicitly
 allows a day-dependent mean-level channel here to be a red flag. `Sea Cooling Water
-Press.` (Pl_water2, day-dependent, excluded on purpose) and `LO Cooling Water Temp. In`
+Press.` (Pl_water2, day-dependent; kept as a model input because notebook 01 judged it load-linked, which this result now calls into question) and `LO Cooling Water Temp. In`
 (T12, day-dependent) dominate the top 5 instead of the expected rolling-std features:
 this is a **test-day shortcut** exactly as the checklist warned against, not a genuine
 cavitation mechanism. `Charge Air IC Cooling Water Temp. In` has no expected mechanism
