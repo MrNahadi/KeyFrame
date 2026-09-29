@@ -9,18 +9,29 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import lightgbm as lgb
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from keyframe import SEED, alarm, audit, evaluate, features, paths, splits, tuning
+from keyframe import SEED, alarm, anomaly, audit, evaluate, features, paths, splits, tuning
 
 MODELLING_FEATURE_SET = "raw+physics+rolling"
+
+FAULT_CLASSES = [c for c in evaluate.CLASS_ORDER if c != "Normal"]
+
+DETECTOR_FACTORIES: dict[str, Callable[[], Any]] = {
+    "iforest": lambda: anomaly.IsolationForestDetector(),
+    "pca": lambda: anomaly.PCADetector(),
+    "autoencoder": lambda: anomaly.AutoencoderDetector(),
+}
 
 MODEL_FACTORIES = {
     # The imputer fills the rare NaNs (a rolling std or slope over a run's first row,
@@ -345,6 +356,104 @@ def _log_alarm_summary(model: str, summary: pd.DataFrame, out_path: Path) -> Non
     evaluate.log_results("04_alarms", summary, results_dir=out_path.parent)
 
 
+def run_anomaly(
+    df: pd.DataFrame,
+    detector: str,
+    fold: int,
+    *,
+    force: bool = False,
+    output_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Fit one healthy-only detector on the training loads' Normal rows and score the
+    held-out load, including its fault rows (R3-R5)."""
+    out_path = output_dir / f"anomaly_{detector}_fold{fold}.parquet"
+    if out_path.exists() and not force:
+        return out_path
+
+    columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+    train_df = df[df["load_bin"] != fold]
+    healthy = train_df[train_df["label"] == "Normal"]
+    thinned = healthy.groupby("run", group_keys=False).apply(lambda g: g.iloc[::2])
+
+    model = DETECTOR_FACTORIES[detector]().fit(thinned[columns])
+
+    test_index = df.index[df["load_bin"] == fold]
+    X_test = df.loc[test_index, columns]
+    result = pd.DataFrame(
+        {
+            "run": df.loc[test_index, "run"],
+            "load_bin": df.loc[test_index, "load_bin"],
+            "label": df.loc[test_index, "label"],
+            "t": df.loc[test_index, "t"],
+        },
+        index=test_index,
+    )
+    if detector == "pca":
+        parts = model.score_parts(X_test)
+        result["score"] = parts["score"]
+        result["t2"] = parts["t2"]
+        result["q"] = parts["q"]
+    else:
+        result["score"] = model.score(X_test)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    result.to_parquet(out_path)
+    _log_anomaly_summary(detector, output_dir, results_dir)
+    return out_path
+
+
+def _anomaly_auroc(labels: pd.Series, scores: pd.Series) -> float:
+    y = (labels != "Normal").astype(int)
+    if y.nunique() < 2:
+        return float("nan")
+    return float(roc_auc_score(y, scores))
+
+
+def _anomaly_per_class_auroc(labels: pd.Series, scores: pd.Series) -> dict[str, float]:
+    result = {}
+    for fault_class in FAULT_CLASSES:
+        mask = labels.isin(["Normal", fault_class])
+        y = labels[mask] == fault_class
+        result[f"auroc_{fault_class}"] = (
+            float(roc_auc_score(y, scores[mask])) if y.nunique() >= 2 else float("nan")
+        )
+    return result
+
+
+def _anomaly_slice(fold: object, labels: pd.Series, scores: pd.Series) -> dict[str, object]:
+    row = {"fold": fold, "auroc": _anomaly_auroc(labels, scores)}
+    row.update(_anomaly_per_class_auroc(labels, scores))
+    return row
+
+
+def _log_anomaly_summary(
+    detector: str, output_dir: Path, results_dir: Path = paths.RESULTS
+) -> None:
+    """Merge ``detector``'s AUROC summary into ``reports/results/05_anomaly.csv`` (R5),
+    once every held-out load's score file for it exists."""
+    parts = [output_dir / f"anomaly_{detector}_fold{fold}.parquet" for fold in splits.LOAD_BINS]
+    if not all(part.exists() for part in parts):
+        return
+
+    predictions = pd.concat(pd.read_parquet(part) for part in parts)
+    rows = [_anomaly_slice("pooled", predictions["label"], predictions["score"])]
+    for fold in sorted(predictions["load_bin"].unique()):
+        mask = predictions["load_bin"] == fold
+        rows.append(
+            _anomaly_slice(fold, predictions.loc[mask, "label"], predictions.loc[mask, "score"])
+        )
+    summary = pd.DataFrame(rows)
+    summary.insert(0, "detector", detector)
+
+    results_path = results_dir / "05_anomaly.csv"
+    if results_path.exists():
+        existing = pd.read_csv(results_path)
+        existing = existing[existing["detector"] != detector]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results("05_anomaly", summary, results_dir=results_dir)
+
+
 def load_modelling(
     model: str, output_dir: Path = paths.PROCESSED / "experiments"
 ) -> pd.DataFrame | None:
@@ -395,6 +504,13 @@ def main(argv: list[str] | None = None) -> None:
     alarm_parser.add_argument("--model", required=True, choices=sorted(tuning.MODEL_BUILDERS))
     alarm_parser.add_argument("--force", action="store_true")
 
+    anomaly_parser = subparsers.add_parser(
+        "anomaly", help="Score one healthy-only detector for one held-out load."
+    )
+    anomaly_parser.add_argument("--detector", required=True, choices=sorted(DETECTOR_FACTORIES))
+    anomaly_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    anomaly_parser.add_argument("--force", action="store_true")
+
     args = parser.parse_args(argv)
 
     table = load_feature_table()
@@ -426,8 +542,10 @@ def main(argv: list[str] | None = None) -> None:
         )
     elif args.experiment == "modelling":
         out_path = run_modelling(table, args.model, force=args.force)
-    else:
+    elif args.experiment == "alarm":
         out_path = run_alarm(table, args.model, force=args.force)
+    else:
+        out_path = run_anomaly(table, args.detector, args.fold, force=args.force)
     print(out_path)
 
 

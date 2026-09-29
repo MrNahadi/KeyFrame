@@ -37,15 +37,15 @@ Notes:
 
 ## T-004: Anomaly experiment and all runs
 
-Status: open
+Status: done
 Blocked by: T-002, T-003
 Slice: Per-row held-out scores for every detector and fold, fitted on training healthy rows only.
 Test seam: `uv run python -m keyframe.experiments anomaly --detector <d> --fold <bin>`
 Context: requirements R3-R5; `grep -n 'def run_ablation\|def load_ablation\|add_parser' keyframe/experiments.py`
 Acceptance:
-- [ ] Spy test: `fit` sees no fault row and no held-out-load row
-- [ ] 12 score files written (one foreground command each, each under 9 minutes)
-- [ ] `reports/results/05_anomaly.csv` with pooled and per-fold AUROC per detector, and per-class AUROC
+- [x] Spy test: `fit` sees no fault row and no held-out-load row
+- [x] 12 score files written (one foreground command each, each under 9 minutes)
+- [x] `reports/results/05_anomaly.csv` with pooled and per-fold AUROC per detector, and per-class AUROC
 Notes:
 
 ## T-005: Thresholds, alarms and detection delay

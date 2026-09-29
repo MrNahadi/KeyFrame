@@ -131,3 +131,85 @@ def test_run_ablation_shop_test_needs_a_residual_feature_set(tmp_path) -> None:
         assert "residualising" in str(error)
     else:
         raise AssertionError("expected a ValueError")
+
+
+def _anomaly_table() -> pd.DataFrame:
+    rows = []
+    for bin_ in (40, 60, 75, 85):
+        for i in range(6):
+            label = "Normal" if i < 4 else "AC"
+            rows.append(
+                {
+                    "run": f"run{bin_}_{i}",
+                    "t": float(i),
+                    "load_bin": bin_,
+                    "label": label,
+                    "Anomaly State": 0,
+                    "Engine Speed": 1000.0 + 10 * i + bin_,
+                    "Fuel Flow": 5.0 + i + bin_ / 10,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def test_run_anomaly_fits_healthy_training_rows_only(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    df = _anomaly_table()
+    seen_index: list[pd.Index] = []
+    real_factory = experiments.DETECTOR_FACTORIES["iforest"]
+
+    def spy_factory():
+        detector = real_factory()
+        real_fit = detector.fit
+
+        def fit(X_healthy):
+            seen_index.append(X_healthy.index)
+            return real_fit(X_healthy)
+
+        detector.fit = fit
+        return detector
+
+    monkeypatch.setitem(experiments.DETECTOR_FACTORIES, "iforest", spy_factory)
+
+    out_path = experiments.run_anomaly(df, "iforest", 60, output_dir=tmp_path)
+
+    assert out_path.exists()
+    assert seen_index
+    fitted = df.loc[seen_index[0]]
+    assert (fitted["label"] == "Normal").all()
+    assert (fitted["load_bin"] != 60).all()
+
+    predictions = pd.read_parquet(out_path)
+    assert set(predictions["load_bin"]) == {60}
+    assert set(predictions.index) == set(df.index[df["load_bin"] == 60])
+    assert {"run", "load_bin", "label", "t", "score"} <= set(predictions.columns)
+    assert set(predictions["label"]) == {"Normal", "AC"}
+
+    mtime_before = out_path.stat().st_mtime_ns
+    experiments.run_anomaly(df, "iforest", 60, output_dir=tmp_path)
+    assert out_path.stat().st_mtime_ns == mtime_before
+
+
+def test_run_anomaly_pca_writes_t2_and_q_parts(tmp_path) -> None:
+    df = _anomaly_table()
+
+    out_path = experiments.run_anomaly(df, "pca", 40, output_dir=tmp_path)
+
+    predictions = pd.read_parquet(out_path)
+    assert {"t2", "q", "score"} <= set(predictions.columns)
+
+
+def test_run_anomaly_logs_auroc_once_every_fold_exists(tmp_path) -> None:
+    df = _anomaly_table()
+    results_dir = tmp_path / "results"
+
+    for fold in (40, 60, 75):
+        experiments.run_anomaly(df, "iforest", fold, output_dir=tmp_path, results_dir=results_dir)
+    assert not (results_dir / "05_anomaly.csv").exists()
+
+    experiments.run_anomaly(df, "iforest", 85, output_dir=tmp_path, results_dir=results_dir)
+
+    summary = pd.read_csv(results_dir / "05_anomaly.csv")
+    assert set(summary["fold"].astype(str)) == {"pooled", "40", "60", "75", "85"}
+    assert {"auroc", "auroc_AC"} <= set(summary.columns)
