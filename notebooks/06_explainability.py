@@ -9,6 +9,42 @@
 # `waterfall`, R4): per-class beeswarms, grouped SHAP per class, and a
 # grouped waterfall for one moment of each fault shortly after switch-on.
 # The physics check, cross-checks and findings follow in later sections.
+#
+# ## Findings for an engine engineer
+#
+# **Which readings drive each diagnosis** (top 5 features by mean |SHAP| on
+# each fault's own held-out rows, all four load folds combined):
+#
+# - **AC (charge-air cooler fouling):** charge-air cooler outlet air temperature
+#   (T15, level and 60/300/900 s rolling means), plus mechanical efficiency.
+# - **INJ (injector fault):** the exhaust gas temperatures of cylinder 3
+#   (T1-T3), its deviation from the other cylinders and the cylinder spread.
+# - **AF (air filter clogging):** engine cooling water flow and two fuel
+#   temperature channels.
+# - **CW (cooling water cavitation):** sea cooling water pressure, LO cooling
+#   water temperature in and charge-air cooler cooling water temperature in.
+# - **TD (turbine degradation):** indicated efficiency (rolling std), fuel flow
+#   per kW and lubricating-oil system flows and pressure.
+#
+# **Physics check** (`reports/physics_check.md`, pre-registered checklist): **2
+# of 5 faults pass, target was 4 of 5, so the target is not met.** AC and INJ
+# are explained by the mechanism an engineer would expect. AF and CW lean on
+# day-dependent channels (fuel temperature, sea water pressure, LO water
+# temperature), which is the test-day shortcut the checklist warned about: they
+# tell us which day a run was recorded on, not that a fault is present. TD's top
+# features are not day-dependent but none is in the expected turbine set
+# (Pturb, T4, T5, Qturb); they look like downstream consequences or load
+# proxies and should not be trusted without residualising against load.
+#
+# **Where explanations are unreliable:** many sensors are near-duplicates
+# (rolling windows of one channel, cylinder temperatures that move together, the
+# cooling circuits that share load and temperature). SHAP splits credit among
+# correlated features arbitrarily, so a single feature's rank is not evidence
+# that it is the cause; read the grouped-by-source views, not single bars. The
+# cross-checks agree only modestly: grouped permutation importance vs mean
+# |SHAP| has Spearman r of 0.07 to 0.29 across folds, and LIME and SHAP share
+# about 2.7 of their top 8 features on average. Treat the AC and INJ stories as
+# credible and the AF, CW and TD stories as unconfirmed.
 
 # %%
 import numpy as np

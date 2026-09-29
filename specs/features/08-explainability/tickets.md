@@ -63,12 +63,12 @@ Notes:
 
 ## T-006: Notebook 06 findings
 
-Status: open
+Status: done
 Blocked by: T-004, T-005
 Slice: Notebook 06 opens with honest findings for an engine engineer.
 Test seam: executing the notebook
 Context: requirements R10; `reports/physics_check.md`; `reports/results/06_crosscheck.csv` (summary only); `grep -n '^# %%' notebooks/06_explainability.py`
 Acceptance:
-- [ ] First cell: which readings drive each diagnosis, physics check result, where credit-sharing makes explanations unreliable
-- [ ] Notebook executes and is committed
+- [x] First cell: which readings drive each diagnosis, physics check result, where credit-sharing makes explanations unreliable
+- [x] Notebook executes and is committed
 Notes:
