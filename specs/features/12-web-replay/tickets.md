@@ -49,14 +49,14 @@ Notes:
 
 ## T-005: Probabilities, alarm status and provenance
 
-Status: open
+Status: done
 Blocked by: T-002
 Slice: The current frame's class probabilities, the predicted-class sentence, the alarm status line and the held-out provenance note.
 Test seam: `web/src/replay/status.ts` (pure sentence functions) and `web/src/replay/Probabilities.tsx`
 Context: requirements R8-R10
 Acceptance:
-- [ ] Sentence tests for every alarm case in R9 and the probability sentence
-- [ ] Bars show text labels and percentages (test)
+- [x] Sentence tests for every alarm case in R9 and the probability sentence
+- [x] Bars show text labels and percentages (test)
 Notes:
 
 ## T-006: Replay screen, keyboard and reduced motion
