@@ -51,7 +51,7 @@ function topFeature(v: unknown, w: string): TopFeature {
   const o = obj(v, w)
   return {
     feature: str(o.feature, `${w}.feature`),
-    value: num(o.value, `${w}.value`),
+    value: o.value === null ? null : num(o.value, `${w}.value`),
     shap: num(o.shap, `${w}.shap`),
   }
 }

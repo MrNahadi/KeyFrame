@@ -64,3 +64,26 @@ def test_mixed_bin_run_uses_each_rows_own_fold_model():
         i = by_t[frame["t"]]
         want = expected[int(run["load_bin"].iloc[i])].iloc[i]
         assert np.allclose(list(frame["probabilities"].values()), want.to_numpy())
+
+
+def test_to_strict_json_turns_nan_into_null() -> None:
+    import json
+    import math
+
+    from keyframe.replay import to_strict_json
+
+    text = to_strict_json({"a": math.nan, "b": [1.0, math.inf], "c": {"d": -math.inf}})
+    assert json.loads(text) == {"a": None, "b": [1.0, None], "c": {"d": None}}
+
+
+def test_committed_replay_files_are_strict_json() -> None:
+    import json
+    from pathlib import Path
+
+    replays = Path(__file__).resolve().parents[1] / "models" / "replays"
+
+    def reject(token: str) -> None:
+        raise ValueError(f"contains {token}")
+
+    for path in replays.glob("*.json"):
+        json.loads(path.read_text(), parse_constant=reject)
