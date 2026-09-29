@@ -61,14 +61,14 @@ Notes:
 
 ## T-005: Notebook 07
 
-Status: open
+Status: done
 Blocked by: T-002, T-004, T-007
 Slice: Notebook 07 presents the final scores, calibration, errors by run, the lockbox and the full target table.
 Test seam: executing `notebooks/07_evaluation.py`
 Context: requirements R1, R7; `grep -n '^# %%' notebooks/04_modelling.py`; `head -3 reports/results/07_*.csv`; `sed -n '1,30p' reports/physics_check.md`
 Acceptance:
-- [ ] `07_confusion.png`, `07_reliability.png`, per-fold figure; final target table with met / not met for every brief target
-- [ ] Executes under 5 minutes from cached outputs; committed
+- [x] `07_confusion.png`, `07_reliability.png`, per-fold figure; final target table with met / not met for every brief target
+- [x] Executes under 5 minutes from cached outputs; committed
 Notes:
 
 ## T-006: Model card and results lock
