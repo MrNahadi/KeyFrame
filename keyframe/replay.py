@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,24 @@ KEY_SENSORS: dict[str, tuple[str, str | None, str]] = {
     ),
     "fuel_flow": ("Fuel flow", "Fuel Flow", "m3/h"),
 }
+
+
+def _finite_or_none(value: Any) -> Any:
+    """Recursively replace NaN and infinities with None (JSON null)."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {k: _finite_or_none(v) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [_finite_or_none(v) for v in value]
+    return value
+
+
+def to_strict_json(value: Any, indent: int | None = None) -> str:
+    """JSON that browsers can parse: NaN and infinities become null (Python's default
+    writer emits bare NaN, which is not valid JSON)."""
+    separators = (",", ":") if indent is None else None
+    return json.dumps(_finite_or_none(value), separators=separators, indent=indent, allow_nan=False)
 
 
 def _thin_positions(t: np.ndarray, switch_on_t: float | None) -> list[int]:
@@ -224,7 +243,7 @@ def export_replays(
         run = run[columns].reset_index(drop=True)
         bins = sorted(int(b) for b in run["load_bin"].unique())
         replay = build_replay(run, fold_models(table, bins))
-        text = json.dumps(replay, separators=(",", ":"))
+        text = to_strict_json(replay)
         if len(text.encode()) > MAX_FILE_BYTES:
             raise ValueError(f"{run_id} replay is {len(text)} bytes, over {MAX_FILE_BYTES}")
         (directory / f"{run_id}.json").write_text(text)
@@ -235,7 +254,7 @@ def export_replays(
             "switch_on_t": replay["switch_on_t"],
             "alarm_delay_s": alarm_delay_s(replay),
         }
-    index_path.write_text(json.dumps(list(index.values()), indent=1))
+    index_path.write_text(to_strict_json(list(index.values()), indent=1))
     total = sum(p.stat().st_size for p in directory.glob("*.json"))
     if total > MAX_TOTAL_BYTES:
         raise ValueError(f"replays total {total} bytes, over {MAX_TOTAL_BYTES}")

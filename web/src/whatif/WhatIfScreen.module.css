@@ -1,0 +1,104 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-title-1);
+  line-height: var(--leading-title-1);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+.notice,
+.range,
+.updatingNote {
+  margin: 0;
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+
+.problem {
+  margin: 0;
+  font-size: var(--text-body);
+  color: var(--text);
+}
+
+.skeleton {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.seg,
+.button {
+  font: inherit;
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 0 var(--space-4);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.slider input {
+  min-height: var(--touch-min);
+}
+
+.segOn {
+  background: var(--bg-secondary);
+  border-color: var(--text);
+  font-weight: 600;
+}
+
+.sliders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 28rem;
+  font-size: var(--text-body);
+  color: var(--text);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.updating .steps,
+.updating ul {
+  opacity: 0.6;
+}
+
+.sub {
+  margin: 0;
+  font-size: var(--text-body);
+  color: var(--text);
+}
+
+.steps,
+.warnings {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-body);
+  color: var(--text);
+}

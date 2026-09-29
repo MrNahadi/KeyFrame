@@ -1,0 +1,86 @@
+.page {
+  display: grid;
+  gap: var(--space-6);
+  max-width: 48rem;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+
+.card h1,
+.card h2,
+.card p,
+.card ul {
+  margin: 0;
+}
+
+.card h1 {
+  font-size: var(--text-title-1);
+  line-height: var(--leading-title-1);
+}
+
+.card h2 {
+  margin-top: var(--space-4);
+  font-size: var(--text-title-3);
+  line-height: var(--leading-title-3);
+}
+
+.card ul {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-6);
+}
+
+.figure {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.caption {
+  font-size: var(--text-callout);
+  color: var(--text-secondary);
+}
+
+.skeleton {
+  height: 8rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--bg-secondary);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

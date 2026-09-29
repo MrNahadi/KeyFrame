@@ -14,7 +14,8 @@ export interface SensorReading {
 
 export interface TopFeature {
   feature: string
-  value: number
+  /** null when the value is undefined, e.g. a rolling spread over a run's first reading. */
+  value: number | null
   shap: number
 }
 
