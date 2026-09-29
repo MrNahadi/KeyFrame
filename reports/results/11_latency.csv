@@ -1,0 +1,3 @@
+endpoint,median_ms,budget_ms,calls,window_rows
+/predict,90.9,300.0,10,600
+/explain,148.1,300.0,10,600

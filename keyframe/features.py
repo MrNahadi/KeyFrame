@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -384,6 +385,40 @@ def build_pipeline(feature_set: str, model: BaseEstimator) -> Pipeline:
             ("model", model),
         ]
     )
+
+
+def build_feature_tail(clean: pd.DataFrame, n_last: int) -> pd.DataFrame:
+    """`build_feature_table` for the last `n_last` rows of one run sorted by ``t``, computed
+    directly from each row's trailing window (same definitions, far cheaper for serving)."""
+    table = add_physics_features(clean)
+    channels = sensor_channels(table) + _physics_columns(table)
+    windows_s: Sequence[float] = (60, 300, 900)
+    t = table["t"].to_numpy(dtype=float)
+    values = table[channels].to_numpy(dtype=float)
+    rows = range(len(table) - n_last, len(table))
+    columns: dict[str, Any] = {}
+    for window in windows_s:
+        columns[f"roll_warmup_{window}"] = [int((t[i] - t[0]) < window) for i in rows]
+        stats: dict[str, list[np.ndarray]] = {"mean": [], "std": [], "slope": []}
+        for i in rows:
+            lo = int(np.searchsorted(t, t[i] - window, side="right"))
+            tw, vw = t[lo : i + 1], values[lo : i + 1]
+            n = len(tw)
+            nan = np.full(vw.shape[1], np.nan)
+            stats["mean"].append(vw.mean(axis=0))
+            stats["std"].append(vw.std(axis=0, ddof=1) if n > 1 else nan)
+            denom = n * (tw**2).sum() - tw.sum() ** 2
+            if denom == 0:
+                stats["slope"].append(nan)
+            else:
+                cross = n * (tw[:, None] * vw).sum(axis=0) - tw.sum() * vw.sum(axis=0)
+                stats["slope"].append(cross / denom * 60.0)
+        for name, per_row in stats.items():
+            block = np.vstack(per_row)
+            for j, channel in enumerate(channels):
+                columns[f"{channel}_roll_{window}s_{name}"] = block[:, j]
+    tail = table.iloc[len(table) - n_last :]
+    return pd.concat([tail, pd.DataFrame(columns, index=tail.index)], axis=1)
 
 
 def build_feature_table(clean: pd.DataFrame) -> pd.DataFrame:
