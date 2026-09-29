@@ -1,6 +1,7 @@
 import { FileText, PlayCircle, SlidersHorizontal } from 'lucide-react'
 import { Icon } from '../ui/Icon'
 import { EmptyState } from '../ui/EmptyState'
+import { RunPicker } from '../replay/RunPicker'
 import styles from './App.module.css'
 import { hrefFor, type Route, useRoute } from './routes'
 
@@ -13,11 +14,23 @@ const NAV: { page: Route['page']; label: string; icon: typeof PlayCircle }[] = [
 function Page({ route }: { route: Route }) {
   switch (route.page) {
     case 'replay':
-      return (
-        <EmptyState icon={PlayCircle} title="Replay a real engine run">
-          Pick a fault run from the test bench and play it back to see when Keyframe raised
-          the alarm. The run list appears here.
+      return route.runId ? (
+        <EmptyState
+          icon={PlayCircle}
+          title="Replay a real engine run"
+          action={<a href={hrefFor({ page: 'replay', runId: null })}>Back to all runs</a>}
+        >
+          The replay of {route.runId} appears here in the next part of the build.
         </EmptyState>
+      ) : (
+        <div>
+          <h1 className={styles.pageTitle}>Replay a real engine run</h1>
+          <p className={styles.pageLead}>
+            Pick a fault run from the test bench and play it back to see when Keyframe raised
+            the alarm.
+          </p>
+          <RunPicker />
+        </div>
       )
     case 'what-if':
       return (

@@ -32,6 +32,7 @@ Read in this order and stop as soon as you know enough:
 
 ### Keyframe specifics
 
+- Run every command from the repo root, one command per call where you can: never start with `cd`, never `git -C`, and use `npm --prefix web ...` for the front end. Write files with the Write/Edit tools, not shell heredocs. Commands outside `.ralph/settings.json`'s allow-list are refused in this unattended session.
 - Notebooks: edit only `notebooks/NN_name.py` (jupytext percent format). Never read or edit `notebooks/*.ipynb`; regenerate it with `uv run jupytext --set-kernel python3 --to ipynb --execute notebooks/NN_name.py 2>&1 | tail -n 15` and commit it with the `.py`.
 - Data: never print a whole CSV or DataFrame. Use `head`, `.shape`, `.describe()` on a few columns, or `.to_string(max_rows=20)`. Files are in `data/raw/`; if missing, run `uv run python -m keyframe.download`.
 - Never read `data/lockbox/` unless your ticket says it is the lockbox evaluation.

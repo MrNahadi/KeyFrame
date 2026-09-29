@@ -71,3 +71,17 @@
     padding: var(--space-8) var(--space-6) var(--space-16);
   }
 }
+
+.pageTitle {
+  font-size: var(--text-title-1);
+  line-height: var(--leading-title-1);
+  font-weight: var(--weight-semibold);
+}
+
+.pageLead {
+  margin: var(--space-2) 0 var(--space-6);
+  max-width: 36rem;
+  font-size: var(--text-callout);
+  line-height: var(--leading-callout);
+  color: var(--text-secondary);
+}

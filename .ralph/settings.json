@@ -53,7 +53,14 @@
       "Bash(npm run sync-replays:*)",
       "Bash(npm --prefix web ci:*)",
       "Bash(npx vitest:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(sed -i:*)",
+      "Bash(git -C /home/user/KeyFrame add:*)",
+      "Bash(git -C /home/user/KeyFrame status:*)",
+      "Bash(git -C /home/user/KeyFrame commit:*)",
+      "Bash(git -C /home/user/KeyFrame diff:*)",
+      "Bash(npm --prefix /home/user/KeyFrame/web run:*)",
+      "Bash(npm --prefix /home/user/KeyFrame/web test:*)"
     ],
     "ask": [
       "Bash(git switch:*)",

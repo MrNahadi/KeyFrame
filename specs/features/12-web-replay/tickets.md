@@ -25,14 +25,14 @@ Notes:
 
 ## T-003: Run picker and routing
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: The replay route lists runs grouped by fault in plain words and opens one.
 Test seam: `web/src/replay/RunPicker.tsx` via Testing Library
 Context: requirements R1, R6, R11; `docs/design/manifesto.md` Part 14 only (`sed -n '/^# Part 14/,/^# Part 15/p'`); `ls web/src/ui web/src/app`
 Acceptance:
-- [ ] Grouped list with load and duration; choosing a run updates the hash route (test)
-- [ ] Loading skeleton, error with retry, empty states (tests)
+- [x] Grouped list with load and duration; choosing a run updates the hash route (test)
+- [x] Loading skeleton, error with retry, empty states (tests)
 Notes:
 
 ## T-004: Sensor traces
