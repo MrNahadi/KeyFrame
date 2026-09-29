@@ -13,14 +13,14 @@ Notes:
 
 ## T-002: Recalibration inside the training folds
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: If pooled ECE exceeds 0.05, each outer fold gets a calibrator fitted only on inner-fold predictions, and held-out probabilities are recalibrated.
 Test seam: `uv run python -m keyframe.experiments calibration --fold <bin>`; `keyframe.calibration.fit_calibrator`
 Context: requirements R3; `grep -n 'def run_alarm' -A30 keyframe/experiments.py` (it already builds inner-fold predictions); `grep -n 'def load_tuned_params' -A10 keyframe/experiments.py`
 Acceptance:
-- [ ] Spy test: the calibrator never sees outer test rows
-- [ ] ECE and macro F1 before/after per fold in `reports/results/07_calibration.csv` (one foreground command per fold); if pooled ECE ≤ 0.05 already, record that and skip recalibration
+- [x] Spy test: the calibrator never sees outer test rows
+- [x] ECE and macro F1 before/after per fold in `reports/results/07_calibration.csv` (one foreground command per fold); if pooled ECE ≤ 0.05 already, record that and skip recalibration
 Notes:
 
 ## T-003: Run-by-run error analysis

@@ -23,7 +23,18 @@ from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from keyframe import SEED, alarm, anomaly, audit, evaluate, features, paths, splits, tuning
+from keyframe import (
+    SEED,
+    alarm,
+    anomaly,
+    audit,
+    calibration,
+    evaluate,
+    features,
+    paths,
+    splits,
+    tuning,
+)
 
 MODELLING_FEATURE_SET = "raw+physics+rolling"
 
@@ -484,6 +495,84 @@ def run_alarm(
     return out_path
 
 
+ECE_RECALIBRATION_THRESHOLD = 0.05
+
+
+def _proba_columns(predictions: pd.DataFrame) -> tuple[list[str], list[str]]:
+    columns = [c for c in predictions.columns if c.startswith("proba_")]
+    return columns, [c.removeprefix("proba_") for c in columns]
+
+
+def run_calibration(
+    df: pd.DataFrame,
+    fold: int,
+    model: str = "xgboost",
+    *,
+    force: bool = False,
+    tuning_dir: Path = paths.MODELS / "tuning",
+    modelling_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+    inner_predict: Callable[..., pd.DataFrame] = evaluate.lolo_predict,
+    fit: Callable[..., Any] | None = None,
+) -> Path:
+    """ECE and macro F1 before/after recalibrating one outer fold (R3).
+
+    Recalibration happens only if the pooled ECE over every outer fold exceeds 0.05.
+    The calibrator is fitted on the outer training rows' inner-fold predictions
+    (``train_df`` excludes the fold), never on the fold's own rows.
+    """
+    out_path = results_dir / "07_calibration.csv"
+    if out_path.exists() and not force and fold in pd.read_csv(out_path)["fold"].unique():
+        return out_path
+
+    fit = fit or calibration.fit_calibrator
+    outer = pd.read_parquet(modelling_dir / f"modelling_{model}.parquet")
+    proba_columns, classes = _proba_columns(outer)
+    pooled_ece = calibration.expected_calibration_error(
+        outer["y_true"], outer[proba_columns].to_numpy(), classes
+    )
+    held_out = outer[outer["fold"] == fold]
+    proba = held_out[proba_columns].to_numpy()
+    ece_before = calibration.expected_calibration_error(held_out["y_true"], proba, classes)
+    f1_before = evaluate.macro_f1(held_out["y_true"], held_out["y_pred"])
+
+    row: dict[str, object] = {
+        "model": model,
+        "fold": fold,
+        "pooled_ece_before": pooled_ece,
+        "recalibrated": pooled_ece > ECE_RECALIBRATION_THRESHOLD,
+        "temperature": 1.0,
+        "ece_before": ece_before,
+        "ece_after": ece_before,
+        "macro_f1_before": f1_before,
+        "macro_f1_after": f1_before,
+    }
+    if row["recalibrated"]:
+        columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+        train_df = df[df["load_bin"] != fold]
+        params = load_tuned_params(model, fold, tuning_dir)
+        inner = inner_predict(lambda: tuning.MODEL_BUILDERS[model](params), train_df, columns)
+        inner_columns, inner_classes = _proba_columns(inner)
+        calibrator = fit(inner["y_true"], inner[inner_columns].to_numpy(), inner_classes)
+        recalibrated = calibrator.transform(proba)
+        after_pred = pd.Series(
+            np.asarray(classes)[recalibrated.argmax(axis=1)], index=held_out.index
+        )
+        row["temperature"] = calibrator.temperature
+        row["ece_after"] = calibration.expected_calibration_error(
+            held_out["y_true"], recalibrated, classes
+        )
+        row["macro_f1_after"] = evaluate.macro_f1(held_out["y_true"], after_pred)
+
+    summary = pd.DataFrame([row])
+    if out_path.exists():
+        existing = pd.read_csv(out_path)
+        existing = existing[existing["fold"] != fold]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results("07_calibration", summary.sort_values("fold"), results_dir=results_dir)
+    return out_path
+
+
 def _log_alarm_summary(model: str, summary: pd.DataFrame, out_path: Path) -> None:
     """Merge ``model``'s per-run alarm rows into ``reports/results/04_alarms.csv`` (R10).
 
@@ -747,6 +836,12 @@ def main(argv: list[str] | None = None) -> None:
     anomaly_parser.add_argument("--inputs", choices=["raw", "residual"], default="raw")
     anomaly_parser.add_argument("--force", action="store_true")
 
+    calibration_parser = subparsers.add_parser(
+        "calibration", help="ECE and macro F1 before/after recalibrating one outer fold."
+    )
+    calibration_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    calibration_parser.add_argument("--force", action="store_true")
+
     shap_parser = subparsers.add_parser(
         "shap", help="SHAP TreeExplainer values for the best model on one held-out load."
     )
@@ -807,6 +902,8 @@ def main(argv: list[str] | None = None) -> None:
         out_path = run_anomaly(
             table, args.detector, args.fold, inputs=args.inputs, force=args.force
         )
+    elif args.experiment == "calibration":
+        out_path = run_calibration(table, args.fold, force=args.force)
     elif args.experiment == "shap":
         out_path = run_shap(table, args.fold, force=args.force)
     elif args.experiment == "crosscheck":
