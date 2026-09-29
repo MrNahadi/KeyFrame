@@ -16,7 +16,7 @@ Derived from `specs/brief.md` sections 8, 9 and 11. Versions are pinned in `pypr
 | Model files | joblib | 1.6.0 |
 | API | FastAPI, Uvicorn, pydantic | 0.141.1, 0.54.0, 2.13.5 |
 | Tests and quality | pytest, ruff, mypy, pandas-stubs, httpx | 9.1.1, 0.16.9, 2.3.1 |
-| Front end | TypeScript; framework chosen at roadmap item 12 | Node 22 |
+| Front end | React 19 + Vite 8 + TypeScript 6 (strict), Recharts 3, lucide-react, Vitest 4 + Testing Library + jsdom; plain CSS tokens with CSS Modules (ADR 0010) | Node 22, npm with `legacy-peer-deps` (web/.npmrc) |
 
 The autoencoder in anomaly detection uses scikit-learn's `MLPRegressor`, so no deep-learning framework is needed. A 1D CNN is a stretch goal and would need a new dependency, installed by the human-present planning phase, never by the loop.
 
@@ -76,7 +76,10 @@ keyframe/
 ### Front end
 
 - The design rules are `docs/design/manifesto.md`: Part 14 (rules sheet) for tokens, spacing, type, radius, colour, icons (Lucide), motion and states, and Part 15 (screen audit) as the checklist every screen must pass.
-- Framework decided at roadmap item 12 and recorded as an ADR.
+- Stack per ADR 0010. Every colour, size, radius and duration comes from `web/src/styles/tokens.css` (a test fails on raw colours elsewhere); icons only through `web/src/ui/Icon.tsx` (sizes 16/20/24).
+- Hash routes (`#/replay/<run>`, `#/what-if`, `#/model-card`); replay reads static JSON in `web/public/replays/` (copied by `npm --prefix web run sync-replays`); what-if calls the API through the dev proxy `/api`.
+- Charts: Recharts with `isAnimationActive={false}`; data colours `--data-*` only; text labels on every bar (light-mode contrast relief).
+- Install dependencies with `npm --prefix web ci` (the loop never installs).
 
 ### Git
 
@@ -93,7 +96,7 @@ Run from the repo root. All must pass before any ticket is marked done.
 | Format | `uv run ruff format --check .` |
 | Typecheck | `uv run mypy` |
 | Test | `uv run pytest` |
-| Build | Python: none. Front end (from roadmap item 12): `npm --prefix web run build` |
-| E2E | Notebooks: `uv run jupytext --set-kernel python3 --to ipynb --execute notebooks/<name>.py` for each notebook the ticket touched. Front end (from roadmap item 12): `npm --prefix web test` |
+| Build | Python: none. Front end: `npm --prefix web run build` (also type-checks) |
+| E2E | Notebooks: `uv run jupytext --set-kernel python3 --to ipynb --execute notebooks/<name>.py` for each notebook the ticket touched. Front end: `npm --prefix web test` |
 
 Data setup (one command, needs network): `uv run python -m keyframe.download`.
