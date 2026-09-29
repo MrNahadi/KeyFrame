@@ -14,13 +14,13 @@ Notes:
 
 ## T-002: Playback engine
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: A tested, DOM-free playback state machine with speeds, stepping, seeking and jump to switch-on.
 Test seam: `web/src/replay/playback.ts`
 Context: requirements R4-R5
 Acceptance:
-- [ ] Tests for 1x/10x/60x frame advance per elapsed time, bounds, seek, switch-on jump, stop at end
+- [x] Tests for 1x/10x/60x frame advance per elapsed time, bounds, seek, switch-on jump, stop at end
 Notes:
 
 ## T-003: Run picker and routing
