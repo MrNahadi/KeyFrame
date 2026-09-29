@@ -11,28 +11,28 @@
   "title": "Turbine degradation at 60% load",
   "duration_s": 7580.0,
   "switch_on_t": 3453.0,
-  "alarm_delay_s": 2287.0
+  "alarm_delay_s": 397.0
  },
  {
   "id": "AC_Fouling_40_Load",
   "title": "Air cooler fouling at 40% load",
   "duration_s": 7999.0,
   "switch_on_t": 2102.0,
-  "alarm_delay_s": 438.0
+  "alarm_delay_s": 5489.0
  },
  {
   "id": "AC_Fouling_60_Load",
   "title": "Air cooler fouling at 60% load",
   "duration_s": 10401.0,
   "switch_on_t": 3201.0,
-  "alarm_delay_s": 2239.0
+  "alarm_delay_s": 1309.0
  },
  {
   "id": "AC_Fouling_75_Load",
   "title": "Air cooler fouling at 75% load",
   "duration_s": 10030.0,
   "switch_on_t": 2621.0,
-  "alarm_delay_s": 170.0
+  "alarm_delay_s": 189.0
  },
  {
   "id": "AC_Fouling_85_Load",
@@ -46,7 +46,7 @@
   "title": "Air filter clogging at 40% load",
   "duration_s": 8373.0,
   "switch_on_t": 2936.0,
-  "alarm_delay_s": 2724.0
+  "alarm_delay_s": null
  },
  {
   "id": "AF_Clogging_60_Load",
@@ -60,7 +60,7 @@
   "title": "Air filter clogging at 75% load",
   "duration_s": 9364.0,
   "switch_on_t": 3734.0,
-  "alarm_delay_s": 366.0
+  "alarm_delay_s": null
  },
  {
   "id": "AF_Clogging_85_Load",
@@ -74,7 +74,7 @@
   "title": "Cooling water pump cavitation at 60% load",
   "duration_s": 9519.0,
   "switch_on_t": 2251.0,
-  "alarm_delay_s": 479.0
+  "alarm_delay_s": 489.0
  },
  {
   "id": "CW_Pump_Cavitation_85_Load",
@@ -88,7 +88,7 @@
   "title": "Turbine degradation at 40% load",
   "duration_s": 11099.0,
   "switch_on_t": 6674.0,
-  "alarm_delay_s": 776.0
+  "alarm_delay_s": null
  },
  {
   "id": "Turbine_Degradation_85_Load",
@@ -102,7 +102,7 @@
   "title": "Clogged injector nozzle 1 with the load stepped through 40%, 60% and 85%",
   "duration_s": 10694.0,
   "switch_on_t": 0.0,
-  "alarm_delay_s": 51.0
+  "alarm_delay_s": 311.0
  },
  {
   "id": "Reference_40",
