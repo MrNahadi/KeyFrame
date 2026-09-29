@@ -1,0 +1,16 @@
+[
+  {
+    "id": "Reference_60",
+    "title": "Healthy reference at 60% load",
+    "duration_s": 1800.0,
+    "switch_on_t": null,
+    "alarm_delay_s": null
+  },
+  {
+    "id": "AC_Fouling_40_Load",
+    "title": "Air cooler fouling at 40% load",
+    "duration_s": 7999.0,
+    "switch_on_t": 2102.0,
+    "alarm_delay_s": 438.0
+  }
+]

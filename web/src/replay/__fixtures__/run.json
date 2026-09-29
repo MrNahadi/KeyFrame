@@ -1,0 +1,21 @@
+{
+  "run": "AC_Fouling_40_Load",
+  "fault": "AC Fouling",
+  "nominal_load": 40,
+  "switch_on_t": 2102.0,
+  "sampling_note": "frames thinned to one every 10 s of t; the switch-on frame is kept exactly",
+  "provenance": "predictions from the model trained without this run's load (leave-one-load-out fold 40); git commit abc1234",
+  "frames": [
+    {
+      "t": 2100.0,
+      "sensors": {
+        "charge_air_pressure": { "label": "Charge air pressure", "value": 1.2, "unit": "kgf/cm2" }
+      },
+      "probabilities": { "Normal": 0.9, "AC Fouling": 0.1 },
+      "alarm": "Normal",
+      "predicted_class": "Normal",
+      "shap_groups": { "Charge air": 0.3, "Turbine": -0.1 },
+      "top_features": [{ "feature": "f1", "value": 1.5, "shap": 0.2 }]
+    }
+  ]
+}

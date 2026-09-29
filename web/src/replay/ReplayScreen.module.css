@@ -1,0 +1,95 @@
+.screen {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.title,
+.lowNote {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.speeds {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--bg-secondary);
+}
+
+.button:disabled {
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.button[aria-pressed='true'] {
+  background: var(--bg-secondary);
+  border-color: var(--text);
+}
+
+.button:focus-visible,
+.scrubber:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.scrubber {
+  width: 100%;
+  min-height: var(--touch-min);
+}
+
+.elapsed {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.skeleton {
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+}
+
+.skeletonBar {
+  height: var(--touch-min);
+}
+
+.skeletonChart {
+  height: 12rem;
+}

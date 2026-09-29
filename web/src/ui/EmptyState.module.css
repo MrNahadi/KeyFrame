@@ -1,0 +1,23 @@
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  max-width: 36rem;
+  padding: var(--space-8) 0;
+  color: var(--text-secondary);
+}
+
+.title {
+  font-size: var(--text-title-3);
+  line-height: var(--leading-title-3);
+  color: var(--text);
+}
+
+.body {
+  font-size: var(--text-callout);
+  line-height: var(--leading-callout);
+}
+
+.action {
+  margin-top: var(--space-2);
+}
