@@ -8,12 +8,21 @@ from keyframe.anomaly import (
     IsolationForestDetector,
     PCADetector,
     detector_inputs,
+    threshold_for_far,
 )
 
 
 def _healthy_cloud(n: int = 200) -> pd.DataFrame:
     rng = np.random.default_rng(SEED)
     return pd.DataFrame({"a": rng.normal(0, 1, n), "b": rng.normal(5, 2, n)})
+
+
+def test_threshold_for_far_flags_about_that_share_of_healthy_scores() -> None:
+    scores = np.arange(1, 101, dtype=float)
+
+    threshold = threshold_for_far(scores, far=0.02)
+
+    assert np.mean(scores >= threshold) == pytest.approx(0.02)
 
 
 def test_far_points_score_higher_than_points_inside_the_healthy_cloud() -> None:

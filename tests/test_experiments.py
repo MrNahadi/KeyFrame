@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -152,6 +153,56 @@ def _anomaly_table() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _residual_anomaly_table() -> pd.DataFrame:
+    rows = []
+    for bin_ in (40, 60, 75, 85):
+        for kind in ("healthy", "fault"):
+            for i in range(8):
+                label = "Normal" if kind == "healthy" or i < 4 else "AC"
+                rows.append(
+                    {
+                        "run": f"run{bin_}_{kind}",
+                        "t": float(i),
+                        "Time_abs": float(i),
+                        "load_bin": bin_,
+                        "label": label,
+                        "Anomaly State": 0 if label == "Normal" else 1,
+                        "Engine Speed": 1000.0 + 10 * i + bin_,
+                        "Fuel Flow": 5.0 + i + bin_ / 10,
+                        "Water Brake Weight": 50.0 + i + bin_ / 10,
+                        "Oil Temp": 80.0 + i + (5.0 if label == "AC" else 0.0),
+                        "phys_load": 0.5 + i / 10,
+                        "Oil Temp_roll_5_mean": 80.0 + i,
+                        "Oil Temp_roll_5_std": 0.1 + i / 10,
+                        "Oil Temp_roll_5_slope": 0.01 * i,
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def test_run_anomaly_alarms_keeps_raw_and_residual_arms_separate(tmp_path) -> None:
+    df = _residual_anomaly_table()
+    output_dir = tmp_path / "experiments"
+    results_dir = tmp_path / "results"
+    for inputs in ("raw", "residual"):
+        for fold in (40, 60, 75, 85):
+            experiments.run_anomaly(
+                df, "iforest", fold, inputs=inputs, output_dir=output_dir, results_dir=results_dir
+            )
+
+    experiments.run_anomaly_alarms(
+        df, "iforest", inputs="raw", output_dir=output_dir, results_dir=results_dir
+    )
+    out_path = experiments.run_anomaly_alarms(
+        df, "iforest", inputs="residual", output_dir=output_dir, results_dir=results_dir
+    )
+
+    summary = pd.read_csv(out_path)
+    rows = summary[summary["detector"] == "iforest"]
+    assert set(rows["inputs"]) == {"raw", "residual"}
+    assert (rows.groupby("inputs")["fold"].apply(set) == {40, 60, 75, 85}).all()
+
+
 def test_run_anomaly_fits_healthy_training_rows_only(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -213,3 +264,36 @@ def test_run_anomaly_logs_auroc_once_every_fold_exists(tmp_path) -> None:
     summary = pd.read_csv(results_dir / "05_anomaly.csv")
     assert set(summary["fold"].astype(str)) == {"pooled", "40", "60", "75", "85"}
     assert {"auroc", "auroc_AC"} <= set(summary.columns)
+
+
+def test_run_anomaly_alarms_thresholds_from_training_healthy_rows_only(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    df = _anomaly_table()
+    output_dir = tmp_path / "experiments"
+    results_dir = tmp_path / "results"
+    for fold in (40, 60, 75, 85):
+        experiments.run_anomaly(df, "iforest", fold, output_dir=output_dir, results_dir=results_dir)
+
+    seen_scores: list[np.ndarray] = []
+    real_threshold_for_far = experiments.anomaly.threshold_for_far
+
+    def spy_threshold_for_far(scores, far):
+        seen_scores.append(np.asarray(scores).copy())
+        return real_threshold_for_far(scores, far)
+
+    monkeypatch.setattr(experiments.anomaly, "threshold_for_far", spy_threshold_for_far)
+
+    out_path = experiments.run_anomaly_alarms(
+        df, "iforest", output_dir=output_dir, results_dir=results_dir
+    )
+
+    assert out_path.exists()
+    assert len(seen_scores) == 4
+    for scores in seen_scores:
+        assert len(scores) == 12  # 3 training load bins x 4 healthy rows each
+
+    result = pd.read_csv(out_path)
+    assert {"detector", "fold", "threshold", "min_duration_s", "false_alarm_rate"} <= set(
+        result.columns
+    )

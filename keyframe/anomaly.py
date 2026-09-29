@@ -58,6 +58,14 @@ def detector_inputs(
     raise ValueError(f"unknown detector input arm: {arm!r}")
 
 
+def threshold_for_far(scores: np.ndarray, far: float) -> float:
+    """Score threshold giving a ``far`` false alarm rate on ``scores`` from healthy rows
+    only (R6): the ``1 - far`` quantile, so about a ``far`` share of these rows score
+    at or above it.
+    """
+    return float(np.quantile(scores, 1 - far))
+
+
 class IsolationForestDetector:
     """Isolation Forest over standardised, median-imputed inputs.
 

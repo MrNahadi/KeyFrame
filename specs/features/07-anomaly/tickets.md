@@ -63,16 +63,16 @@ Notes:
 
 ## T-005: Thresholds, alarms and detection delay
 
-Status: open
+Status: done
 Blocked by: T-008
 Slice: For both input arms (residual primary), each detector's scores become sustained alarms with a 2% training-fold false alarm budget, giving detection delay per run.
 Test seam: `keyframe.anomaly.threshold_for_far`, alarm helpers from `keyframe.alarm`
 Context: requirements R6; `grep -n '^def ' keyframe/alarm.py`
 Acceptance:
-- [ ] Threshold chosen from training healthy rows only (test)
-- [ ] `reports/results/05_alarms.csv`: per detector, per run delay, alarm-level false alarm rate
+- [x] Threshold chosen from training healthy rows only (test)
+- [x] `reports/results/05_alarms.csv`: per detector, per run delay, alarm-level false alarm rate
 Notes:
-- Parked stash: T-005 parked (work started on the raw arm only before T-008 was added; pop it, then extend to both arms)
+- Popped the parked stash and extended `run_anomaly_alarms` with an `inputs` arg (raw/residual), matching `run_anomaly`'s file suffix and keying the CSV merge on (detector, inputs) so both arms coexist.
 
 ## T-006: Notebook 05 and findings
 

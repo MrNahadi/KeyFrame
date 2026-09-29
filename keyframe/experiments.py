@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import lightgbm as lgb
+import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
@@ -408,6 +409,88 @@ def run_anomaly(
     return out_path
 
 
+def run_anomaly_alarms(
+    df: pd.DataFrame,
+    detector: str,
+    *,
+    inputs: str = "raw",
+    far: float = 0.02,
+    force: bool = False,
+    output_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Threshold ``detector`` on the ``inputs`` arm (``raw`` or ``residual``, R1b/ADR 0008)
+    at a 2% false alarm rate on each fold's training healthy rows (R6), pick a
+    sustained-alarm duration from the training fold's own runs at a 2% alarm-level
+    false alarm budget, then score detection delay and false alarm rate on the
+    held-out fold. Requires that fold's ``run_anomaly`` score file to exist."""
+    out_path = results_dir / "05_alarms.csv"
+    if out_path.exists() and not force:
+        existing = pd.read_csv(out_path)
+        if ((existing["detector"] == detector) & (existing["inputs"] == inputs)).any():
+            return out_path
+
+    suffix = "" if inputs == "raw" else f"_{inputs}"
+    _, fit_view = anomaly.detector_inputs(df, inputs)
+    fold_tables = []
+    for fold in splits.LOAD_BINS:
+        train_df = df[df["load_bin"] != fold]
+        healthy = train_df[train_df["label"] == "Normal"]
+        thinned = healthy.groupby("run", group_keys=False).apply(lambda g: g.iloc[::2])
+        view = fit_view(train_df, train_df["label"])
+        model = DETECTOR_FACTORIES[detector]().fit(view(thinned))
+
+        threshold = anomaly.threshold_for_far(model.score(view(healthy)), far)
+
+        train_scores = model.score(view(train_df))
+        train_predictions = pd.DataFrame(
+            {
+                "run": train_df["run"],
+                "t": train_df["t"],
+                "y_pred": np.where(train_scores >= threshold, "Anomaly", "Normal"),
+                "y_true": train_df["label"],
+                "proba_Anomaly": 1.0,
+            },
+            index=train_df.index,
+        )
+        train_switch_on = audit.switch_on_points(train_df)
+        chosen = alarm.choose_alarm_params(train_predictions, train_switch_on)
+
+        test_scores = pd.read_parquet(output_dir / f"anomaly_{detector}{suffix}_fold{fold}.parquet")
+        test_alarms = test_scores.assign(
+            y_pred=np.where(test_scores["score"] >= threshold, "Anomaly", "Normal"),
+            proba_Anomaly=1.0,
+            y_true=test_scores["label"],
+        )
+        test_alarms["alarm"] = alarm.sustained_alarm(test_alarms, chosen["min_duration_s"], 0.5)
+        test_switch_on = audit.switch_on_points(df.loc[test_scores.index])
+        metrics = alarm.alarm_metrics(test_alarms, test_switch_on)
+        delays = alarm.detection_delay(test_alarms, test_switch_on)
+        delays["fold"] = fold
+        delays["threshold"] = threshold
+        delays["min_duration_s"] = chosen["min_duration_s"]
+        delays["false_alarm_rate"] = metrics["false_alarm_rate"]
+        fold_tables.append(delays)
+
+    summary = pd.concat(fold_tables, ignore_index=True)
+    summary.insert(0, "inputs", inputs)
+    summary.insert(0, "detector", detector)
+    _log_anomaly_alarm_summary(detector, inputs, summary, out_path)
+    return out_path
+
+
+def _log_anomaly_alarm_summary(
+    detector: str, inputs: str, summary: pd.DataFrame, out_path: Path
+) -> None:
+    """Merge ``detector``/``inputs``' per-run alarm rows into ``reports/results/05_alarms.csv``
+    (R6), keeping other detectors' and arms' rows (mirrors ``_log_alarm_summary``)."""
+    if out_path.exists():
+        existing = pd.read_csv(out_path)
+        existing = existing[~((existing["detector"] == detector) & (existing["inputs"] == inputs))]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results("05_alarms", summary, results_dir=out_path.parent)
+
+
 def _anomaly_auroc(labels: pd.Series, scores: pd.Series) -> float:
     y = (labels != "Normal").astype(int)
     if y.nunique() < 2:
@@ -524,6 +607,15 @@ def main(argv: list[str] | None = None) -> None:
     anomaly_parser.add_argument("--inputs", choices=["raw", "residual"], default="raw")
     anomaly_parser.add_argument("--force", action="store_true")
 
+    anomaly_alarm_parser = subparsers.add_parser(
+        "anomaly-alarm", help="Threshold one detector and score its detection delay."
+    )
+    anomaly_alarm_parser.add_argument(
+        "--detector", required=True, choices=sorted(DETECTOR_FACTORIES)
+    )
+    anomaly_alarm_parser.add_argument("--inputs", choices=["raw", "residual"], default="raw")
+    anomaly_alarm_parser.add_argument("--force", action="store_true")
+
     args = parser.parse_args(argv)
 
     table = load_feature_table()
@@ -557,10 +649,12 @@ def main(argv: list[str] | None = None) -> None:
         out_path = run_modelling(table, args.model, force=args.force)
     elif args.experiment == "alarm":
         out_path = run_alarm(table, args.model, force=args.force)
-    else:
+    elif args.experiment == "anomaly":
         out_path = run_anomaly(
             table, args.detector, args.fold, inputs=args.inputs, force=args.force
         )
+    else:
+        out_path = run_anomaly_alarms(table, args.detector, inputs=args.inputs, force=args.force)
     print(out_path)
 
 
