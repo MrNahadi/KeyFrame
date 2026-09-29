@@ -965,9 +965,27 @@ def main(argv: list[str] | None = None) -> None:
     anomaly_alarm_parser.add_argument("--inputs", choices=["raw", "residual"], default="raw")
     anomaly_alarm_parser.add_argument("--force", action="store_true")
 
+    subparsers.add_parser("export", help="Save the all-loads model and its reference prediction.")
+
+    replay_parser = subparsers.add_parser(
+        "replay", help="Write replay JSON files and the index under models/replays/."
+    )
+    replay_parser.add_argument("--run", action="append", help="Only this run id (repeatable).")
+
     args = parser.parse_args(argv)
 
+    if args.experiment == "export":
+        from keyframe import predict
+
+        print(predict.export_model())
+        return
+
     table = load_feature_table()
+    if args.experiment == "replay":
+        from keyframe import replay
+
+        print(replay.export_replays(table, args.run))
+        return
     if args.experiment == "ablation":
         out_path = run_ablation(
             table,
