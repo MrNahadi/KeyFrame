@@ -9,7 +9,7 @@ Each item is one feature, one branch (`feature/NN-slug`), one folder in `specs/f
 - [x] 5. **Feature engineering** [M6]: healthy-engine residuals, physics features and time-based rolling windows, each tested on its own; notebook 03 ablation table.
 - [x] 6. **Modelling and tuning** [M7]: notebook 04 compares LightGBM/XGBoost, random forest and logistic regression with nested Optuna tuning and class weights, plus sustained-alarm logic; best model recorded in the results log.
 - [x] 7. **Anomaly detection** [M8]: notebook 05 trains healthy-only detectors (Isolation Forest, PCA + Hotelling T², small autoencoder); AUROC and detection delay measured.
-- [ ] 8. **Explainability** [M9]: notebook 06 with SHAP per class, per moment and per sensor group, permutation importance, PDP/ICE, one LIME comparison, and the physics check against the checklist.
+- [x] 8. **Explainability** [M9]: notebook 06 with SHAP per class, per moment and per sensor group, permutation importance, PDP/ICE, one LIME comparison, and the physics check against the checklist.
 - [ ] 9. **Evaluation and model card, results locked** [M10 gate]: notebook 07 with final held-out-load scores and spread, confusion matrix, calibration, run-by-run error analysis, the lockbox test and `reports/model_card.md`.
 - [ ] 10. **Export** [M11]: notebook 08 retrains on all loads, saves model, preprocessing and explainer, and cuts replay files; a clean session reproduces a prediction.
 - [ ] 11. **API** [M12]: FastAPI `/predict`, `/explain`, `/runs`; one prediction plus explanation in under 300 ms.
