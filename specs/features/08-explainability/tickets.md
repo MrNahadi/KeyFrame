@@ -38,14 +38,14 @@ Notes:
 
 ## T-004: Physics check against the pre-registered checklist
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: Each fault's top 5 SHAP features scored against the checklist with the rule fixed before modelling, with every mismatch investigated.
 Test seam: `keyframe.explain.physics_check`
 Context: requirements R5-R6; `sed -n '/Physics check/,/^$/p' reports/targets.md`; `grep -n 'Expected top 5\|Agree' reports/engineering_checklist.md`
 Acceptance:
-- [ ] Rule tests on hand-made rankings (3 of 5 passes, 2 of 5 fails, a day-dependent channel fails)
-- [ ] `reports/physics_check.md` with per-fault table, mismatch investigations and met / not met against 4 of 5
+- [x] Rule tests on hand-made rankings (3 of 5 passes, 2 of 5 fails, a day-dependent channel fails)
+- [x] `reports/physics_check.md` with per-fault table, mismatch investigations and met / not met against 4 of 5
 Notes:
 
 ## T-005: Cross-checks: permutation importance, PDP/ICE, one LIME comparison

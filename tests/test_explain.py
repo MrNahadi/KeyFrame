@@ -175,3 +175,86 @@ def test_waterfall_grouped_matches_the_row_and_lists_top_features():
     assert grouped.sum() == pytest.approx(row.sum())
     assert list(top.index) == ["Shaft Power", "Fuel Flow"]
     assert top["Shaft Power"] == pytest.approx(-3.0)
+
+
+def _ranking(*features: str) -> pd.Series:
+    return pd.Series(range(len(features), 0, -1), index=list(features), dtype=float)
+
+
+def test_physics_check_passes_a_fault_with_3_of_5_top_features_matching():
+    checklist = {"AC": explain.CHECKLIST["AC"]}
+    rankings = {
+        "AC": _ranking(
+            "Charge Air IC Air Temp. Out",
+            "Exh.Gas Temp. Turbine In",
+            "No.1 Exh.Gas Temp.",
+            "Fuel Flow",
+            "Shaft Power",
+        )
+    }
+    result = explain.physics_check(rankings, checklist)
+    assert result["match_count"].iloc[0] == 3
+    assert bool(result["passed"].iloc[0]) is True
+    assert not result["day_dependent_hit"].any()
+
+
+def test_physics_check_fails_a_fault_with_only_2_of_5_top_features_matching():
+    checklist = {"AC": explain.CHECKLIST["AC"]}
+    rankings = {
+        "AC": _ranking(
+            "Charge Air IC Air Temp. Out",
+            "Exh.Gas Temp. Turbine In",
+            "Fuel Flow",
+            "Shaft Power",
+            "Fuel Injector Cooling Oil Press.",
+        )
+    }
+    result = explain.physics_check(rankings, checklist)
+    assert result["match_count"].iloc[0] == 2
+    assert bool(result["passed"].iloc[0]) is False
+
+
+def test_physics_check_fails_when_a_day_dependent_channel_is_in_the_top_5():
+    checklist = {"AC": explain.CHECKLIST["AC"]}
+    rankings = {
+        "AC": _ranking(
+            "Charge Air IC Air Temp. Out",
+            "Exh.Gas Temp. Turbine In",
+            "No.1 Exh.Gas Temp.",
+            "No.2 Exh.Gas Temp.",
+            "Fuel Temp.",
+        )
+    }
+    result = explain.physics_check(rankings, checklist)
+    assert result["match_count"].iloc[0] == 4
+    assert bool(result["day_dependent_hit"].iloc[0]) is True
+    assert bool(result["passed"].iloc[0]) is False
+
+
+def test_checklist_matches_the_engineering_checklist_file():
+    text = (paths.ROOT / "reports" / "engineering_checklist.md").read_text()
+    # Every channel marked "Agree" (not "Disagree"/"Unclear") in the Observed section for a
+    # symbol this module resolves must be reachable from that fault's checklist entry.
+    symbol_to_channel = {
+        "T15": "Charge Air IC Air Temp. Out",
+        "T1": "No.1 Exh.Gas Temp.",
+        "T2": "No.2 Exh.Gas Temp.",
+        "T3": "No.3 Exh.Gas Temp.",
+        "T4": "Exh.Gas Temp. Turbine In",
+        "T5": "Exh.Gas Temp. Turbine Out",
+        "Pturb": "Charge Air Press.",
+        "Qturb": "TCH Power",
+        "Pmax": "Max. In-Cylinder Press. No.1",
+    }
+    for symbol, channel in symbol_to_channel.items():
+        assert f"({symbol})" in text
+        assert (
+            channel
+            in explain.CHECKLIST["AC"]
+            | explain.CHECKLIST["AF"]
+            | explain.CHECKLIST["INJ"]
+            | explain.CHECKLIST["CW"]
+            | explain.CHECKLIST["TD"]
+        )
+    for symbol in ("T12", "T18", "T21", "Pl_water2"):
+        assert symbol in text

@@ -224,6 +224,135 @@ def grouped_shap(shap_values: np.ndarray, columns: Sequence[str]) -> pd.Series:
     return per_row.mean(axis=0).sort_values(key=lambda s: s.abs(), ascending=False)
 
 
+DAY_DEPENDENT_CHANNELS: frozenset[str] = frozenset(
+    {
+        "LO Cooling Water Temp. In",
+        "Fuel Temp.",
+        "Fuel Oil Temp. Flow meter In",
+        "Sea Cooling Water Press.",
+    }
+)
+"""Slow, day-dependent channels a diagnosis must not lean on (checklist "Channels that
+must not drive a diagnosis"; symbols T12, T18, T21, Pl_water2 in `reports/targets.md`)."""
+
+CHECKLIST: dict[str, frozenset[str]] = {
+    "AC": frozenset(
+        {
+            "Charge Air IC Air Temp. Out",
+            "Charge Air IC Air Temp. In",
+            "Charge Air IC Cooling Water Temp. In",
+            "Loss in Charge Air IC",
+            "Charge Air IC Cooling water flow",
+            "Charge Air IC Cooling Water Temp. Out",
+            "Exh.Gas Temp. Turbine In",
+            "No.1 Exh.Gas Temp.",
+            "No.2 Exh.Gas Temp.",
+            "No.3 Exh.Gas Temp.",
+        }
+    ),
+    "AF": frozenset(
+        {
+            "Charge Air Press.",
+            "Exh.Gas Temp. Turbine In",
+            "No.1 Exh.Gas Temp.",
+            "No.2 Exh.Gas Temp.",
+            "No.3 Exh.Gas Temp.",
+            "Max. In-Cylinder Press. No.1",
+            "Max. In-Cylinder Press. No.2",
+            "Max. In-Cylinder Press. No.3",
+            "TCH Power",
+            "Exh. Gas Mass Flow",
+        }
+    ),
+    "INJ": frozenset(
+        {
+            "No.1 Exh.Gas Temp.",
+            "No.2 Exh.Gas Temp.",
+            "No.3 Exh.Gas Temp.",
+            "Max. In-Cylinder Press. No.1",
+            "Max. In-Cylinder Press. No.2",
+            "Max. In-Cylinder Press. No.3",
+            "Indicated Work No.1",
+            "Indicated Work No.2",
+            "Indicated Work No.3",
+            "Indicated Efficiency",
+            "Charge Air Press.",
+            "Effective Efficiency",
+            "Fuel Flow",
+            "Shaft Power",
+        }
+    ),
+    "CW": frozenset(
+        {
+            "Fresh Cooling Water Press.",
+            "Engine Cooling water flow",
+            "Cooling Water Temp. Engine In",
+            "Cooling Water Temp. Engine Out I",
+            "Cooling Water Temp. Engine Out II",
+            "Cooling Water Temp. Engine Out III",
+            "Loss with cooling water",
+        }
+    ),
+    "TD": frozenset(
+        {
+            "Exh.Gas Temp. Turbine Out",
+            "Exh.Gas Temp. Turbine In",
+            "Charge Air Press.",
+            "TCH Power",
+            "No.1 Exh.Gas Temp.",
+            "No.2 Exh.Gas Temp.",
+            "No.3 Exh.Gas Temp.",
+            "Max. In-Cylinder Press. No.1",
+        }
+    ),
+}
+"""Per fault, the channels a top-5 SHAP feature must trace to for a match (R5): the
+checklist's pre-registered "Expected top 5" plus any channel marked "Agree" in the
+Observed section of `reports/engineering_checklist.md`, transcribed and checked against
+that file by `tests/test_explain.py::test_checklist_matches_the_engineering_checklist_file`."""
+
+
+def physics_check(
+    shap_rank_by_class: dict[str, pd.Series], checklist: dict[str, frozenset[str]]
+) -> pd.DataFrame:
+    """The pre-registered physics check (R5): for each fault, the top 5 features by mean
+    |SHAP| (`shap_rank_by_class[fault]`, already restricted to that class's held-out rows
+    and sorted descending), each mapped to its source channel(s) via `source_channel`. A
+    feature matches if any of its channels is in `checklist[fault]`. A fault passes when at
+    least 3 of 5 features match and none of the top 5 traces to a day-dependent channel
+    (`DAY_DEPENDENT_CHANNELS`).
+
+    Returns one row per fault per top-5 feature, columns: fault, feature, channels, matched,
+    day_dependent, match_count, day_dependent_hit, passed.
+    """
+    rows = []
+    for fault, ranking in shap_rank_by_class.items():
+        allowed = checklist[fault]
+        top5 = ranking.index[:5]
+        channels = [source_channel(feature) for feature in top5]
+        matched = [any(ch in allowed for ch in chans) for chans in channels]
+        day_dependent = [any(ch in DAY_DEPENDENT_CHANNELS for ch in chans) for chans in channels]
+        match_count = sum(matched)
+        day_dependent_hit = any(day_dependent)
+        passed = match_count >= 3 and not day_dependent_hit
+        for feature, chans, is_match, is_day in zip(
+            top5, channels, matched, day_dependent, strict=True
+        ):
+            rows.append(
+                {
+                    "fault": fault,
+                    "feature": feature,
+                    "channels": ", ".join(chans),
+                    "matched": is_match,
+                    "day_dependent": is_day,
+                    "match_count": match_count,
+                    "day_dependent_hit": day_dependent_hit,
+                    "passed": passed,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def waterfall(
     shap_row: np.ndarray, columns: Sequence[str], top_n: int = 8
 ) -> tuple[pd.Series, pd.Series]:
