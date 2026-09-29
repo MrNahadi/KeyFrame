@@ -2,14 +2,14 @@
 
 ## T-001: Model bundle
 
-Status: open
+Status: done
 Blocked by:
 Slice: The all-loads XGBoost model, its feature recipe, alarm settings and metadata saved and restored as one object that predicts and explains from raw readings.
 Test seam: `keyframe.predict.KeyframeModel` (`save`, `load`, `features`, `predict_proba`, `explain`)
 Context: requirements R1-R2, R4; `grep -n '^def \|^class ' keyframe/lockbox.py keyframe/explain.py`; `grep -n 'def build_feature_table\|def add_rolling_features\|def add_physics_features' keyframe/features.py`
 Acceptance:
-- [ ] Round-trip test on a small synthetic model: save, load, same probabilities
-- [ ] `explain` returns five groups whose SHAP sums plus base value equal the raw margin for the predicted class (additivity, test)
+- [x] Round-trip test on a small synthetic model: save, load, same probabilities
+- [x] `explain` returns five groups whose SHAP sums plus base value equal the raw margin for the predicted class (additivity, test)
 Notes:
 
 ## T-002: Reproduction in a clean session
