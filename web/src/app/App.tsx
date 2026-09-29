@@ -1,6 +1,6 @@
 import { FileText, PlayCircle, SlidersHorizontal } from 'lucide-react'
 import { Icon } from '../ui/Icon'
-import { EmptyState } from '../ui/EmptyState'
+import { WhatIfScreen } from '../whatif/WhatIfScreen'
 import { RunPicker } from '../replay/RunPicker'
 import { ReplayScreen } from '../replay/ReplayScreen'
 import { ModelCardPage } from '../modelcard/ModelCardPage'
@@ -34,16 +34,7 @@ function Page({ route }: { route: Route }) {
         </div>
       )
     case 'what-if':
-      return (
-        <EmptyState
-          icon={SlidersHorizontal}
-          title="Try your own readings"
-          action={<a href={hrefFor({ page: 'replay', runId: null })}>Go to Replay</a>}
-        >
-          Set an engine load, move key readings and watch the diagnosis change. This view
-          needs the Keyframe API; until it is built, replay a recorded run instead.
-        </EmptyState>
-      )
+      return <WhatIfScreen />
     case 'model-card':
       return <ModelCardPage />
   }

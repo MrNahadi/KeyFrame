@@ -48,13 +48,13 @@ Notes:
 
 ## T-005: What-if screen
 
-Status: open
+Status: done
 Blocked by: T-001, T-004
 Slice: Pick a load, move readings, and watch the diagnosis and explanation update, with honest states.
 Test seam: `web/src/whatif/WhatIfScreen.tsx` via Testing Library with a mocked client
 Context: requirements R5-R6; `grep -n 'export' web/src/replay/Probabilities.tsx web/src/replay/ExplainPanel.tsx`
 Acceptance:
-- [ ] Tests: baseline loads per load; slider change triggers one debounced request; latest response wins; API-unavailable state with the start command and retry; steady-state notice always visible
+- [x] Tests: baseline loads per load; slider change triggers one debounced request; latest response wins; API-unavailable state with the start command and retry; steady-state notice always visible
 Notes:
 
 ## T-006: Screen audit
