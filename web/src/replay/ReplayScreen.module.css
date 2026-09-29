@@ -1,84 +1,154 @@
 .screen {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
-.title,
-.lowNote {
-  margin: 0;
+.header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-self: start;
+  min-height: var(--touch-min);
+  font-size: var(--text-callout);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.title {
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
   overflow-wrap: anywhere;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+.heldOut {
+  max-width: var(--measure);
+  color: var(--text-secondary);
 }
 
-.speeds {
+.notice {
   display: flex;
   gap: var(--space-2);
-  margin-left: auto;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: var(--touch-min);
-  min-width: var(--touch-min);
-  padding: 0 var(--space-4);
+  max-width: var(--measure);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
+  font-size: var(--text-callout);
+  line-height: var(--leading-callout);
 }
 
-.button:hover:not(:disabled) {
-  background: var(--bg-secondary);
+.notice svg {
+  flex: none;
+  margin-top: 0.15rem;
 }
 
-.button:disabled {
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.now {
+  display: grid;
+  min-width: 7rem;
+}
+
+.clock {
+  font-family: var(--font-display);
+  font-size: var(--text-title-1);
+  line-height: var(--leading-title-1);
+  font-weight: var(--weight-semibold);
+}
+
+.clockLabel {
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
   color: var(--text-secondary);
-  cursor: not-allowed;
 }
 
-.button[aria-pressed='true'] {
-  background: var(--bg-secondary);
-  border-color: var(--text);
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
-.button:focus-visible,
-.scrubber:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+.play {
+  min-width: 7rem;
 }
 
-.scrubber {
-  width: 100%;
-  min-height: var(--touch-min);
+.speed {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+  font-size: var(--text-callout);
+  color: var(--text-secondary);
 }
 
-.elapsed {
-  margin: 0;
+.keys {
+  margin-top: calc(-1 * var(--space-3));
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
   color: var(--text-secondary);
 }
 
 .body {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
   gap: var(--space-6);
   align-items: start;
 }
 
-@media (max-width: 900px) {
-  .body {
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* The model's reading comes first in reading order (it answers the page's question) but sits on the right on wide screens. */
+.aside {
+  display: grid;
+  gap: var(--space-4);
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.body > section {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.about {
+  max-width: var(--measure);
+  font-size: var(--text-callout);
+  line-height: var(--leading-callout);
+  color: var(--text-secondary);
+}
+
+.about summary {
+  min-height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.about dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+}
+
+.about dt {
+  color: var(--text);
+  font-weight: var(--weight-medium);
 }
 
 .skeleton {
@@ -86,10 +156,42 @@
   background: var(--bg-secondary);
 }
 
-.skeletonBar {
-  height: var(--touch-min);
+.skeletonTitle {
+  height: 3rem;
+  max-width: 32rem;
 }
 
-.skeletonChart {
-  height: 12rem;
+.skeletonBar {
+  height: 3.5rem;
+}
+
+.skeletonPanel {
+  height: 20rem;
+}
+
+@media (max-width: 959px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aside,
+  .body > section {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .title {
+    font-size: var(--text-title-1);
+    line-height: var(--leading-title-1);
+  }
+
+  .speed {
+    margin-left: 0;
+  }
+
+  .keys {
+    display: none;
+  }
 }

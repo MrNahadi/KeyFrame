@@ -1,0 +1,232 @@
+.page {
+  display: grid;
+  gap: var(--space-12);
+}
+
+.intro {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
+  max-width: 46rem;
+}
+
+.title {
+  font-size: var(--text-title-1);
+  line-height: var(--leading-title-1);
+  text-wrap: balance;
+}
+
+.lead {
+  max-width: var(--measure);
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  font-size: var(--text-callout);
+  color: var(--text-secondary);
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.intro > :last-child {
+  margin-top: var(--space-2);
+}
+
+.runs {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  font-size: var(--text-callout);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table thead th {
+  font-size: var(--text-label);
+  line-height: var(--leading-label);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.groupRow th {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-2);
+  font-size: var(--text-callout);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+.group + .group .groupRow th {
+  border-top: 1px solid var(--border);
+}
+
+.row {
+  position: relative;
+}
+
+.row:hover {
+  background: var(--bg-secondary);
+}
+
+.load {
+  font-weight: var(--weight-regular);
+  white-space: nowrap;
+}
+
+.rowLink {
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* The whole row is the link target; the outline shows on the row when focused. */
+.rowLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.rowLink:focus-visible {
+  outline: none;
+}
+
+.rowLink:focus-visible::after {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.timelineHead {
+  width: 44%;
+}
+
+.timelineCell {
+  width: 44%;
+}
+
+.strip {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--healthy-span);
+}
+
+.span {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--fault-span);
+}
+
+.mark {
+  position: absolute;
+  top: 50%;
+  display: block;
+  line-height: 0;
+  transform: translate(-50%, -50%);
+}
+
+.alarmed {
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+.quiet {
+  color: var(--text-secondary);
+}
+
+.skeletonTable {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skeletonRow {
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: var(--text-display);
+    line-height: var(--leading-display);
+  }
+}
+
+/* Phones: each run is load and alarm on one line, its timeline underneath. */
+@media (max-width: 719px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table,
+  .table tbody,
+  .table .groupRow,
+  .table .groupRow th {
+    display: block;
+  }
+
+  .table .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'load alarm'
+      'strip strip';
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .table .row > * {
+    padding: 0;
+  }
+
+  .table .row > .load {
+    grid-area: load;
+  }
+
+  .table .row > .length {
+    display: none;
+  }
+
+  .table .row > .timelineCell {
+    grid-area: strip;
+    width: auto;
+  }
+
+  .table .row > .alarm {
+    grid-area: alarm;
+  }
+}

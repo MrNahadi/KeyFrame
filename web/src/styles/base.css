@@ -11,6 +11,7 @@ html {
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -22,20 +23,30 @@ body {
 h1,
 h2,
 h3,
-p {
+p,
+figure,
+ul,
+ol,
+dl,
+dd {
   margin: 0;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.005em;
 }
 
 h1 {
   font-size: var(--text-title-1);
   line-height: var(--leading-title-1);
-  font-weight: var(--weight-semibold);
 }
 
 h2 {
   font-size: var(--text-title-2);
   line-height: var(--leading-title-2);
-  font-weight: var(--weight-semibold);
 }
 
 h3 {
@@ -45,12 +56,30 @@ h3 {
 }
 
 a {
-  color: var(--accent);
+  color: var(--text);
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
 }
 
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Every number is a reading: equal-width figures so columns and live values do not jitter. */
+body {
+  font-variant-numeric: tabular-nums;
 }
 
 .visually-hidden {

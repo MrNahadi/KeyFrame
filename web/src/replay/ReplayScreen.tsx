@@ -1,8 +1,12 @@
-import { AlertTriangle, ChevronLeft, ChevronRight, Pause, Play, SkipBack, SkipForward, Zap } from 'lucide-react'
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Info, Pause, Play, SkipBack, SkipForward } from 'lucide-react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { hrefFor } from '../app/routes'
+import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
+import { clock } from '../ui/format'
 import { Icon } from '../ui/Icon'
+import { Keyframe } from '../ui/Keyframe'
+import { Segmented } from '../ui/Segmented'
 import { loadIndex, loadRun } from './data'
 import {
   createPlayback,
@@ -22,7 +26,8 @@ import {
 import { ExplainPanel } from './ExplainPanel'
 import { Probabilities } from './Probabilities'
 import styles from './ReplayScreen.module.css'
-import { duration, lowConfidenceNote } from './status'
+import { alarmTime, heldOutNote, lowConfidenceNote } from './status'
+import { Timeline } from './Timeline'
 import { Traces } from './Traces'
 import type { Replay, RunSummary } from './types'
 
@@ -84,6 +89,17 @@ type Load =
   | { kind: 'error'; message: string }
   | { kind: 'ready'; replay: Replay; title: string }
 
+const backHref = hrefFor({ page: 'replay', runId: null })
+
+function BackLink() {
+  return (
+    <a className={styles.back} href={backHref}>
+      <Icon icon={ChevronLeft} size={16} />
+      All runs
+    </a>
+  )
+}
+
 export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: ReplayScreenProps) {
   const [state, setState] = useState<Load>({ kind: 'loading' })
   const [attempt, setAttempt] = useState(0)
@@ -108,16 +124,14 @@ export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: 
     }
   }, [runId, load, loadTitles, attempt])
 
-  const back = <a href={hrefFor({ page: 'replay', runId: null })}>Back to all runs</a>
-
   if (state.kind === 'loading') {
     return (
       <div className={styles.screen} role="status" aria-label="Loading replay">
+        <div className={`${styles.skeleton} ${styles.skeletonTitle}`} aria-hidden="true" />
         <div className={`${styles.skeleton} ${styles.skeletonBar}`} aria-hidden="true" />
         <div className={styles.body} aria-hidden="true">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className={`${styles.skeleton} ${styles.skeletonChart}`} />
-          ))}
+          <div className={`${styles.skeleton} ${styles.skeletonPanel}`} />
+          <div className={`${styles.skeleton} ${styles.skeletonPanel}`} />
         </div>
       </div>
     )
@@ -130,10 +144,10 @@ export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: 
         title="This run could not be loaded"
         action={
           <>
-            <button type="button" className={styles.button} onClick={() => setAttempt((a) => a + 1)}>
+            <Button variant="primary" onClick={() => setAttempt((a) => a + 1)}>
               Try again
-            </button>{' '}
-            {back}
+            </Button>
+            <BackLink />
           </>
         }
       >
@@ -144,7 +158,7 @@ export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: 
 
   if (state.replay.frames.length === 0) {
     return (
-      <EmptyState icon={AlertTriangle} title="This run has no frames" action={back}>
+      <EmptyState icon={AlertTriangle} title="This run has no frames" action={<BackLink />}>
         The recording is empty, so there is nothing to play back.
       </EmptyState>
     )
@@ -153,13 +167,13 @@ export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: 
   return <Player replay={state.replay} title={state.title} />
 }
 
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+const SPEED_OPTIONS = SPEEDS.map((sp) => ({ value: sp, label: `${sp}×` }))
+
 function Player({ replay, title }: { replay: Replay; title: string }) {
   const times = replay.frames.map((f) => f.t)
-  const [pb, dispatch] = useReducer(
-    reduce,
-    undefined,
-    () => createPlayback(times, replay.switch_on_t),
-  )
+  const [pb, dispatch] = useReducer(reduce, undefined, () => createPlayback(times, replay.switch_on_t))
 
   const playing = pb.playing
   useEffect(() => {
@@ -175,7 +189,6 @@ function Player({ replay, title }: { replay: Replay; title: string }) {
     return () => cancelAnimationFrame(raf)
   }, [playing])
 
-  const rootRef = useRef<HTMLDivElement>(null)
   const onKey = useCallback((e: KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return
     const target = e.target as HTMLElement | null
@@ -193,80 +206,101 @@ function Player({ replay, title }: { replay: Replay; title: string }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onKey])
 
-  const last = times.length - 1
   const lowNote = lowConfidenceNote(replay.frames)
-  const elapsed = duration(times[pb.index] - times[0])
+  const elapsed = times[pb.index] - times[0]
 
   return (
-    <div className={styles.screen} ref={rootRef}>
-      <h1 className={styles.title}>{title}</h1>
-      <div className={styles.controls} role="group" aria-label="Playback controls">
-        <button type="button" className={styles.button} onClick={() => dispatch({ type: 'start' })} aria-label="Go to start">
-          <Icon icon={SkipBack} size={20} />
-        </button>
-        <button type="button" className={styles.button} onClick={() => dispatch({ type: 'back' })} aria-label="Step back">
-          <Icon icon={ChevronLeft} size={20} />
-        </button>
-        <button
-          type="button"
-          className={`${styles.button} ${styles.primary}`}
-          onClick={() => dispatch({ type: 'toggle' })}
-          aria-label={pb.playing ? 'Pause' : 'Play'}
-        >
-          <Icon icon={pb.playing ? Pause : Play} size={20} />
-        </button>
-        <button type="button" className={styles.button} onClick={() => dispatch({ type: 'forward' })} aria-label="Step forward">
-          <Icon icon={ChevronRight} size={20} />
-        </button>
-        <button type="button" className={styles.button} onClick={() => dispatch({ type: 'end' })} aria-label="Go to end">
-          <Icon icon={SkipForward} size={20} />
-        </button>
-        <button
-          type="button"
-          className={styles.button}
-          onClick={() => dispatch({ type: 'switchOn' })}
-          disabled={replay.switch_on_t === null}
-        >
-          <Icon icon={Zap} size={20} /> Jump to fault switch-on
-        </button>
-        <div className={styles.speeds} role="group" aria-label="Playback speed">
-          {SPEEDS.map((sp) => (
-            <button
-              key={sp}
-              type="button"
-              className={styles.button}
-              aria-pressed={pb.speed === sp}
-              onClick={() => dispatch({ type: 'speed', speed: sp })}
-            >
-              {sp}×
-            </button>
-          ))}
-        </div>
-      </div>
-      <input
-        className={styles.scrubber}
-        type="range"
-        aria-label="Position in run"
-        min={0}
-        max={last}
-        step={1}
-        value={pb.index}
-        aria-valuetext={elapsed}
-        onChange={(e) => dispatch({ type: 'seek', index: Number(e.target.value) })}
-      />
-      <p className={styles.elapsed}>
-        {elapsed} into the run. Keys: Space plays or pauses, arrows step, Home and End jump, S jumps to switch-on.
-      </p>
-      <div className={styles.body}>
-        <Traces replay={replay} index={pb.index} />
-        <Probabilities replay={replay} index={pb.index} />
-      </div>
-      <ExplainPanel replay={replay} index={pb.index} playing={pb.playing} />
+    <div className={styles.screen}>
+      <header className={styles.header}>
+        <BackLink />
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.heldOut}>
+          {heldOutNote(replay)} <a href={hrefFor({ page: 'model-card' })}>Model card</a>
+        </p>
+      </header>
+
       {lowNote && (
-        <p className={styles.lowNote}>
-          {lowNote} <a href={hrefFor({ page: 'model-card' })}>Model card</a>
+        <p className={styles.notice}>
+          <Icon icon={Info} size={16} />
+          <span>{lowNote}</span>
         </p>
       )}
+
+      <Timeline
+        times={times}
+        index={pb.index}
+        switchOnT={replay.switch_on_t}
+        alarmT={alarmTime(replay)}
+        onSeek={(index) => dispatch({ type: 'seek', index })}
+      />
+
+      <div className={styles.transport}>
+        <p className={styles.now}>
+          <span className={styles.clock}>{clock(elapsed)}</span>
+          <span className={styles.clockLabel}>into the run</span>
+        </p>
+        <div className={styles.buttons} role="group" aria-label="Playback controls">
+          <Button variant="tertiary" onClick={() => dispatch({ type: 'start' })} aria-label="Go to start">
+            <Icon icon={SkipBack} size={20} />
+          </Button>
+          <Button variant="tertiary" onClick={() => dispatch({ type: 'back' })} aria-label="Step back">
+            <Icon icon={ChevronLeft} size={20} />
+          </Button>
+          <Button
+            variant="primary"
+            className={styles.play}
+            onClick={() => dispatch({ type: 'toggle' })}
+            aria-label={pb.playing ? 'Pause' : 'Play'}
+          >
+            <Icon icon={pb.playing ? Pause : Play} size={20} />
+            <span aria-hidden="true">{pb.playing ? 'Pause' : 'Play'}</span>
+          </Button>
+          <Button variant="tertiary" onClick={() => dispatch({ type: 'forward' })} aria-label="Step forward">
+            <Icon icon={ChevronRight} size={20} />
+          </Button>
+          <Button variant="tertiary" onClick={() => dispatch({ type: 'end' })} aria-label="Go to end">
+            <Icon icon={SkipForward} size={20} />
+          </Button>
+        </div>
+        <Button onClick={() => dispatch({ type: 'switchOn' })} disabled={replay.switch_on_t === null}>
+          <Keyframe kind="switch-on" size={14} />
+          Jump to switch-on
+        </Button>
+        <div className={styles.speed}>
+          <span className={styles.speedLabel} aria-hidden="true">
+            Speed
+          </span>
+          <Segmented
+            label="Playback speed"
+            options={SPEED_OPTIONS}
+            value={pb.speed}
+            onChange={(speed: Speed) => dispatch({ type: 'speed', speed })}
+          />
+        </div>
+      </div>
+      <p className={styles.keys}>
+        Keys: Space plays or pauses, arrows step, Home and End jump, S jumps to switch-on.
+      </p>
+
+      <div className={styles.body}>
+        <aside className={styles.aside} aria-label="Model">
+          <Probabilities replay={replay} index={pb.index} />
+          <ExplainPanel replay={replay} index={pb.index} playing={pb.playing} />
+        </aside>
+        <Traces replay={replay} index={pb.index} />
+      </div>
+
+      <details className={styles.about}>
+        <summary>About this replay</summary>
+        <dl>
+          <dt>Recording</dt>
+          <dd>Real test-bench run, {replay.sampling_note}.</dd>
+          <dt>Predictions</dt>
+          <dd>
+            {sentence(replay.provenance)}. Each moment is read using only what had happened up to then.
+          </dd>
+        </dl>
+      </details>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Probabilities } from './Probabilities'
-import { alarmStatus, className, clock, duration, probabilitySentence } from './status'
+import { alarmState, className, heldOutNote, probabilitySentence } from './status'
 import type { Replay, ReplayFrame } from './types'
 
 afterEach(cleanup)
@@ -18,20 +18,12 @@ const frame = (t: number, alarm: string): ReplayFrame => ({
 
 const make = (switchOn: number | null, alarms: Record<number, string> = {}): Replay => ({
   run: 'r',
-  fault: 'f',
+  fault: 'AC',
   nominal_load: 40,
   switch_on_t: switchOn,
   sampling_note: '',
   provenance: '',
   frames: [100, 200, 300, 400, 500].map((t) => frame(t, alarms[t] ?? 'Normal')),
-})
-
-describe('formatting', () => {
-  it('formats clock and duration', () => {
-    expect(clock(125)).toBe('02:05')
-    expect(duration(45)).toBe('45 s')
-    expect(duration(438)).toBe('7 min 18 s')
-  })
 })
 
 describe('probabilitySentence', () => {
@@ -44,42 +36,76 @@ describe('probabilitySentence', () => {
   it('understands the class codes in the real replay files', () => {
     expect(probabilitySentence('AC', { AC: 0.9 })).toBe('The model reads this as air cooler fouling (90%)')
     expect(className('INJ')).toBe('injector nozzle clogging')
+    expect(className('Normal')).toBe('normal running')
   })
 })
 
-describe('alarmStatus', () => {
-  const faulty = make(200, { 400: 'AC Fouling' })
+describe('alarmState', () => {
+  const faulty = make(200, { 400: 'AC' })
 
   it('says healthy by design before switch-on', () => {
-    expect(alarmStatus(faulty, 0)).toBe('Engine healthy by design until 03:20')
+    expect(alarmState(faulty, 0)).toMatchObject({ kind: 'healthy', detail: 'The fault is switched on at 3:20.' })
   })
   it('says no alarm yet after switch-on', () => {
-    expect(alarmStatus(faulty, 2)).toBe('Fault switched on 100 s ago, no alarm yet'.replace('100 s', '1 min 40 s'))
+    expect(alarmState(faulty, 2)).toMatchObject({
+      kind: 'fault-on',
+      headline: 'Fault on, no alarm yet',
+      detail: 'Switched on 1 min 40 s ago.',
+    })
   })
   it('reports the alarm and its delay after it fires', () => {
-    expect(alarmStatus(faulty, 3)).toBe('Alarm: air cooler fouling raised 3 min 20 s after switch-on')
-    expect(alarmStatus(faulty, 4)).toContain('Alarm: air cooler fouling raised')
+    expect(alarmState(faulty, 3)).toEqual({
+      kind: 'alarm',
+      headline: 'Alarm: air cooler fouling',
+      detail: 'Raised 3 min 20 s after switch-on.',
+    })
+    expect(alarmState(faulty, 4).kind).toBe('alarm')
+  })
+  it('says plainly when the alarm names the wrong fault', () => {
+    expect(alarmState(make(200, { 400: 'TD' }), 3).detail).toBe(
+      'Raised 3 min 20 s after switch-on. The fault switched on was air cooler fouling.',
+    )
   })
   it('says so at the end of a run with no alarm', () => {
-    expect(alarmStatus(make(200), 4)).toBe('Fault switched on 5 min 0 s ago, no alarm was raised in this run')
+    expect(alarmState(make(200), 4)).toMatchObject({
+      kind: 'missed',
+      detail: 'The fault ran for 5 min 0 s and the model never raised the alarm.',
+    })
   })
   it('says no fault in a healthy run', () => {
-    expect(alarmStatus(make(null), 2)).toBe('No fault in this run')
+    expect(alarmState(make(null), 2).headline).toBe('No fault in this run')
   })
   it('flags an alarm in a healthy run', () => {
-    expect(alarmStatus(make(null, { 300: 'AC Fouling' }), 3)).toContain('no fault was switched on')
+    expect(alarmState(make(null, { 300: 'AC' }), 3)).toMatchObject({
+      kind: 'false-alarm',
+      detail: 'Raised though no fault was switched on in this run.',
+    })
+  })
+})
+
+describe('heldOutNote', () => {
+  it('names the held-out load, or says the load changes', () => {
+    const r = make(null)
+    expect(heldOutNote({ ...r, provenance: 'predictions from ... (leave-one-load-out fold 75); git commit x' })).toBe(
+      'Predictions come from a model that never saw 75% load.',
+    )
+    expect(heldOutNote({ ...r, provenance: '(leave-one-load-out fold 40, 60, 75, 85); git' })).toContain(
+      'The load changes during this run',
+    )
+    expect(heldOutNote(r)).toBe('Predictions come from a model that never saw 40% load.')
   })
 })
 
 describe('Probabilities', () => {
-  it('shows a text label and percentage for every class, plus provenance', () => {
+  it('shows the status and a text label and percentage for every class, leading class first', () => {
     render(<Probabilities replay={make(200)} index={1} />)
-    expect(screen.getByText('air cooler fouling')).toBeTruthy()
-    expect(screen.getByText('82%')).toBeTruthy()
-    expect(screen.getByText('normal running')).toBeTruthy()
-    expect(screen.getByText('18%')).toBeTruthy()
-    expect(screen.getByRole('status').textContent).toContain('Fault switched on')
-    expect(screen.getByText(/never saw this engine load/)).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Model card' }).getAttribute('href')).toBe('#/model-card')
+    expect(screen.getByRole('status').textContent).toBe('Fault on, no alarm yet')
+    const rows = screen.getAllByRole('listitem').map((li) => li.textContent)
+    expect(rows).toEqual(['Air cooler fouling82%', 'Normal running18%'])
+  })
+
+  it('marks the alarm', () => {
+    render(<Probabilities replay={make(200, { 300: 'AC' })} index={2} />)
+    expect(screen.getByRole('status').textContent).toBe('Alarm: air cooler fouling')
   })
 })

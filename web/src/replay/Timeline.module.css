@@ -1,0 +1,150 @@
+.wrap {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.timeline {
+  position: relative;
+  padding: var(--space-2) 0;
+}
+
+.track {
+  position: relative;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--healthy-span);
+}
+
+.healthy,
+.fault {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  overflow: hidden;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.healthy {
+  left: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.fault {
+  right: 0;
+  justify-content: flex-end;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--fault-span);
+}
+
+/* The part already played sits under a thin ink rule along the bottom edge. */
+.played {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 0 0 0 var(--radius-sm);
+  background: var(--playhead);
+}
+
+.key {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  transform: translate(-50%, -50%);
+}
+
+.playhead {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  bottom: calc(-1 * var(--space-2));
+  width: 2px;
+  margin-left: -1px;
+  background: var(--playhead);
+}
+
+.playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--playhead);
+}
+
+/* The native range input covers the strip; its own drawing is hidden, its behaviour kept. */
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.input::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+
+.input::-webkit-slider-thumb {
+  width: 2px;
+  height: 52px;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.input::-moz-range-track {
+  background: transparent;
+}
+
+.input::-moz-range-thumb {
+  width: 2px;
+  height: 52px;
+  border: 0;
+  background: transparent;
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.timeline:has(.input:focus-visible) .track {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.scale {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--text-secondary);
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text);
+}

@@ -1,4 +1,7 @@
-import { Line, LineChart, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import { groupOrder, sensorGroup, sensorLabel } from '../app/vocabulary'
+import { axisDecimals, fixed, reading } from '../ui/format'
+import { alarmTime } from './status'
 import styles from './Traces.module.css'
 import type { Replay } from './types'
 
@@ -16,11 +19,6 @@ export interface TraceRow {
   future: number | null
 }
 
-/** Time of the first frame where the alarm is raised, or null. */
-export function alarmTime(replay: Replay): number | null {
-  return replay.frames.find((f) => f.alarm !== 'Normal')?.t ?? null
-}
-
 /** Played values (up to the current frame) and future values; both share the current frame so the line is continuous. */
 export function buildSeries(replay: Replay, key: string, index: number): TraceRow[] {
   return replay.frames.map((f, i) => {
@@ -33,55 +31,70 @@ export function buildSeries(replay: Replay, key: string, index: number): TraceRo
   })
 }
 
+const TICK = { fontSize: 11, fill: 'var(--chart-axis)' }
+
+/** Trend charts like an engine-room trend page: one per sensor, grouped by pipe colour, with live readings. */
 export function Traces({ replay, index, width, height }: TracesProps) {
   const first = replay.frames[0]
   if (!first) return null
   const alarmT = alarmTime(replay)
-  const nowT = replay.frames[Math.min(index, replay.frames.length - 1)].t
+  const frame = replay.frames[Math.min(index, replay.frames.length - 1)]
+  const sensors = Object.entries(first.sensors)
+    .slice(0, 8)
+    .sort((a, b) => groupOrder(sensorGroup(a[0]).key) - groupOrder(sensorGroup(b[0]).key))
 
   return (
-    <div className={styles.grid} role="group" aria-label="Sensor traces">
-      {Object.entries(first.sensors)
-        .slice(0, 8)
-        .map(([key, s]) => {
+    <section className={styles.section} aria-labelledby="traces-title">
+      <h2 id="traces-title" className={styles.heading}>
+        Sensor readings
+      </h2>
+      <div className={styles.grid}>
+        {sensors.map(([key, s]) => {
+          const g = sensorGroup(key)
+          const values = replay.frames.map((f) => f.sensors[key]?.value).filter(Number.isFinite) as number[]
+          const decimals = axisDecimals(Math.max(...values) - Math.min(...values))
           const chart = (
             <LineChart
               data={buildSeries(replay, key, index)}
+              accessibilityLayer={false}
               width={width}
               height={height}
-              margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
+              margin={{ top: 6, right: 4, bottom: 4, left: 0 }}
             >
+              <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
               <XAxis dataKey="t" type="number" domain={['dataMin', 'dataMax']} hide />
-              <YAxis width={40} domain={['auto', 'auto']} tick={{ fontSize: 11 }} />
+              <YAxis
+                width={44}
+                domain={['auto', 'auto']}
+                tick={TICK}
+                tickCount={3}
+                tickFormatter={(v: number) => fixed(v, decimals)}
+                axisLine={false}
+                tickLine={false}
+              />
               <Line
                 dataKey="future"
-                stroke="var(--data-future)"
+                stroke="var(--trace-future)"
+                strokeWidth={1.5}
                 dot={false}
                 isAnimationActive={false}
               />
-              <Line
-                dataKey="past"
-                stroke="var(--data-trace)"
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
+              <Line dataKey="past" stroke={g.colour} strokeWidth={2} dot={false} isAnimationActive={false} />
               {replay.switch_on_t !== null && (
-                <ReferenceLine
-                  x={replay.switch_on_t}
-                  stroke="var(--data-marker-switch-on)"
-                  strokeDasharray="4 3"
-                />
+                <ReferenceLine x={replay.switch_on_t} stroke="var(--switch-on)" strokeDasharray="4 3" />
               )}
-              {alarmT !== null && (
-                <ReferenceLine x={alarmT} stroke="var(--data-marker-alarm)" strokeWidth={2} />
-              )}
-              <ReferenceLine x={nowT} stroke="var(--text)" />
+              {alarmT !== null && <ReferenceLine x={alarmT} stroke="var(--alarm)" strokeWidth={1.5} />}
+              <ReferenceLine x={frame.t} stroke="var(--playhead)" strokeOpacity={0.5} />
             </LineChart>
           )
+          const now = frame.sensors[key]
           return (
-            <figure key={key} className={styles.chart}>
-              <figcaption className={styles.title}>{`${s.label} (${s.unit})`}</figcaption>
+            <figure key={key} className={styles.chart} style={{ ['--group' as string]: g.colour }}>
+              <figcaption className={styles.caption}>
+                <span className={styles.label}>{sensorLabel(key, s.label)}</span>
+                <span className={styles.value}>{reading(now?.value, s.unit)}</span>
+                <span className={styles.group}>{g.label}</span>
+              </figcaption>
               <div className={styles.plot}>
                 {width && height ? (
                   chart
@@ -94,6 +107,11 @@ export function Traces({ replay, index, width, height }: TracesProps) {
             </figure>
           )
         })}
-    </div>
+      </div>
+      <p className={styles.key}>
+        Coloured line: readings so far. Grey line: the rest of the run. Dashed rule: fault switched on. Red rule:
+        alarm.
+      </p>
+    </section>
   )
 }

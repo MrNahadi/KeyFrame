@@ -1,39 +1,135 @@
 .page {
   display: grid;
-  gap: var(--space-6);
-  max-width: 48rem;
+  gap: var(--space-8);
+  max-width: 50rem;
+}
+
+.header {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  overflow-wrap: anywhere;
+}
+
+.lead {
+  max-width: var(--measure);
+  color: var(--text-secondary);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: var(--text-title-2);
+  line-height: var(--leading-title-2);
+}
+
+.tableWrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-callout);
+  line-height: var(--leading-callout);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.table thead th {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.table tbody th {
+  font-weight: var(--weight-medium);
+}
+
+.note {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+}
+
+.table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.result {
+  font-family: var(--font-display);
+  font-size: var(--text-headline);
+  font-weight: var(--weight-semibold);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.met {
+  color: var(--success);
+  font-weight: var(--weight-semibold);
 }
 
 .card {
   display: grid;
   gap: var(--space-3);
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
+  max-width: var(--measure);
   overflow-wrap: anywhere;
 }
 
-.card h1,
-.card h2,
-.card p,
-.card ul {
-  margin: 0;
-}
-
-.card h1 {
-  font-size: var(--text-title-1);
-  line-height: var(--leading-title-1);
-}
-
 .card h2 {
-  margin-top: var(--space-4);
-  font-size: var(--text-title-3);
-  line-height: var(--leading-title-3);
+  margin-top: var(--space-6);
+  font-size: var(--text-title-2);
+  line-height: var(--leading-title-2);
+}
+
+.card > p:first-child {
+  color: var(--text-secondary);
+  font-size: var(--text-callout);
 }
 
 .card ul {
   display: grid;
   gap: var(--space-2);
   padding-left: var(--space-6);
+}
+
+.card code {
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  font-family: inherit;
+  font-size: 0.95em;
 }
 
 .figure {
@@ -46,13 +142,22 @@
   display: block;
   max-width: 100%;
   height: auto;
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
 }
 
 .caption {
   font-size: var(--text-callout);
   color: var(--text-secondary);
+}
+
+.external {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch-min);
 }
 
 .skeleton {
@@ -61,26 +166,69 @@
   background: var(--bg-secondary);
 }
 
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--touch-min);
-  min-width: var(--touch-min);
-  padding: 0 var(--space-4);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
+.phoneLabel {
+  display: none;
 }
 
-.button:hover {
-  background: var(--bg-secondary);
-}
+/* Phones: each row becomes the measure on one line, then result, target and status. */
+@media (max-width: 639px) {
+  .title {
+    font-size: var(--text-title-1);
+    line-height: var(--leading-title-1);
+  }
 
-.button:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas:
+      'measure measure measure'
+      'result target status';
+    align-items: baseline;
+    column-gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table tbody th,
+  .table tbody td {
+    padding: 0;
+    border: 0;
+  }
+
+  .table tbody th {
+    grid-area: measure;
+    margin-bottom: var(--space-1);
+  }
+
+  .table .result {
+    grid-area: result;
+    text-align: left;
+  }
+
+  .table .target {
+    grid-area: target;
+    text-align: left;
+    color: var(--text-secondary);
+  }
+
+  .statusCell {
+    grid-area: status;
+    justify-self: end;
+  }
+
+  .phoneLabel {
+    display: inline;
+  }
 }

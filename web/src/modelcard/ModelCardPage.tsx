@@ -1,8 +1,11 @@
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Check, ExternalLink, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
+import { Icon } from '../ui/Icon'
 import { renderMarkdown } from './markdown'
 import styles from './ModelCardPage.module.css'
+import { SCORECARD } from './scorecard'
 
 const NOTEBOOK_URL = 'https://github.com/MrNahadi/KeyFrame/blob/main/notebooks/07_evaluation.ipynb'
 const publicUrl = (path: string) => `${import.meta.env.BASE_URL}${path}`
@@ -56,9 +59,9 @@ export function ModelCardPage({ load = loadModelCard }: { load?: () => Promise<s
         icon={AlertTriangle}
         title="The model card could not be loaded"
         action={
-          <button type="button" className={styles.button} onClick={() => setAttempt((a) => a + 1)}>
+          <Button variant="primary" onClick={() => setAttempt((a) => a + 1)}>
             Try again
-          </button>
+          </Button>
         }
       >
         {state.message}
@@ -66,9 +69,64 @@ export function ModelCardPage({ load = loadModelCard }: { load?: () => Promise<s
     )
   }
 
+  const met = SCORECARD.filter((s) => s.met).length
+  const { title, body } = splitTitle(state.card)
+
   return (
     <article className={styles.page}>
-      <div className={styles.card}>{renderMarkdown(state.card)}</div>
+      <header className={styles.header}>
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.lead}>
+          How good the model is and where it fails, scored on engine loads it never saw. {met} of{' '}
+          {SCORECARD.length} targets met.
+        </p>
+      </header>
+
+      <section aria-labelledby="targets-title" className={styles.section}>
+        <h2 id="targets-title" className={styles.sectionTitle}>
+          Targets
+        </h2>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th scope="col">Measure</th>
+                <th scope="col" className={styles.num}>
+                  Result
+                </th>
+                <th scope="col" className={styles.num}>
+                  Target
+                </th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SCORECARD.map((s) => (
+                <tr key={s.metric}>
+                  <th scope="row">
+                    {s.metric}
+                    {s.note && <span className={styles.note}>{s.note}</span>}
+                  </th>
+                  <td className={`${styles.num} ${styles.result}`}>{s.result}</td>
+                  <td className={`${styles.num} ${styles.target}`}>
+                    <span className={styles.phoneLabel}>Target </span>
+                    {s.target}
+                  </td>
+                  <td className={styles.statusCell}>
+                    <span className={s.met ? `${styles.status} ${styles.met}` : styles.status}>
+                      <Icon icon={s.met ? Check : X} size={16} />
+                      {s.met ? 'Met' : 'Not met'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div className={styles.card}>{renderMarkdown(body)}</div>
+
       <figure className={styles.figure}>
         <img
           className={styles.image}
@@ -80,10 +138,18 @@ export function ModelCardPage({ load = loadModelCard }: { load?: () => Promise<s
         </figcaption>
       </figure>
       <p>
-        <a href={NOTEBOOK_URL} rel="noreferrer">
+        <a className={styles.external} href={NOTEBOOK_URL} rel="noreferrer">
           Full evaluation notebook on GitHub
+          <Icon icon={ExternalLink} size={16} />
         </a>
       </p>
     </article>
   )
+}
+
+/** The card's own first heading becomes the page title, so the page has one h1. */
+function splitTitle(card: string): { title: string; body: string } {
+  const match = /^\s*#\s+(.+)\n?/.exec(card)
+  if (!match) return { title: 'Model card', body: card }
+  return { title: match[1].trim(), body: card.slice(match[0].length) }
 }

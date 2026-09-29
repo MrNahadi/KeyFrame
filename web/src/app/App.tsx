@@ -1,9 +1,10 @@
 import { FileText, PlayCircle, SlidersHorizontal } from 'lucide-react'
-import { Icon } from '../ui/Icon'
-import { WhatIfScreen } from '../whatif/WhatIfScreen'
-import { RunPicker } from '../replay/RunPicker'
-import { ReplayScreen } from '../replay/ReplayScreen'
 import { ModelCardPage } from '../modelcard/ModelCardPage'
+import { ReplayScreen } from '../replay/ReplayScreen'
+import { RunsPage } from '../replay/RunsPage'
+import { Icon } from '../ui/Icon'
+import { Keyframe } from '../ui/Keyframe'
+import { WhatIfScreen } from '../whatif/WhatIfScreen'
 import styles from './App.module.css'
 import { hrefFor, type Route, useRoute } from './routes'
 
@@ -16,23 +17,7 @@ const NAV: { page: Route['page']; label: string; icon: typeof PlayCircle }[] = [
 function Page({ route }: { route: Route }) {
   switch (route.page) {
     case 'replay':
-      return route.runId ? (
-        <div>
-          <p className={styles.pageLead}>
-            <a href={hrefFor({ page: 'replay', runId: null })}>Back to all runs</a>
-          </p>
-          <ReplayScreen key={route.runId} runId={route.runId} />
-        </div>
-      ) : (
-        <div>
-          <h1 className={styles.pageTitle}>Replay a real engine run</h1>
-          <p className={styles.pageLead}>
-            Pick a fault run from the test bench and play it back to see when Keyframe raised
-            the alarm.
-          </p>
-          <RunPicker />
-        </div>
-      )
+      return route.runId ? <ReplayScreen key={route.runId} runId={route.runId} /> : <RunsPage />
     case 'what-if':
       return <WhatIfScreen />
     case 'model-card':
@@ -46,7 +31,8 @@ export function App() {
     <div className={styles.shell}>
       <header className={styles.header}>
         <a className={styles.brand} href={hrefFor({ page: 'replay', runId: null })}>
-          Keyframe
+          <Keyframe kind="alarm" size={14} />
+          <span>Keyframe</span>
         </a>
         <nav aria-label="Primary">
           <ul className={styles.nav}>
@@ -75,6 +61,12 @@ export function App() {
       <main className={styles.main}>
         <Page route={route} />
       </main>
+      <footer className={styles.footer}>
+        <p>
+          Data: Marine Engine Fault Dataset v1.0 (BahooToroody et al., 2026), CC BY 4.0. Bench
+          results only; not tested on a ship.
+        </p>
+      </footer>
     </div>
   )
 }

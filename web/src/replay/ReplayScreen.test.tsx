@@ -64,6 +64,13 @@ describe('ReplayScreen', () => {
     expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe('Air cooler fouling at 40% load')
   })
 
+  it('says which held-out model made the predictions and links the model card', async () => {
+    render(<ReplayScreen runId="r" load={() => Promise.resolve(replay)} loadTitles={() => Promise.resolve([])} />)
+    expect(await screen.findByText(/never saw 40% load/)).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Model card' }).getAttribute('href')).toBe('#/model-card')
+    expect(screen.getByRole('link', { name: 'All runs' }).getAttribute('href')).toBe('#/replay')
+  })
+
   it('shows the low-confidence note only when the model is never confident', async () => {
     const weak: Replay = {
       ...replay,
@@ -79,7 +86,7 @@ describe('ReplayScreen', () => {
 
   it('gives the scrubber a text value', async () => {
     const { scrubber } = await setup()
-    expect(scrubber.getAttribute('aria-valuetext')).toBe('0 s')
+    expect(scrubber.getAttribute('aria-valuetext')).toBe('0:00 into the run')
   })
 
   it('Space toggles play and pause', async () => {
@@ -111,7 +118,7 @@ describe('ReplayScreen', () => {
   it('playback advances with animation frames', async () => {
     const raf = vi.spyOn(window, 'requestAnimationFrame')
     const { user, scrubber } = await setup()
-    await user.click(screen.getByRole('button', { name: '60×' }))
+    await user.click(screen.getByRole('radio', { name: '60×' }))
     await user.click(screen.getByRole('button', { name: 'Play' }))
     await waitFor(() => expect(raf).toHaveBeenCalled())
     expect(scrubber).toBeTruthy()

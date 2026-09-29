@@ -1,25 +1,20 @@
+import { AlertTriangle, Info, Loader2, RotateCcw } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { buildWaterfall } from '../replay/waterfall'
-import { className, probabilitySentence } from '../replay/status'
-import probStyles from '../replay/Probabilities.module.css'
-import { explainWindow, fetchBaselines, type ApiFailure, type Baselines, type Explanation } from './api'
+import { channelUnit, faultName, featureName, GROUPS, groupOrder, sensorGroup, sensorLabel } from '../app/vocabulary'
+import { ProbabilityBars } from '../replay/ProbabilityBars'
+import { className } from '../replay/status'
+import { Waterfall } from '../replay/Waterfall'
+import { Button } from '../ui/Button'
+import { number, percent, precise, signed } from '../ui/format'
+import { Icon } from '../ui/Icon'
+import { Segmented } from '../ui/Segmented'
+import { explainWindow, fetchBaselines, type ApiFailure, type Baselines, type Explanation, type Slider } from './api'
 import styles from './WhatIfScreen.module.css'
 
 const DEBOUNCE_MS = 250
 const WINDOW_S = 900
 const STEP_S = 10
 const START_COMMAND = 'uv run uvicorn api.main:app --port 8000'
-
-const COLOURS: Record<string, string> = {
-  Normal: 'var(--data-neutral)',
-  'AC Fouling': 'var(--data-1)',
-  'AF Clogging': 'var(--data-2)',
-  'Clogged Injector': 'var(--data-3)',
-  'CW Pump': 'var(--data-4)',
-  'Turbine Degradation': 'var(--data-5)',
-}
-
-const signed = (v: number) => `${v < 0 ? '−' : '+'}${Math.abs(v).toFixed(2)}`
 
 /** The API's explain endpoint takes a window, so hold one reading for 15 minutes. */
 const steadyRows = (reading: Record<string, number>) =>
@@ -82,134 +77,221 @@ export function WhatIfScreen() {
 
   const entry = load ? baselines?.loads[load] : undefined
   const unreachable = failure !== null && failure.kind !== 'validation'
+  const changed = entry
+    ? Object.keys(entry.sliders).filter((c) => values[c] !== undefined && values[c] !== entry.reading[c]).length
+    : 0
 
   return (
     <div className={styles.screen}>
-      <h1 className={styles.title}>Try your own readings</h1>
-      <p className={styles.notice}>Assumes the engine has held these readings steady for 15 minutes.</p>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Try your own readings</h1>
+        <p className={styles.lead}>
+          Start from a healthy engine, move a reading and see what the model makes of it.
+        </p>
+        <p className={styles.notice}>
+          <Icon icon={Info} size={16} />
+          <span>Assumes the engine has held these readings steady for 15 minutes.</span>
+        </p>
+      </header>
 
       {unreachable && (
-        <div className={styles.problem} role="alert">
-          <p>{failure.message}</p>
-          <p>
-            Start the API with <code>{START_COMMAND}</code>, then try again.
-          </p>
-          <button type="button" className={styles.button} onClick={() => void loadBaselines()}>
-            Retry
-          </button>
-        </div>
+        <section className={styles.problem} role="alert">
+          <Icon icon={AlertTriangle} size={20} />
+          <div className={styles.problemBody}>
+            <h2 className={styles.problemTitle}>The model&rsquo;s API is not answering</h2>
+            <p>{failure.message}</p>
+            <p>
+              Start it from the repository root with <code className={styles.code}>{START_COMMAND}</code>, then
+              retry.
+            </p>
+            <div>
+              <Button variant="primary" onClick={() => void loadBaselines()}>
+                Retry
+              </Button>
+            </div>
+          </div>
+        </section>
       )}
 
       {!baselines && !failure && (
         <div className={styles.skeleton} role="status" aria-label="Loading">
-          Loading readings…
+          Loading the healthy baselines…
         </div>
       )}
 
       {baselines && (
-        <>
-          <div role="radiogroup" aria-label="Engine load" className={styles.segmented}>
-            {baselines.load_bins.map((bin) => (
-              <button
-                key={bin}
-                type="button"
-                role="radio"
-                aria-checked={String(bin) === load}
-                className={String(bin) === load ? `${styles.seg} ${styles.segOn}` : styles.seg}
-                onClick={() => setLoad(String(bin))}
-              >
-                {bin}%
-              </button>
-            ))}
-          </div>
-
-          {entry && (
-            <div className={styles.sliders}>
-              {Object.entries(entry.sliders).map(([channel, s]) => (
-                <label key={channel} className={styles.slider}>
-                  <span>
-                    {s.label}: {values[channel] ?? entry.reading[channel]}
-                  </span>
-                  <input
-                    type="range"
-                    min={s.min}
-                    max={s.max}
-                    step="any"
-                    value={values[channel] ?? entry.reading[channel]}
-                    onChange={(e) => setValues((v) => ({ ...v, [channel]: Number(e.target.value) }))}
-                  />
-                  <span className={styles.range}>
-                    {s.min} to {s.max}
-                  </span>
-                </label>
-              ))}
-              <button type="button" className={styles.button} onClick={() => load && resetTo(load)}>
+        <div className={styles.body}>
+          <section className={styles.controls} aria-label="Readings">
+            <div className={styles.toolbar}>
+              <div className={styles.load}>
+                <span className={styles.toolbarLabel} aria-hidden="true">
+                  Engine load
+                </span>
+                <Segmented
+                  label="Engine load"
+                  options={baselines.load_bins.map((bin) => ({ value: String(bin), label: `${bin}%` }))}
+                  value={load ?? ''}
+                  onChange={setLoad}
+                />
+              </div>
+              <Button variant="tertiary" onClick={() => load && resetTo(load)} disabled={changed === 0}>
+                <Icon icon={RotateCcw} size={16} />
                 Reset to healthy baseline
-              </button>
+              </Button>
             </div>
-          )}
 
-          {failure?.kind === 'validation' && (
-            <p className={styles.problem} role="alert">
-              {failure.message}
-            </p>
-          )}
-
-          {!result && !failure && (
-            <div className={styles.skeleton} role="status" aria-label="Loading">
-              Reading the model…
-            </div>
-          )}
-
-          {result && (
-            <section
-              className={updating ? `${styles.result} ${styles.updating}` : styles.result}
-              aria-label="Diagnosis"
-              aria-busy={updating}
-            >
-              {updating && <p className={styles.updatingNote}>Updating…</p>}
-              <p className={probStyles.sentence}>
-                {probabilitySentence(result.predicted_class, result.probabilities)}
+            {entry && <SliderGroups entry={entry} values={values} setValues={setValues} />}
+            {result && (
+              // Phones only: the full diagnosis sits below the sliders, so keep its verdict in view.
+              <p className={styles.dock} aria-hidden="true">
+                <span className={styles.dockLabel}>{updating ? 'Updating…' : 'The model reads this as'}</span>
+                <span className={styles.dockValue}>
+                  {faultName(result.predicted_class)}{' '}
+                  {percent(result.probabilities[result.predicted_class] ?? 0)}
+                </span>
               </p>
-              <ul className={probStyles.bars}>
-                {Object.entries(result.probabilities)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([name, p]) => (
-                    <li key={name} className={probStyles.row}>
-                      <span className={probStyles.name}>{className(name)}</span>
-                      <span className={probStyles.track} aria-hidden="true">
-                        <span
-                          className={probStyles.fill}
-                          style={{
-                            width: `${Math.round(p * 100)}%`,
-                            background: COLOURS[name] ?? 'var(--data-neutral)',
-                          }}
-                        />
-                      </span>
-                      <span className={probStyles.pct}>{Math.round(p * 100)}%</span>
-                    </li>
-                  ))}
-              </ul>
-              <h2 className={styles.sub}>Why the model reads this as {className(result.predicted_class)}</h2>
-              <ul className={styles.steps}>
-                {buildWaterfall(result.groups, result.base_value).steps.map((s) => (
-                  <li key={s.name}>
-                    {s.name}: {signed(s.value)} ({s.sign === 'positive' ? 'towards' : 'away from'}{' '}
-                    {className(result.predicted_class)})
-                  </li>
-                ))}
-              </ul>
-              {result.warnings.length > 0 && (
-                <ul className={styles.warnings}>
-                  {result.warnings.map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          )}
-        </>
+            )}
+          </section>
+
+          <section
+            className={updating && result ? `${styles.result} ${styles.updating}` : styles.result}
+            aria-label="Diagnosis"
+            aria-busy={updating}
+          >
+            {failure?.kind === 'validation' && (
+              <p className={styles.validation} role="alert">
+                {failure.message}
+              </p>
+            )}
+            {!result && !failure && (
+              <div className={styles.waiting} role="status" aria-label="Loading">
+                Reading the model…
+              </div>
+            )}
+            {result && <Diagnosis result={result} updating={updating} />}
+          </section>
+        </div>
       )}
     </div>
+  )
+}
+
+interface SliderGroupsProps {
+  entry: { reading: Record<string, number>; sliders: Record<string, Slider> }
+  values: Record<string, number>
+  setValues: (update: (v: Record<string, number>) => Record<string, number>) => void
+}
+
+function SliderGroups({ entry, values, setValues }: SliderGroupsProps) {
+  const channels = Object.keys(entry.sliders).sort(
+    (a, b) => groupOrder(sensorGroup(a).key) - groupOrder(sensorGroup(b).key),
+  )
+  const groups = [...GROUPS, sensorGroup('other')]
+    .map((g) => ({ g, channels: channels.filter((c) => sensorGroup(c).key === g.key) }))
+    .filter((x) => x.channels.length > 0)
+
+  return (
+    <div className={styles.groups}>
+      {groups.map(({ g, channels: list }) => (
+        <fieldset key={g.key} className={styles.group} style={{ ['--group' as string]: g.colour }}>
+          <legend className={styles.legend}>{g.label}</legend>
+          {list.map((channel) => {
+            const s = entry.sliders[channel]
+            const base = entry.reading[channel]
+            const value = values[channel] ?? base
+            const u = channelUnit(channel)
+            const range = s.max - s.min
+            const delta = value - base
+            const show = (v: number, withUnit = true) => precise(v, range, withUnit ? u : '')
+            const moved = Math.abs(delta) > range / 1000
+            const id = `slider-${channel.replace(/\W+/g, '-')}`
+            return (
+              <div key={channel} className={styles.slider}>
+                <label htmlFor={id} className={styles.sliderLabel}>
+                  {sensorLabel(channel, s.label)}
+                </label>
+                <output htmlFor={id} className={styles.sliderValue}>
+                  {show(value)}
+                </output>
+                <input
+                  id={id}
+                  className={styles.range}
+                  type="range"
+                  min={s.min}
+                  max={s.max}
+                  step={range / 200}
+                  value={value}
+                  aria-valuetext={show(value)}
+                  onChange={(e) => setValues((v) => ({ ...v, [channel]: Number(e.target.value) }))}
+                />
+                <span className={styles.scale}>
+                  <span>{show(s.min, false)}</span>
+                  <span className={moved ? styles.moved : undefined}>
+                    {moved
+                      ? `${delta < 0 ? '−' : '+'}${show(Math.abs(delta))} from healthy`
+                      : `Healthy ${show(base, false)}`}
+                  </span>
+                  <span>{show(s.max, false)}</span>
+                </span>
+              </div>
+            )
+          })}
+        </fieldset>
+      ))}
+    </div>
+  )
+}
+
+function Diagnosis({ result, updating }: { result: Explanation; updating: boolean }) {
+  const cls = className(result.predicted_class)
+  const p = result.probabilities[result.predicted_class]
+  return (
+    <>
+      <div className={styles.verdict}>
+        <p className={styles.verdictLabel}>
+          The model reads this as
+          {updating && (
+            <span className={styles.updatingNote}>
+              <Icon icon={Loader2} size={16} />
+              Updating…
+            </span>
+          )}
+        </p>
+        <p className={styles.verdictValue}>
+          {cls.charAt(0).toUpperCase() + cls.slice(1)}
+          {p !== undefined && <span className={styles.verdictPct}> {percent(p)}</span>}
+        </p>
+      </div>
+      <ProbabilityBars probabilities={result.probabilities} predicted={result.predicted_class} />
+      <div className={styles.why}>
+        <h2 className={styles.whyTitle}>Why the model reads this as {cls}</h2>
+        <Waterfall groups={result.groups} base={result.base_value} target={cls} />
+        {result.top_features.length > 0 && (
+          <>
+            <h3 className={styles.sub}>Strongest single readings</h3>
+            <ol className={styles.features}>
+              {result.top_features.slice(0, 3).map((f) => (
+                <li key={f.feature}>
+                  <span>{featureName(f.feature)}</span>
+                  <span className={styles.featureNumbers}>
+                    value {number(f.value)}, push {signed(f.shap)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+      </div>
+      {result.warnings.length > 0 && (
+        <ul className={styles.warnings}>
+          {result.warnings.map((w) => (
+            <li key={w}>
+              <Icon icon={Info} size={16} />
+              <span>{w}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   )
 }
