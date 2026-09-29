@@ -50,12 +50,12 @@ Notes:
 
 ## T-005: Notebook 08
 
-Status: open
+Status: done
 Blocked by: T-004
 Slice: Notebook 08 shows the export, the reproduction and one replay run.
 Test seam: executing `notebooks/08_export.py`
 Context: requirements R9; `grep -n '^# %%' notebooks/07_evaluation.py`
 Acceptance:
-- [ ] Figure `08_replay_example.png`; findings cell with sizes and the reproduction result
-- [ ] Executes under 5 minutes from saved files; committed
+- [x] Figure `08_replay_example.png`; findings cell with sizes and the reproduction result
+- [x] Executes under 5 minutes from saved files; committed
 Notes:
