@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Probabilities } from './Probabilities'
-import { alarmStatus, clock, duration, probabilitySentence } from './status'
+import { alarmStatus, className, clock, duration, probabilitySentence } from './status'
 import type { Replay, ReplayFrame } from './types'
 
 afterEach(cleanup)
@@ -39,6 +39,11 @@ describe('probabilitySentence', () => {
     expect(probabilitySentence('AC Fouling', { 'AC Fouling': 0.82 })).toBe(
       'The model reads this as air cooler fouling (82%)',
     )
+  })
+
+  it('understands the class codes in the real replay files', () => {
+    expect(probabilitySentence('AC', { AC: 0.9 })).toBe('The model reads this as air cooler fouling (90%)')
+    expect(className('INJ')).toBe('injector nozzle clogging')
   })
 })
 

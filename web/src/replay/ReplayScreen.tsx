@@ -243,7 +243,9 @@ function Player({ replay }: { replay: Replay }) {
         aria-valuetext={elapsed}
         onChange={(e) => dispatch({ type: 'seek', index: Number(e.target.value) })}
       />
-      <p className={styles.elapsed}>{elapsed} into the run</p>
+      <p className={styles.elapsed}>
+        {elapsed} into the run. Keys: Space plays or pauses, arrows step, Home and End jump, S jumps to switch-on.
+      </p>
       <div className={styles.body}>
         <Traces replay={replay} index={pb.index} />
         <Probabilities replay={replay} index={pb.index} />

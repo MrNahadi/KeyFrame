@@ -73,11 +73,11 @@ Notes:
 
 ## T-007: Screen audit
 
-Status: open
+Status: done
 Blocked by: T-006
 Slice: The replay screen is checked against the manifesto's Part 15 and fixed where it fails.
 Test seam: `specs/features/12-web-replay/audit.md`
 Context: requirements R13; `sed -n '/^# Part 15/,/^## The last word/p' docs/design/manifesto.md`; `grep -rn 'className' web/src/replay/*.tsx | head -40`
 Acceptance:
-- [ ] Every Part 15 item answered; failures fixed in the code or explained
+- [x] Every Part 15 item answered; failures fixed in the code or explained
 Notes:

@@ -3,6 +3,11 @@ import type { Replay } from './types'
 
 const CLASS_NAMES: Record<string, string> = {
   Normal: 'normal running',
+  AC: 'air cooler fouling',
+  AF: 'air filter clogging',
+  INJ: 'injector nozzle clogging',
+  CW: 'cooling water pump cavitation',
+  TD: 'turbine degradation',
   'AC Fouling': 'air cooler fouling',
   'AF Clogging': 'air filter clogging',
   'Clogged Injector': 'injector nozzle clogging',
