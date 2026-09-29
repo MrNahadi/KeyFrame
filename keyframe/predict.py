@@ -113,18 +113,21 @@ class KeyframeModel:
             )
         return model
 
-    def features(self, run_df: pd.DataFrame) -> pd.DataFrame:
+    def features(self, run_df: pd.DataFrame, last_n: int | None = None) -> pd.DataFrame:
         """Model feature frame for one run of raw readings (clean-table columns, time in `t`).
 
-        Uses the training functions (physics, then causal trailing rolling stats)."""
+        Uses the training functions (physics, then causal trailing rolling stats). With
+        `last_n`, only the last `last_n` rows (sorted by `t`) are built, directly and fast."""
         run = run_df if "run" in run_df.columns else run_df.assign(run="run")
+        if last_n is not None:
+            return features.build_feature_tail(run, min(last_n, len(run)))[self.columns]
         return features.build_feature_table(run)[self.columns]
 
-    def predict_proba(self, run_df: pd.DataFrame) -> pd.DataFrame:
-        """Class probabilities per row, columns in `classes` order."""
-        frame = self.features(run_df)
+    def predict_proba(self, run_df: pd.DataFrame, last_n: int | None = None) -> pd.DataFrame:
+        """Class probabilities per row (only the last `last_n` rows if given), in `classes` order."""
+        frame = self.features(run_df, last_n)
         return pd.DataFrame(
-            self.classifier.predict_proba(frame), index=run_df.index, columns=self.classes
+            self.classifier.predict_proba(frame), index=frame.index, columns=self.classes
         )
 
     @property

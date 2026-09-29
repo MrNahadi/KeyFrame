@@ -140,9 +140,11 @@ def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
             raise HTTPException(status_code=503, detail="Model files missing.")
         steady = body.reading is not None
         frame, warns = _steady_window(body) if steady else _prepare(body)
-        proba = model.predict_proba(frame)
+        # The alarm only reads the trailing min_duration_s, so build features for those rows.
+        recent = frame["t"] >= frame["t"].iloc[-1] - model.alarm["min_duration_s"]
+        proba = model.predict_proba(frame, last_n=int(recent.sum()))
         preds = proba.add_prefix("proba_").assign(
-            run="run", t=frame["t"], y_pred=proba.idxmax(axis=1)
+            run="run", t=frame["t"].loc[proba.index], y_pred=proba.idxmax(axis=1)
         )
         alarms = sustained_alarm(
             preds, model.alarm["min_duration_s"], model.alarm["min_probability"]
@@ -175,7 +177,7 @@ def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
         if model is None:
             raise HTTPException(status_code=503, detail="Model files missing.")
         frame, warns = _prepare(body)
-        result = model.explain(frame, len(frame) - 1)
+        result = model.explain(frame, 0, feature_frame=model.features(frame, last_n=1))
         for item in result["top_features"]:
             item["source_channels"] = list(explain.source_channel(item["feature"]))
             item["group"] = explain.group_of(item["feature"])

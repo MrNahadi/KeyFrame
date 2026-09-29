@@ -48,12 +48,12 @@ Notes:
 
 ## T-005: Latency under 300 ms
 
-Status: open
+Status: done
 Blocked by: T-003, T-004
 Slice: Predict and explain each answer in under 300 ms, measured and recorded.
 Test seam: `tests/test_api_latency.py`
 Context: requirements R9; `grep -n 'def features' -A25 keyframe/predict.py`
 Acceptance:
-- [ ] Median of 10 calls under 300 ms for `/predict` and `/explain`; `reports/results/11_latency.csv` written
-- [ ] `specs/tech-stack.md` Feedback commands mention how to run the API (edit only that table row)
+- [x] Median of 10 calls under 300 ms for `/predict` and `/explain`; `reports/results/11_latency.csv` written
+- [x] `specs/tech-stack.md` Feedback commands mention how to run the API (edit only that table row)
 Notes:
