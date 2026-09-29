@@ -39,3 +39,26 @@ jobs:
 
       - name: Test
         run: uv run pytest
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build (type-checks, copies replay files)
+        run: npm run build
