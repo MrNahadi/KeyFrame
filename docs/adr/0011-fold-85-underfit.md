@@ -1,0 +1,8 @@
+# 0011. The 85% fold's tuned XGBoost is underfit; the locked scores stand
+
+Status: accepted
+Decided-by: planner (stated: brief non-negotiable), 29 Sep 2026, during feature 12 validation
+Question: The 85% fold's tuned XGBoost (learning rate 0.0034, 59 trees, depth 7, from 9 Optuna trials under a 300 s cap) barely moves from its prior: its highest class probability on any held-out row is 0.26 (other folds reach 0.99). This explains that fold's calibration error (ECE 0.499), why no sustained alarm (minimum probability 0.5) fires on any 85% run, and flat probability bars in the demo. Should the model be re-tuned?
+Decision: No. The locked scores (ADR 0009) stand unchanged. The defect is recorded in the model card, notebook 07 and the demo (which shows a low-confidence note on such runs). A future version 2 may fix it by (a) constraining the search so learning rate × trees can converge (for example learning rate ≥ 0.03 or trees scaled with 1 / learning rate), and (b) more trials per fold; any such result is reported as a new, separately labelled evaluation, never as a replacement of the locked numbers.
+Basis: Brief section 8: "Targets are fixed before modelling ... never changed after seeing test results. Scores are not changed after milestone 10." Re-tuning after inspecting held-out predictions would select on the test folds (ranked trade-off 1, honest evaluation).
+Consequences: The headline macro F1 (0.717) includes a near-degenerate fold; the model card says so. The export (roadmap item 10) trains the deployable model with the median of per-fold tuned params, which is not affected by the fold-85 learning rate outlier in the same way; its behaviour is shown in the what-if view.

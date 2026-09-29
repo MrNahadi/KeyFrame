@@ -81,3 +81,16 @@ Context: requirements R13; `sed -n '/^# Part 15/,/^## The last word/p' docs/desi
 Acceptance:
 - [x] Every Part 15 item answered; failures fixed in the code or explained
 Notes:
+
+## T-008: Plain run titles and a low-confidence note
+
+Status: open
+Blocked by: T-007
+Slice: The replay screen names the run in plain words, never overflows at phone width, and says so plainly when the held-out model is never confident for a run.
+Test seam: `web/src/replay/ReplayScreen.tsx`; `web/src/replay/status.ts` (a pure `lowConfidenceNote(frames)` function)
+Context: requirements R6, R10, R11; `grep -n 'title\|runId\|h1' web/src/replay/ReplayScreen.tsx | head -20`; `head -c 400 web/public/replays/index.json`; `docs/adr/0011-fold-85-underfit.md`
+Acceptance:
+- [ ] The page title is the run's `title` from `index.json` ("Turbine degradation at 85% load"), never the raw id; long titles wrap (`overflow-wrap: anywhere`) so a 390 px viewport has no horizontal scroll
+- [ ] `lowConfidenceNote(frames)` returns a sentence when the highest class probability in every frame of the run is below 0.40, else null (tests for both cases); the screen shows it next to the provenance note: "The held-out model for this load is barely confident on any reading (at most <max>%). This is a known tuning defect, described on the model card; the scores shown are the locked ones." linked to the model card route
+- [ ] `npm --prefix web test` and `npm --prefix web run build` pass
+Notes:
