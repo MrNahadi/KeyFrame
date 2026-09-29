@@ -26,14 +26,14 @@ Notes:
 
 ## T-003: Replay builder from held-out fold models
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: One run becomes a replay JSON whose predictions and explanations come from the model that never saw its load.
 Test seam: `keyframe.replay.build_replay`
 Context: requirements R5, R8; `grep -n 'def run_shap' -A30 keyframe/experiments.py`; `grep -n 'def sustained_alarm' -A10 keyframe/alarm.py`
 Acceptance:
-- [ ] R8 tests on a synthetic run with a tiny fold model
-- [ ] Mixed-bin runs use each row's own fold model (test)
+- [x] R8 tests on a synthetic run with a tiny fold model
+- [x] Mixed-bin runs use each row's own fold model (test)
 Notes:
 
 ## T-004: Export every replay
