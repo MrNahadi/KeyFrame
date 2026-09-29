@@ -4,7 +4,7 @@ Results locked 29 September 2026 (ADR 0009).
 
 ## Model details
 
-XGBoost classifier on 833 features built from 2-second marine diesel sensor logs: the raw channels, physics-derived quantities (for example pressure ratios and temperature differences across the air cooler and turbine) and rolling-window statistics (mean, spread and trend over recent minutes). It predicts one of six states: Normal, air cooler fouling (AC), air filter clogging (AF), injector nozzle clogging (INJ), cooling water pump cavitation (CW) and turbine degradation (TD). Hyperparameters were tuned inside each training fold.
+XGBoost classifier on 833 features built from marine diesel sensor logs (one reading every 1 to 2 seconds): the raw channels, physics-derived quantities (for example pressure ratios and temperature differences across the air cooler and turbine) and rolling-window statistics (mean, spread and trend over recent minutes). It predicts one of six states: Normal, air cooler fouling (AC), air filter clogging (AF), injector nozzle clogging (INJ), cooling water pump cavitation (CW) and turbine degradation (TD). Hyperparameters were tuned inside each training fold.
 
 ## Intended use
 
@@ -33,7 +33,7 @@ Confidence is unreliable: pooled expected calibration error is 0.176 (target 0.0
 
 ## Explainability
 
-Grouped SHAP values agree with the physics: INJ leans on combustion and power channels, CW on cooling, AC on the air path. AF also leans mostly on cooling, which is less obviously causal. Window warm-up features carry almost no weight.
+SHAP explanations were checked against an engineering checklist written before any model saw the data. Only 2 of 5 faults pass (target 4 of 5): air cooler fouling leans on charge air temperature after the cooler, and injector clogging on the exhaust temperature spread between cylinders, both as predicted. Air filter clogging and cavitation lean on day-dependent channels (fuel temperatures, sea cooling water pressure, LO cooling water inlet temperature), and turbine degradation on lube oil and efficiency channels rather than the turbine itself. Grouped by system, CW appears to rely on "cooling", but only because its shortcut channels sit in that group, so the grouped view alone would overstate agreement with the physics. Details: `reports/physics_check.md`.
 
 ## Limits
 
@@ -43,3 +43,4 @@ Grouped SHAP values agree with the physics: INJ leans on combustion and power ch
 - Healthy segments show warm-up drift that can look like a fault.
 - Anomaly detectors trained on healthy data are near chance (fault detection AUROC 0.528, target 0.95).
 - Alarm detects 6 of 13 fault runs; the other 7 never raise one.
+- Demo response time (target 300 ms for a prediction plus explanation) is measured when the API is built, after this card was locked.

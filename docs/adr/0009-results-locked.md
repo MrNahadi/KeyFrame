@@ -13,5 +13,6 @@ Final numbers (XGBoost, `raw+physics+rolling`, leave one load out, `reports/resu
 6. Sensitivity without day-dependent channels: macro F1 0.635 / 0.725 / 0.611 / 0.347.
 7. Lockbox (unseen severity, scored once): 6,791 of 6,791 rows labelled INJ, 100% (target 90% met), but only INJ was predicted, so weak evidence.
 8. Anomaly detectors: fault detection AUROC 0.528 (target 0.95, not met).
+9. Physics check on SHAP explanations: 2 of 5 faults match the pre-registered checklist (AC, INJ; target 4 of 5, not met). AF and CW rely on day-dependent channels, TD on lube oil and efficiency proxies (`reports/physics_check.md`).
 Basis: `reports/model_card.md` and notebook 07 report these numbers without tuning on any test fold or the lockbox.
 Consequences: only the unseen-severity target is met. The model card states plainly that the model has not been tested on a ship.
