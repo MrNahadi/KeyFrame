@@ -6,7 +6,10 @@
 
 .title {
   margin: 0;
-  font-size: var(--text-headline);
+  overflow-wrap: anywhere;
+  font-size: var(--text-title-1);
+  line-height: var(--leading-title-1);
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 
@@ -31,21 +34,29 @@
 
 .segmented {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
 .seg,
 .button {
   font: inherit;
-  padding: var(--space-2) var(--space-3);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 0 var(--space-4);
   color: var(--text);
-  background: transparent;
-  border: 1px solid var(--text-secondary);
-  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 
+.slider input {
+  min-height: var(--touch-min);
+}
+
 .segOn {
+  background: var(--bg-secondary);
   border-color: var(--text);
   font-weight: 600;
 }

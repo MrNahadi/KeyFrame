@@ -59,11 +59,11 @@ Notes:
 
 ## T-006: Screen audit
 
-Status: open
+Status: done
 Blocked by: T-002, T-003, T-005
 Slice: The explain panel, what-if and model card screens are checked against the manifesto's Part 15.
 Test seam: `specs/features/13-web-explain/audit.md`
 Context: requirements R10; `sed -n '/^# Part 15/,/^## The last word/p' docs/design/manifesto.md`
 Acceptance:
-- [ ] Every Part 15 item answered for each screen; failures fixed or explained
+- [x] Every Part 15 item answered for each screen; failures fixed or explained
 Notes:
