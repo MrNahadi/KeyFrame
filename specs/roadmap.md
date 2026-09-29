@@ -12,7 +12,7 @@ Each item is one feature, one branch (`feature/NN-slug`), one folder in `specs/f
 - [x] 8. **Explainability** [M9]: notebook 06 with SHAP per class, per moment and per sensor group, permutation importance, PDP/ICE, one LIME comparison, and the physics check against the checklist.
 - [x] 9. **Evaluation and model card, results locked** [M10 gate]: notebook 07 with final held-out-load scores and spread, confusion matrix, calibration, run-by-run error analysis, the lockbox test and `reports/model_card.md`.
 - [x] 10. **Export** [M11]: notebook 08 retrains on all loads, saves model, preprocessing and explainer, and cuts replay files; a clean session reproduces a prediction.
-- [ ] 11. **API** [M12]: FastAPI `/predict`, `/explain`, `/runs`; one prediction plus explanation in under 300 ms.
+- [x] 11. **API** [M12]: FastAPI `/predict`, `/explain`, `/runs`; one prediction plus explanation in under 300 ms.
 - [ ] 12. **Web demo: replay** [M13, part 1]: framework chosen (ADR), app scaffold following the design manifesto, replay view with traces, probabilities, alarm and delay.
 - [ ] 13. **Web demo: explain, what-if and model card** [M13, part 2]: grouped SHAP waterfall on pause, what-if sliders, model card page.
 - [ ] 14. **Write-up** [M14]: README with results, figures, dataset citation and reproduction steps; drafts of the LinkedIn post and the Marine AIMS README link for the owner to publish.
