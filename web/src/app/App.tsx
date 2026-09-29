@@ -2,6 +2,7 @@ import { FileText, PlayCircle, SlidersHorizontal } from 'lucide-react'
 import { Icon } from '../ui/Icon'
 import { EmptyState } from '../ui/EmptyState'
 import { RunPicker } from '../replay/RunPicker'
+import { ReplayScreen } from '../replay/ReplayScreen'
 import styles from './App.module.css'
 import { hrefFor, type Route, useRoute } from './routes'
 
@@ -15,13 +16,13 @@ function Page({ route }: { route: Route }) {
   switch (route.page) {
     case 'replay':
       return route.runId ? (
-        <EmptyState
-          icon={PlayCircle}
-          title="Replay a real engine run"
-          action={<a href={hrefFor({ page: 'replay', runId: null })}>Back to all runs</a>}
-        >
-          The replay of {route.runId} appears here in the next part of the build.
-        </EmptyState>
+        <div>
+          <h1 className={styles.pageTitle}>Replay: {route.runId}</h1>
+          <p className={styles.pageLead}>
+            <a href={hrefFor({ page: 'replay', runId: null })}>Back to all runs</a>
+          </p>
+          <ReplayScreen key={route.runId} runId={route.runId} />
+        </div>
       ) : (
         <div>
           <h1 className={styles.pageTitle}>Replay a real engine run</h1>

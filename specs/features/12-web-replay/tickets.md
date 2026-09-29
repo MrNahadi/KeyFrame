@@ -61,14 +61,14 @@ Notes:
 
 ## T-006: Replay screen, keyboard and reduced motion
 
-Status: open
+Status: done
 Blocked by: T-004, T-005
 Slice: The full replay screen: controls, scrubber, traces, probabilities, status, with keyboard control.
 Test seam: `web/src/replay/ReplayScreen.tsx` via Testing Library and user-event
 Context: requirements R5, R11; `grep -n 'export' web/src/replay/*.ts web/src/replay/*.tsx`
 Acceptance:
-- [ ] Keyboard tests: Space, arrows, Home/End, S
-- [ ] `npm --prefix web run build` passes
+- [x] Keyboard tests: Space, arrows, Home/End, S
+- [x] `npm --prefix web run build` passes
 Notes:
 
 ## T-007: Screen audit
