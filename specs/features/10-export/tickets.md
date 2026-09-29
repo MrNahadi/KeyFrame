@@ -14,14 +14,14 @@ Notes:
 
 ## T-002: Reproduction in a clean session
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: The real bundle is saved, a reference prediction stored, and a fresh subprocess reproduces it.
 Test seam: `tests/test_predict.py::test_clean_session_reproduces_reference`; `uv run python -m keyframe.experiments export`
 Context: requirements R1, R3; `grep -n 'def evaluate_lockbox' -A30 keyframe/lockbox.py`
 Acceptance:
-- [ ] `models/keyframe_xgboost.joblib`, `models/model_meta.json`, `models/reference_prediction.json` written (one foreground command, under 9 minutes)
-- [ ] Subprocess test matches to 1e-6 (data-marked; skips if the model file is absent)
+- [x] `models/keyframe_xgboost.joblib`, `models/model_meta.json`, `models/reference_prediction.json` written (one foreground command, under 9 minutes)
+- [x] Subprocess test matches to 1e-6 (data-marked; skips if the model file is absent)
 Notes:
 
 ## T-003: Replay builder from held-out fold models

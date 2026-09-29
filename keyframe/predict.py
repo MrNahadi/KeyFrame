@@ -178,3 +178,49 @@ class KeyframeModel:
                 for f, v in top.items()
             ],
         }
+
+
+REFERENCE_FILE = "reference_prediction.json"
+REFERENCE_RUN = "AC_Fouling_40_Load"
+REFERENCE_AFTER_SWITCH_ON_S = 900.0
+
+
+def reference_window(clean: pd.DataFrame, switch_on: pd.DataFrame) -> pd.DataFrame:
+    """Raw rows of the reference run from its start to 15 minutes after switch-on (R3)."""
+    switch_t = float(switch_on.set_index("run")["t"].astype(float).loc[REFERENCE_RUN])
+    run = clean[clean["run"] == REFERENCE_RUN]
+    columns = [*explain.SENSOR_GROUPS, "t", "run"]
+    return run.loc[run["t"] <= switch_t + REFERENCE_AFTER_SWITCH_ON_S, columns]
+
+
+def write_reference(
+    model: KeyframeModel, window: pd.DataFrame, directory: Path = paths.MODELS
+) -> Path:
+    """Store the window and the model's probabilities for its last row."""
+    proba = model.predict_proba(window).iloc[-1]
+    payload = {
+        "run": REFERENCE_RUN,
+        "columns": list(window.columns),
+        "rows": window.to_dict(orient="list"),
+        "expected_probabilities": {str(k): float(v) for k, v in proba.items()},
+    }
+    path = directory / REFERENCE_FILE
+    path.write_text(json.dumps(payload, indent=1))
+    return path
+
+
+def export_model(directory: Path = paths.MODELS) -> Path:
+    """Train on every load, save the bundle, and store the reference prediction."""
+    model = KeyframeModel.train_all_loads()
+    model.save(directory)
+    switch_on = pd.read_csv(paths.RESULTS / "00_switch_on_points.csv")
+    window = reference_window(experiments.load_feature_table(), switch_on)
+    return write_reference(model, window, directory)
+
+
+def reproduce_reference(directory: Path = paths.MODELS) -> float:
+    """Reload the model from disk; return the largest gap to the stored probabilities."""
+    stored = json.loads((directory / REFERENCE_FILE).read_text())
+    window = pd.DataFrame(stored["rows"])[stored["columns"]]
+    proba = KeyframeModel.load(directory).predict_proba(window).iloc[-1]
+    return max(abs(float(proba[k]) - v) for k, v in stored["expected_probabilities"].items())

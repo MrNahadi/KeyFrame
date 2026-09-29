@@ -1,7 +1,11 @@
+import subprocess
+import sys
+
 import numpy as np
 import pandas as pd
+import pytest
 
-from keyframe import explain, features
+from keyframe import explain, features, paths, predict
 from keyframe.predict import KeyframeModel
 
 LABELS = ["Normal", "AC_Fouling", "AF_Clogging"]
@@ -58,3 +62,14 @@ def test_explain_groups_plus_base_equal_raw_margin(tmp_path):
     assert np.isclose(total, out["margin"], atol=1e-4)
     assert len(out["top_features"]) == 8
     assert set(out["groups_all_classes"]) == set(LABELS)
+
+
+@pytest.mark.data
+def test_clean_session_reproduces_reference():
+    if not (paths.MODELS / predict.MODEL_FILE).exists():
+        pytest.skip("models/keyframe_xgboost.joblib is missing; run the export experiment")
+    code = "from keyframe import predict; print(predict.reproduce_reference())"
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True, cwd=paths.ROOT
+    )
+    assert float(out.stdout.strip().splitlines()[-1]) < 1e-6
