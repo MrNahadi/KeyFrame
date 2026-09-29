@@ -19,6 +19,7 @@ import {
   type PlaybackState,
   type Speed,
 } from './playback'
+import { ExplainPanel } from './ExplainPanel'
 import { Probabilities } from './Probabilities'
 import styles from './ReplayScreen.module.css'
 import { duration, lowConfidenceNote } from './status'
@@ -260,6 +261,7 @@ function Player({ replay, title }: { replay: Replay; title: string }) {
         <Traces replay={replay} index={pb.index} />
         <Probabilities replay={replay} index={pb.index} />
       </div>
+      <ExplainPanel replay={replay} index={pb.index} playing={pb.playing} />
       {lowNote && (
         <p className={styles.lowNote}>
           {lowNote} <a href={hrefFor({ page: 'model-card' })}>Model card</a>

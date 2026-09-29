@@ -13,14 +13,14 @@ Notes:
 
 ## T-002: Explain panel on pause
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: Pausing the replay shows why the model reads the current moment as it does.
 Test seam: `web/src/replay/ExplainPanel.tsx` via Testing Library
 Context: requirements R2-R3; `grep -n 'export\|paused\|playing' web/src/replay/ReplayScreen.tsx | head -30`; `grep -n 'lowConfidenceNote' web/src/replay/status.ts`
 Acceptance:
-- [ ] Tests: panel shows title, summary sentence, top three features and caveat when paused; hint while playing; low-confidence wording when applicable
-- [ ] Waterfall renders with fixed width/height in tests; below probabilities under 640 px
+- [x] Tests: panel shows title, summary sentence, top three features and caveat when paused; hint while playing; low-confidence wording when applicable
+- [x] Waterfall renders with fixed width/height in tests; below probabilities under 640 px
 Notes:
 
 ## T-003: Model card page
