@@ -2,13 +2,13 @@
 
 ## T-001: Replay types and loading
 
-Status: open
+Status: done
 Blocked by:
 Slice: The app can fetch the run index and one run, typed and validated.
 Test seam: `web/src/replay/data.ts` (`loadIndex`, `loadRun`)
 Context: requirements R2-R3; `head -c 1500 web/public/replays/index.json`; `head -c 2500 web/public/replays/<first run>.json` (after `npm --prefix web run sync-replays`); `ls web/src`
 Acceptance:
-- [ ] Types match the real files; validation rejects a malformed file with a typed error (tests with fixtures in `web/src/replay/__fixtures__/`, small hand-trimmed copies)
+- [x] Types match the real files; validation rejects a malformed file with a typed error (tests with fixtures in `web/src/replay/__fixtures__/`, small hand-trimmed copies)
 Notes:
 - Parked stash: T-001 parked (types, loaders, fixtures and tests written; `npm --prefix web test` passes 9/9; `npm --prefix web run build` fails: `data.test.ts` lines 21 and 36 index an empty tuple, TS2493. The earlier iteration could not run the web checks; `.ralph/settings.json` now allows them)
 
