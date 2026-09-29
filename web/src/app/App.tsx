@@ -3,6 +3,7 @@ import { Icon } from '../ui/Icon'
 import { EmptyState } from '../ui/EmptyState'
 import { RunPicker } from '../replay/RunPicker'
 import { ReplayScreen } from '../replay/ReplayScreen'
+import { ModelCardPage } from '../modelcard/ModelCardPage'
 import styles from './App.module.css'
 import { hrefFor, type Route, useRoute } from './routes'
 
@@ -44,16 +45,7 @@ function Page({ route }: { route: Route }) {
         </EmptyState>
       )
     case 'model-card':
-      return (
-        <EmptyState
-          icon={FileText}
-          title="How good is Keyframe, and where does it fail?"
-          action={<a href={hrefFor({ page: 'replay', runId: null })}>Go to Replay</a>}
-        >
-          The model card lists the scores on engine loads the model never trained on, the
-          dataset credit and the known limits. It appears here in the next part of the build.
-        </EmptyState>
-      )
+      return <ModelCardPage />
   }
 }
 

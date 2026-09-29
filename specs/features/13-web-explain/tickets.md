@@ -25,14 +25,14 @@ Notes:
 
 ## T-003: Model card page
 
-Status: open
+Status: done
 Blocked by:
 Slice: The model card is copied at build and rendered safely in the app with the confusion matrix.
 Test seam: `web/src/modelcard/markdown.ts`; `web/src/modelcard/ModelCardPage.tsx`
 Context: requirements R7-R9; `cat web/scripts/sync-replays.mjs`; `sed -n '1,12p' reports/model_card.md`; `grep -n 'model-card' web/src/app/App.tsx`
 Acceptance:
-- [ ] Renderer tests for every construct and for `<script>` rendered as text
-- [ ] Page test with a fixture card; loading and error states
+- [x] Renderer tests for every construct and for `<script>` rendered as text
+- [x] Page test with a fixture card; loading and error states
 Notes:
 
 ## T-004: What-if API client
