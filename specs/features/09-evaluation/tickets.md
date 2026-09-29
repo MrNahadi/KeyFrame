@@ -37,14 +37,14 @@ Notes:
 
 ## T-007: Shortcut sensitivity without day-dependent channels
 
-Status: open
+Status: done
 Blocked by: T-003
 Slice: The best model re-scored on held-out loads without day-dependent channels and their derivatives, to show how much AF and CW rely on them.
 Test seam: `uv run python -m keyframe.experiments sensitivity --fold <bin>`; `keyframe.features.without_day_channels(columns)`
 Context: requirements R4b; `sed -n '/^## Result/,/^## Mismatch/p' reports/physics_check.md`; `grep -n 'def source_channel' -A20 keyframe/explain.py`; `grep -n 'def run_modelling' -A25 keyframe/experiments.py`
 Acceptance:
-- [ ] Test: `without_day_channels` removes each day-dependent channel and every rolling, residual and physics feature derived from it, and nothing else
-- [ ] Four fold outputs (one foreground command each); `reports/results/07_sensitivity.csv` with headline vs no-day-channel metrics per class
+- [x] Test: `without_day_channels` removes each day-dependent channel and every rolling, residual and physics feature derived from it, and nothing else
+- [x] Four fold outputs (one foreground command each); `reports/results/07_sensitivity.csv` with headline vs no-day-channel metrics per class
 Notes:
 
 ## T-004: The lockbox, once

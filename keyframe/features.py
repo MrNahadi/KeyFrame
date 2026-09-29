@@ -394,6 +394,18 @@ def build_feature_table(clean: pd.DataFrame) -> pd.DataFrame:
     return add_rolling_features(table, rolled_channels)
 
 
+def without_day_channels(columns: Sequence[str]) -> list[str]:
+    """``columns`` minus the day-dependent channels and every rolling, residual and
+    physics feature derived from one of them (R4b)."""
+    from keyframe import explain
+
+    return [
+        c
+        for c in columns
+        if not explain.DAY_DEPENDENT_CHANNELS.intersection(explain.source_channel(c))
+    ]
+
+
 def prune_correlated(df: pd.DataFrame, columns: list[str], threshold: float = 0.98) -> list[str]:
     """Keep the first of every pair of ``columns`` with |Pearson r| > ``threshold`` on ``df``,
     dropping the rest (R13a). Compute on a training fold's healthy rows only; a constant

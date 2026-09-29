@@ -497,3 +497,24 @@ def test_stratified_subsample_keeps_class_shares_and_is_seeded():
     assert features._stratified_subsample(labels, None, np.random.default_rng(0)).equals(
         labels.index
     )
+
+
+def test_without_day_channels_drops_day_channels_and_their_derivatives_only():
+    columns = [
+        "Fuel Temp.",
+        "Fuel Temp._roll_300s_mean",
+        "resid_Sea Cooling Water Press.",
+        "resid_Sea Cooling Water Press._roll_60s_std",
+        "LO Cooling Water Temp. In_roll_900s_slope",
+        "Fuel Oil Temp. Flow meter In",
+        "Charge Air IC Air Temp. Out",
+        "Charge Air IC Air Temp. Out_roll_300s_mean",
+        "roll_warmup_300s",
+        "phys_exhaust_temp_spread",
+    ]
+    assert features.without_day_channels(columns) == [
+        "Charge Air IC Air Temp. Out",
+        "Charge Air IC Air Temp. Out_roll_300s_mean",
+        "roll_warmup_300s",
+        "phys_exhaust_temp_spread",
+    ]

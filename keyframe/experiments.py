@@ -573,6 +573,68 @@ def run_calibration(
     return out_path
 
 
+def run_sensitivity(
+    df: pd.DataFrame,
+    fold: int,
+    model: str = "xgboost",
+    *,
+    force: bool = False,
+    tuning_dir: Path = paths.MODELS / "tuning",
+    modelling_dir: Path = paths.PROCESSED / "experiments",
+    results_dir: Path = paths.RESULTS,
+) -> Path:
+    """Re-score ``model`` on one held-out load without day-dependent channels (R4b).
+
+    Same tuned params and training rows as the headline; only the columns differ. Writes
+    headline vs no-day-channel macro F1 and per-class recall to ``07_sensitivity.csv``.
+    """
+    out_path = results_dir / "07_sensitivity.csv"
+    if out_path.exists() and not force and fold in pd.read_csv(out_path)["fold"].unique():
+        return out_path
+
+    all_columns = features.FEATURE_SETS[MODELLING_FEATURE_SET].columns(df)
+    columns = features.without_day_channels(all_columns)
+    params = load_tuned_params(model, fold, tuning_dir)
+    reduced = evaluate.lolo_predict(
+        lambda: tuning.MODEL_BUILDERS[model](params), df, columns, only_folds=[fold]
+    )
+    headline = pd.read_parquet(modelling_dir / f"modelling_{model}.parquet")
+    headline = headline[headline["fold"] == fold]
+    reduced = reduced[reduced["fold"] == fold]
+
+    recall_head = evaluate.per_class_recall(headline["y_true"], headline["y_pred"])
+    recall_red = evaluate.per_class_recall(reduced["y_true"], reduced["y_pred"])
+    scores = {
+        "macro_f1": (
+            evaluate.macro_f1(headline["y_true"], headline["y_pred"]),
+            evaluate.macro_f1(reduced["y_true"], reduced["y_pred"]),
+        ),
+        **{
+            f"recall_{cls}": (recall_head[cls], recall_red.get(cls, float("nan")))
+            for cls in recall_head.index
+        },
+    }
+    summary = pd.DataFrame(
+        {
+            "model": model,
+            "fold": fold,
+            "metric": metric,
+            "headline": head,
+            "no_day_channels": red,
+            "n_features_dropped": len(all_columns) - len(columns),
+        }
+        for metric, (head, red) in scores.items()
+    )
+    if out_path.exists():
+        existing = pd.read_csv(out_path)
+        existing = existing[existing["fold"] != fold]
+        summary = pd.concat([existing.drop(columns=["experiment", "date", "git_commit"]), summary])
+    evaluate.log_results(
+        "07_sensitivity", summary.sort_values("fold", kind="stable"), results_dir=results_dir
+    )
+    return out_path
+
+
 def _log_alarm_summary(model: str, summary: pd.DataFrame, out_path: Path) -> None:
     """Merge ``model``'s per-run alarm rows into ``reports/results/04_alarms.csv`` (R10).
 
@@ -864,6 +926,12 @@ def main(argv: list[str] | None = None) -> None:
     runs_parser = subparsers.add_parser("runs", help="Per-run error table for XGBoost.")
     runs_parser.add_argument("--force", action="store_true")
 
+    sensitivity_parser = subparsers.add_parser(
+        "sensitivity", help="Best model on one held-out load without day-dependent channels."
+    )
+    sensitivity_parser.add_argument("--fold", type=int, required=True, choices=splits.LOAD_BINS)
+    sensitivity_parser.add_argument("--force", action="store_true")
+
     shap_parser = subparsers.add_parser(
         "shap", help="SHAP TreeExplainer values for the best model on one held-out load."
     )
@@ -928,6 +996,8 @@ def main(argv: list[str] | None = None) -> None:
         out_path = run_calibration(table, args.fold, force=args.force)
     elif args.experiment == "runs":
         out_path = run_runs(force=args.force)
+    elif args.experiment == "sensitivity":
+        out_path = run_sensitivity(table, args.fold, force=args.force)
     elif args.experiment == "shap":
         out_path = run_shap(table, args.fold, force=args.force)
     elif args.experiment == "crosscheck":
