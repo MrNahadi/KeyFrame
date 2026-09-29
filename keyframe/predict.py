@@ -39,6 +39,24 @@ def alarm_settings(
     }
 
 
+def fold_alarm_settings(
+    fold: int, model: str = lockbox.MODEL, alarms_path: Path = paths.RESULTS / "04_alarms.csv"
+) -> dict[str, float]:
+    """The alarm settings chosen for held-out load `fold` from its own training loads only.
+
+    The replays use these, so the demo shows the alarms the locked evaluation scored; the
+    median in `alarm_settings` is for the all-loads model, which has no held-out load."""
+    table = pd.read_csv(alarms_path)
+    chosen = table[(table["model"] == model) & (table["fold"] == fold)]
+    if chosen.empty:
+        raise ValueError(f"no alarm settings for {model} at held-out load {fold}")
+    row = chosen.iloc[0]
+    return {
+        "min_duration_s": float(row["min_duration_s"]),
+        "min_probability": float(row["min_probability"]),
+    }
+
+
 @dataclass
 class KeyframeModel:
     """A fitted XGBoost classifier with its feature recipe, alarm settings and metadata."""
