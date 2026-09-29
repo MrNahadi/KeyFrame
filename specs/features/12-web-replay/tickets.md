@@ -37,14 +37,14 @@ Notes:
 
 ## T-004: Sensor traces
 
-Status: open
+Status: done
 Blocked by: T-002, T-003
 Slice: Eight small-multiple traces with switch-on, alarm and current-frame markers, past emphasised over future.
 Test seam: `web/src/replay/Traces.tsx`
 Context: requirements R7, R11; `grep -n 'data-' web/src/styles/tokens.css`; ADR 0010 chart notes (`sed -n '/Charts/,/Tests/p' docs/adr/0010-web-stack.md`)
 Acceptance:
-- [ ] Renders eight charts with units in titles for a fixture run (test with fixed width/height)
-- [ ] Reflows to one column under 640 px (CSS)
+- [x] Renders eight charts with units in titles for a fixture run (test with fixed width/height)
+- [x] Reflows to one column under 640 px (CSS)
 Notes:
 
 ## T-005: Probabilities, alarm status and provenance
