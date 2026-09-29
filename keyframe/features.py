@@ -423,6 +423,17 @@ def _source_group(column: str) -> str:
     return column
 
 
+def group_columns_by_source(columns: Sequence[str]) -> dict[str, list[str]]:
+    """`columns` bucketed by `_source_group` (R13b): a channel, its residual and its rolling
+    stats share a bucket, each physics feature stands on its own. Shared by
+    `inner_permutation_importance` and `outer_permutation_importance` so both cross-checks
+    group the same way."""
+    groups: dict[str, list[str]] = {}
+    for column in columns:
+        groups.setdefault(_source_group(column), []).append(column)
+    return groups
+
+
 def _stratified_subsample(labels: pd.Series, max_rows: int | None, rng) -> pd.Index:
     """Up to ``max_rows`` of ``labels``' index, keeping each class's share (seeded)."""
     if max_rows is None or len(labels) <= max_rows:
@@ -459,9 +470,7 @@ def inner_permutation_importance(
     from keyframe import splits
     from keyframe.evaluate import macro_f1
 
-    groups: dict[str, list[str]] = {}
-    for column in columns:
-        groups.setdefault(_source_group(column), []).append(column)
+    groups = group_columns_by_source(columns)
 
     rng = np.random.default_rng(random_state)
     records = []
@@ -489,3 +498,39 @@ def inner_permutation_importance(
                 records.append({"fold": inner_bin, "feature": column, "importance": importance})
 
     return pd.DataFrame.from_records(records, columns=["fold", "feature", "importance"])
+
+
+def outer_permutation_importance(
+    model: BaseEstimator,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    columns: list[str],
+    n_repeats: int = 3,
+    random_state: int = 0,
+) -> pd.Series:
+    """Grouped permutation importance of an already-fitted ``model`` on genuine outer
+    held-out rows (R7), as a cross-check against that fold's SHAP ranking. Same grouping as
+    `inner_permutation_importance` (`group_columns_by_source`), but for a model fitted once
+    on the outer training fold and scored on its own held-out rows, not the inner folds used
+    for tuning.
+
+    Returns one row per group, the mean macro-F1 drop over ``n_repeats`` permutations,
+    sorted descending.
+    """
+    from keyframe.evaluate import macro_f1
+
+    groups = group_columns_by_source(columns)
+    rng = np.random.default_rng(random_state)
+    baseline = macro_f1(y_test, model.predict(X_test))
+
+    importances = {}
+    for group_name, group_columns in groups.items():
+        drops = []
+        for _ in range(n_repeats):
+            X_perm = X_test.copy()
+            permuted = rng.permutation(len(X_perm))
+            X_perm[group_columns] = X_perm[group_columns].to_numpy()[permuted]
+            drops.append(baseline - macro_f1(y_test, model.predict(X_perm)))
+        importances[group_name] = float(np.mean(drops))
+
+    return pd.Series(importances).sort_values(ascending=False)
