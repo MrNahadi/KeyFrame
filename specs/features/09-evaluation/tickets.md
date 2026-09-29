@@ -73,12 +73,12 @@ Notes:
 
 ## T-006: Model card and results lock
 
-Status: open
+Status: done
 Blocked by: T-005
 Slice: A one-page model card for an engine-maker engineer, and an ADR locking the results.
 Test seam: `reports/model_card.md`; the ADR
 Context: requirements R8-R9; notebook 07's first cell (`sed -n '1,40p' notebooks/07_evaluation.py`); `sed -n '/^## Dataset/,/^## Goals/p' specs/brief.md`; `grep -n 'CC BY\|zenodo\|arXiv' README.md`
 Acceptance:
-- [ ] Model card covers every R8 item, 600 to 900 words, cites both dataset works, says it has not been tested on a ship
-- [ ] ADR "results locked" with the final numbers
+- [x] Model card covers every R8 item, 600 to 900 words, cites both dataset works, says it has not been tested on a ship
+- [x] ADR "results locked" with the final numbers
 Notes:
