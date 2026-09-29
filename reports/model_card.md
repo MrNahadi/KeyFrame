@@ -43,4 +43,5 @@ SHAP explanations were checked against an engineering checklist written before a
 - Healthy segments show warm-up drift that can look like a fault.
 - Anomaly detectors trained on healthy data are near chance (fault detection AUROC 0.528, target 0.95).
 - Alarm detects 6 of 13 fault runs; the other 7 never raise one.
+- Known tuning defect (ADR 0011): the model tuned for the 85% held-out load settled on a learning rate of 0.0034 with 59 trees after only 9 trials, so it is barely confident on any reading (highest class probability 0.26). It explains that load's calibration error (0.499) and why no alarm fires at 85% load. The locked scores include it unchanged; a fix belongs in a separately reported version 2.
 - Demo response time (target 300 ms for a prediction plus explanation) is measured when the API is built, after this card was locked.

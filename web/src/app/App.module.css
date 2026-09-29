@@ -2,6 +2,8 @@
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr;
+  /* Never let a wide child (a chart, a long title) stretch the page past the viewport. */
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .header {
@@ -25,6 +27,7 @@
 
 .nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
   margin: 0;
   padding: 0;
@@ -73,6 +76,7 @@
 }
 
 .pageTitle {
+  overflow-wrap: anywhere;
   font-size: var(--text-title-1);
   line-height: var(--leading-title-1);
   font-weight: var(--weight-semibold);

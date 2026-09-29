@@ -22,6 +22,10 @@
 #   is met, but the model predicted only INJ there, so this is weak evidence.
 # - Of the brief's targets, only the unseen-severity target is met; the final
 #   table below lists each one.
+# - Known defect found after the lock (ADR 0011): the 85% fold's tuned model is
+#   underfit (learning rate 0.0034, 59 trees; highest class probability 0.26),
+#   which explains that fold's ECE of 0.499 and its missing alarms. The locked
+#   numbers are kept as they are.
 
 # %%
 import matplotlib.pyplot as plt

@@ -17,7 +17,6 @@ function Page({ route }: { route: Route }) {
     case 'replay':
       return route.runId ? (
         <div>
-          <h1 className={styles.pageTitle}>Replay: {route.runId}</h1>
           <p className={styles.pageLead}>
             <a href={hrefFor({ page: 'replay', runId: null })}>Back to all runs</a>
           </p>
