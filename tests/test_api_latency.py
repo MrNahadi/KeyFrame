@@ -1,9 +1,11 @@
 """Latency budget for /predict and /explain (feature 11, T-005, R9)."""
 
 import json
+import os
 import statistics
 import time
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -43,10 +45,16 @@ def _median_ms(client: TestClient, path: str, rows: list[dict[str, Any]]) -> flo
 
 
 @pytest.mark.data
-def test_predict_and_explain_median_under_budget(client: TestClient) -> None:
+def test_predict_and_explain_median_under_budget(client: TestClient, tmp_path: Path) -> None:
     rows = _rows()
     results = {p: _median_ms(client, p, rows) for p in ("/predict", "/explain")}
-    out = paths.RESULTS / "11_latency.csv"
+    # Timings vary run to run, so the committed report is only refreshed on request:
+    # KEYFRAME_RECORD_LATENCY=1 uv run pytest tests/test_api_latency.py
+    out = (
+        paths.RESULTS / "11_latency.csv"
+        if os.environ.get("KEYFRAME_RECORD_LATENCY") == "1"
+        else tmp_path / "11_latency.csv"
+    )
     out.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(
         {
