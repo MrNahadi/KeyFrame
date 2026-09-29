@@ -8,14 +8,25 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
-from keyframe import paths
+from keyframe import explain, paths
+from keyframe.alarm import sustained_alarm
+from keyframe.features import EXCLUDED_COLUMNS
 from keyframe.predict import META_FILE, MODEL_FILE, KeyframeModel
 
+WINDOW_S = 900.0
 DEV_ORIGIN = "http://localhost:5173"
 CREATE_MODEL_HINT = "uv run python -c 'from keyframe.predict import export_model; export_model()'"
+
+
+class PredictRequest(BaseModel):
+    """A time-ordered window of raw readings (channel name → value, plus `t` in seconds)."""
+
+    rows: list[dict[str, float]] = Field(min_length=1)
 
 
 def _cors_origins() -> list[str]:
@@ -70,6 +81,49 @@ def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
         if run_id not in {entry["id"] for entry in state["index"]}:
             raise HTTPException(status_code=404, detail=f"No replay called '{run_id}'.")
         return json.loads((replays_dir / f"{run_id}.json").read_text())
+
+    @app.post("/predict")
+    def predict(body: PredictRequest) -> dict[str, Any]:
+        model: KeyframeModel | None = state["model"]
+        if model is None:
+            raise HTTPException(status_code=503, detail="Model files missing.")
+        frame = pd.DataFrame(body.rows)
+        required = list(explain.SENSOR_GROUPS)
+        missing = [c for c in required if c not in frame.columns]
+        if missing:
+            raise HTTPException(
+                status_code=422, detail=f"Missing required channels: {', '.join(missing)}"
+            )
+        if "t" not in frame.columns:
+            raise HTTPException(status_code=422, detail="Each row needs a time `t` in seconds.")
+        warns = [
+            f"Ignored unknown channel '{c}'."
+            for c in frame.columns
+            if c not in explain.SENSOR_GROUPS and c not in EXCLUDED_COLUMNS
+        ]
+        frame = frame[[*required, "t"]].astype(float).sort_values("t").reset_index(drop=True)
+        span = float(frame["t"].iloc[-1] - frame["t"].iloc[0])
+        if span < WINDOW_S:
+            warns.append(
+                f"Window covers {span / 60:.1f} min, shorter than 15 min: "
+                "long-window features are still warming up."
+            )
+        proba = model.predict_proba(frame)
+        preds = proba.add_prefix("proba_").assign(
+            run="run", t=frame["t"], y_pred=proba.idxmax(axis=1)
+        )
+        alarms = sustained_alarm(
+            preds, model.alarm["min_duration_s"], model.alarm["min_probability"]
+        )
+        last = proba.iloc[-1]
+        return {
+            "mode": "window",
+            "probabilities": {k: float(v) for k, v in last.items()},
+            "predicted_class": str(last.idxmax()),
+            "alarm": str(alarms.iloc[-1]),
+            "alarm_settings": model.alarm,
+            "warnings": warns,
+        }
 
     return app
 

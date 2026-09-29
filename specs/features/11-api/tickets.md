@@ -13,14 +13,14 @@ Notes:
 
 ## T-002: Predict from a window
 
-Status: open
+Status: done
 Blocked by: T-001
 Slice: A window of raw readings returns probabilities, predicted class and alarm state for its last row.
 Test seam: `POST /predict` with `rows`
 Context: requirements R4-R5; `grep -n 'def features\|def predict_proba' -A15 keyframe/predict.py`
 Acceptance:
-- [ ] Test with a real 15-minute window from the clean table (data-marked) matches `KeyframeModel.predict_proba` for the last row
-- [ ] Missing channels → 422 listing them; excluded channels ignored
+- [x] Test with a real 15-minute window from the clean table (data-marked) matches `KeyframeModel.predict_proba` for the last row
+- [x] Missing channels → 422 listing them; excluded channels ignored
 Notes:
 
 ## T-003: Explain
