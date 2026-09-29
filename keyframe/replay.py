@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
-from keyframe import alarm, evaluate
+from keyframe import alarm, evaluate, experiments, explain, lockbox, paths, predict, splits
 from keyframe.predict import KeyframeModel
 
 FRAME_STEP_S = 10.0
@@ -99,12 +101,16 @@ def build_replay(
 
     spread = run[SPREAD_COLUMNS].max(axis=1) - run[SPREAD_COLUMNS].min(axis=1)
     frames = []
+    feature_frames: dict[int, pd.DataFrame] = {}
     for i in _thin_positions(t, switch_on_t):
         sensors = {}
         for key, (label, column, unit) in KEY_SENSORS.items():
             value = spread.iloc[i] if column is None else run[column].iloc[i]
             sensors[key] = {"label": label, "value": float(value), "unit": unit}
-        explained = row_models[i].explain(run, i)
+        model = row_models[i]
+        if id(model) not in feature_frames:
+            feature_frames[id(model)] = model.features(run)
+        explained = model.explain(run, i, feature_frame=feature_frames[id(model)])
         frames.append(
             {
                 "t": float(t[i]),
@@ -131,3 +137,106 @@ def build_replay(
         f"(leave-one-load-out fold {fold_text}); git commit {commit}",
         "frames": frames,
     }
+
+
+REFERENCE_SEGMENT_S = 1800.0
+MAX_FILE_BYTES = 2_000_000
+MAX_TOTAL_BYTES = 30_000_000
+FAULT_NAMES = {
+    "AC_Fouling": "Air cooler fouling",
+    "AF_Clogging": "Air filter clogging",
+    "CW_Pump_Cavitation": "Cooling water pump cavitation",
+    "Turbine_Degradation": "Turbine degradation",
+}
+INJECTOR_RUN = "Clogged_Injector_Nozzle1_40_60_85_Load"
+REFERENCE_RUN = "Reference_Data"
+
+
+def replay_title(run_id: str) -> str:
+    """Plain-words title for a run id such as `Turbine_Degradation_40_Load` or `Reference_60`."""
+    if run_id == INJECTOR_RUN:
+        return "Clogged injector nozzle 1 with the load stepped through 40%, 60% and 85%"
+    if run_id.startswith("Reference_"):
+        return f"Healthy reference at {run_id.rsplit('_', 1)[1]}% load"
+    stem, load = run_id.removesuffix("_Load").rsplit("_", 1)
+    return f"{FAULT_NAMES[stem]} at {load}% load"
+
+
+def replay_run_ids(table: pd.DataFrame) -> list[str]:
+    """Every exported run id: the fixed-load fault runs, the injector run, one reference per bin."""
+    faults = sorted(r for r in table["run"].unique() if r not in (INJECTOR_RUN, REFERENCE_RUN))
+    return [*faults, INJECTOR_RUN, *(f"Reference_{b}" for b in splits.LOAD_BINS)]
+
+
+def reference_segment(table: pd.DataFrame, load: int) -> pd.DataFrame:
+    """First 30 minutes of the healthy run spent in one load bin, named `Reference_<load>`."""
+    ref = table[(table["run"] == REFERENCE_RUN) & (table["load_bin"] == load)].sort_values("t")
+    times = ref["t"].to_numpy(dtype=float)
+    stretch_start = previous = times[0]
+    for value in times:
+        if value - previous > 60:  # a gap: another load bin sat in between
+            stretch_start = value
+        previous = value
+        if value - stretch_start >= REFERENCE_SEGMENT_S:
+            segment = ref[(ref["t"] >= stretch_start) & (ref["t"] <= value)]
+            return segment.assign(run=f"Reference_{load}")
+    raise ValueError(f"no {REFERENCE_SEGMENT_S:g} s stretch at load {load}")
+
+
+def fold_models(table: pd.DataFrame, bins: list[int]) -> dict[int, KeyframeModel]:
+    """Leave-one-load-out XGBoost models (each outer fold's tuned params) for the given bins."""
+    models = {}
+    for bin_value, train_index, _ in splits.lolo_folds(table):
+        if int(bin_value) in bins:
+            params = experiments.load_tuned_params(lockbox.MODEL, bin_value)
+            models[int(bin_value)] = KeyframeModel.fit(
+                table.loc[train_index], params, predict.alarm_settings()
+            )
+    return models
+
+
+def alarm_delay_s(replay: dict[str, Any]) -> float | None:
+    """Seconds from switch-on to the first alarm frame; None if healthy or never alarmed."""
+    switch_on = replay["switch_on_t"]
+    if switch_on is None:
+        return None
+    for frame in replay["frames"]:
+        if frame["t"] >= switch_on and frame["alarm"] != "Normal":
+            return frame["t"] - switch_on
+    return None
+
+
+def export_replays(
+    table: pd.DataFrame,
+    run_ids: list[str] | None = None,
+    directory: Path = paths.MODELS / "replays",
+) -> Path:
+    """Write `<run>.json` per run and merge its entry into `index.json`; enforce size limits."""
+    directory.mkdir(parents=True, exist_ok=True)
+    columns = list(dict.fromkeys(["run", "t", "label", "load_bin", *explain.SENSOR_GROUPS]))
+    index_path = directory / "index.json"
+    index = {e["id"]: e for e in json.loads(index_path.read_text())} if index_path.exists() else {}
+    for run_id in run_ids or replay_run_ids(table):
+        if run_id.startswith("Reference_"):
+            run = reference_segment(table, int(run_id.rsplit("_", 1)[1]))
+        else:
+            run = table[table["run"] == run_id]
+        run = run[columns].reset_index(drop=True)
+        bins = sorted(int(b) for b in run["load_bin"].unique())
+        replay = build_replay(run, fold_models(table, bins))
+        text = json.dumps(replay, separators=(",", ":"))
+        if len(text.encode()) > MAX_FILE_BYTES:
+            raise ValueError(f"{run_id} replay is {len(text)} bytes, over {MAX_FILE_BYTES}")
+        (directory / f"{run_id}.json").write_text(text)
+        index[run_id] = {
+            "id": run_id,
+            "title": replay_title(run_id),
+            "duration_s": float(run["t"].max() - run["t"].min()),
+            "switch_on_t": replay["switch_on_t"],
+            "alarm_delay_s": alarm_delay_s(replay),
+        }
+    index_path.write_text(json.dumps(list(index.values()), indent=1))
+    total = sum(p.stat().st_size for p in directory.glob("*.json"))
+    if total > MAX_TOTAL_BYTES:
+        raise ValueError(f"replays total {total} bytes, over {MAX_TOTAL_BYTES}")
+    return index_path

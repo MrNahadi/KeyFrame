@@ -134,13 +134,18 @@ class KeyframeModel:
             self._explainer = shap.TreeExplainer(self.classifier.get_booster())
         return self._explainer
 
-    def explain(self, run_df: pd.DataFrame, row: int) -> dict[str, Any]:
+    def explain(
+        self, run_df: pd.DataFrame, row: int, *, feature_frame: pd.DataFrame | None = None
+    ) -> dict[str, Any]:
         """Grouped and per-feature SHAP for the row at position `row` of `run_df`.
 
         `groups` are the five sensor groups' summed SHAP for the predicted class,
         `warmup` the window warm-up flags' share, so groups + warmup + base_value equal the
-        raw margin of the predicted class. `groups_all_classes` has the same per class."""
-        frame = self.features(run_df).iloc[[row]]
+        raw margin of the predicted class. `groups_all_classes` has the same per class.
+        Pass `feature_frame` (`self.features(run_df)`) to avoid rebuilding it for every row."""
+        if feature_frame is None:
+            feature_frame = self.features(run_df)
+        frame = feature_frame.iloc[[row]]
         values = np.asarray(self.explainer.shap_values(frame))
         # (1, features, classes) or (classes, 1, features)
         per_class = values[0].T if values.shape[0] == 1 else values[:, 0, :]

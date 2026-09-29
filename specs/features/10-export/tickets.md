@@ -38,14 +38,14 @@ Notes:
 
 ## T-004: Export every replay
 
-Status: open
+Status: done
 Blocked by: T-002, T-003
 Slice: All 18 replay files and the index are written within the size limits.
 Test seam: `uv run python -m keyframe.experiments replay [--run <id>]`; the files under `models/replays/`
 Context: requirements R6-R7; `uv run python -m keyframe.experiments --help`
 Acceptance:
-- [ ] 18 files plus `index.json`, each under 2 MB, total under 30 MB (one foreground command per fold model or per run, each under 9 minutes)
-- [ ] Index titles in plain words
+- [x] 18 files plus `index.json`, each under 2 MB, total under 30 MB (one foreground command per fold model or per run, each under 9 minutes)
+- [x] Index titles in plain words
 Notes:
 
 ## T-005: Notebook 08
