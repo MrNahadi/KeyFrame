@@ -36,14 +36,14 @@ Notes:
 
 ## T-004: What-if baselines and steady-state mode
 
-Status: open
+Status: done
 Blocked by: T-002
 Slice: The what-if view can fetch typical healthy readings per load and ask for a prediction from a single reading.
 Test seam: `GET /whatif/baselines`; `POST /predict` with `reading`
 Context: requirements R4, R7; `grep -n 'def run_export\|add_parser' keyframe/experiments.py`
 Acceptance:
-- [ ] `models/whatif_baselines.json` exported (one command) and served
-- [ ] Data-marked test: the steady-state prediction for each load's baseline reading returns a well-formed response with the steady-state warning; the predicted class per load is written to `reports/results/11_whatif_baselines.csv` (a baseline predicted as a fault is reported, not hidden)
+- [x] `models/whatif_baselines.json` exported (one command) and served
+- [x] Data-marked test: the steady-state prediction for each load's baseline reading returns a well-formed response with the steady-state warning; the predicted class per load is written to `reports/results/11_whatif_baselines.csv` (a baseline predicted as a fault is reported, not hidden)
 Notes:
 
 ## T-005: Latency under 300 ms

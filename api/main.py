@@ -11,14 +11,20 @@ from typing import Any
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from keyframe import explain, paths
 from keyframe.alarm import sustained_alarm
 from keyframe.features import EXCLUDED_COLUMNS
 from keyframe.predict import META_FILE, MODEL_FILE, KeyframeModel
+from keyframe.whatif import BASELINES_FILE
 
 WINDOW_S = 900.0
+STEADY_STEP_S = 10.0
+STEADY_WARNING = (
+    "Steady-state mode: the single reading is held constant for 15 minutes, so trend "
+    "features read zero and the result assumes the engine has been at this state."
+)
 DEV_ORIGIN = "http://localhost:5173"
 CREATE_MODEL_HINT = "uv run python -c 'from keyframe.predict import export_model; export_model()'"
 
@@ -26,7 +32,15 @@ CREATE_MODEL_HINT = "uv run python -c 'from keyframe.predict import export_model
 class PredictRequest(BaseModel):
     """A time-ordered window of raw readings (channel name → value, plus `t` in seconds)."""
 
-    rows: list[dict[str, float]] = Field(min_length=1)
+    rows: list[dict[str, float]] | None = Field(default=None, min_length=1)
+    reading: dict[str, float] | None = None
+    load_percent: float | None = None
+
+    @model_validator(mode="after")
+    def _one_input(self) -> "PredictRequest":
+        if (self.rows is None) == (self.reading is None):
+            raise ValueError("Send exactly one of `rows` (a window) or `reading` (one reading).")
+        return self
 
 
 def _cors_origins() -> list[str]:
@@ -37,6 +51,8 @@ def _cors_origins() -> list[str]:
 
 def _prepare(body: PredictRequest) -> tuple[pd.DataFrame, list[str]]:
     """Validate a window; return it ordered by time, plus warnings for the caller."""
+    if body.rows is None:
+        raise HTTPException(status_code=422, detail="This endpoint needs `rows`, not `reading`.")
     frame = pd.DataFrame(body.rows)
     required = list(explain.SENSOR_GROUPS)
     missing = [c for c in required if c not in frame.columns]
@@ -59,6 +75,15 @@ def _prepare(body: PredictRequest) -> tuple[pd.DataFrame, list[str]]:
             "long-window features are still warming up."
         )
     return frame, warns
+
+
+def _steady_window(body: PredictRequest) -> tuple[pd.DataFrame, list[str]]:
+    """A single reading held constant for 15 minutes, so every rolling feature is warm."""
+    assert body.reading is not None
+    n = int(WINDOW_S / STEADY_STEP_S) + 1
+    rows = [{**body.reading, "t": i * STEADY_STEP_S} for i in range(n)]
+    frame, warns = _prepare(PredictRequest(rows=rows))
+    return frame, [STEADY_WARNING, *warns]
 
 
 def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
@@ -113,7 +138,8 @@ def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
         model: KeyframeModel | None = state["model"]
         if model is None:
             raise HTTPException(status_code=503, detail="Model files missing.")
-        frame, warns = _prepare(body)
+        steady = body.reading is not None
+        frame, warns = _steady_window(body) if steady else _prepare(body)
         proba = model.predict_proba(frame)
         preds = proba.add_prefix("proba_").assign(
             run="run", t=frame["t"], y_pred=proba.idxmax(axis=1)
@@ -123,13 +149,25 @@ def create_app(models_dir: Path = paths.MODELS) -> FastAPI:
         )
         last = proba.iloc[-1]
         return {
-            "mode": "window",
+            "mode": "steady-state" if steady else "window",
             "probabilities": {k: float(v) for k, v in last.items()},
             "predicted_class": str(last.idxmax()),
-            "alarm": str(alarms.iloc[-1]),
+            "alarm": None if steady else str(alarms.iloc[-1]),
             "alarm_settings": model.alarm,
+            "load_percent": body.load_percent,
             "warnings": warns,
         }
+
+    @app.get("/whatif/baselines")
+    def whatif_baselines() -> Any:
+        path = models_dir / BASELINES_FILE
+        if not path.exists():
+            raise HTTPException(
+                status_code=503,
+                detail="What-if baselines missing. Create them with: "
+                "uv run python -m keyframe.experiments whatif",
+            )
+        return json.loads(path.read_text())
 
     @app.post("/explain")
     def explain_window(body: PredictRequest) -> dict[str, Any]:
