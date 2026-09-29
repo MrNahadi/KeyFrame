@@ -20,6 +20,12 @@ describe('format', () => {
     expect(signed(-0.384)).toBe('−0.38')
   })
 
+  it('writes a push that rounds to zero without a sign', () => {
+    expect(signed(-0.001)).toBe('0.00')
+    expect(signed(0.004)).toBe('0.00')
+    expect(signed(-0.38)).toBe('−0.38')
+  })
+
   it('gives axes enough decimals to keep ticks distinct', () => {
     expect(axisDecimals(0.04)).toBe(3)
     expect(axisDecimals(0.4)).toBe(2)

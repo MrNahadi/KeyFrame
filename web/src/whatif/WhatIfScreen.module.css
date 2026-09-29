@@ -168,7 +168,7 @@
 .range {
   grid-area: range;
   width: 100%;
-  min-height: var(--control-md);
+  min-height: var(--touch-min);
   margin: 0;
   accent-color: var(--accent);
   cursor: pointer;

@@ -108,8 +108,11 @@ export function ModelCardPage({ load = loadModelCard }: { load?: () => Promise<s
                     {s.note && <span className={styles.note}>{s.note}</span>}
                   </th>
                   <td className={`${styles.num} ${styles.result}`}>{s.result}</td>
-                  <td className={styles.num}>{s.target}</td>
-                  <td>
+                  <td className={`${styles.num} ${styles.target}`}>
+                    <span className={styles.phoneLabel}>Target </span>
+                    {s.target}
+                  </td>
+                  <td className={styles.statusCell}>
                     <span className={s.met ? `${styles.status} ${styles.met}` : styles.status}>
                       <Icon icon={s.met ? Check : X} size={16} />
                       {s.met ? 'Met' : 'Not met'}

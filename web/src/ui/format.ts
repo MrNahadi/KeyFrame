@@ -32,9 +32,11 @@ export function percent(p: number): string {
   return `${Math.round(p * 100)}%`
 }
 
-/** A signed contribution such as "+1.24" or "−0.38" (true minus sign). */
+/** A signed contribution such as "+1.24" or "−0.38" (true minus sign); "0.00" when it rounds to zero. */
 export function signed(v: number): string {
-  return `${v < 0 ? '−' : '+'}${Math.abs(v).toFixed(2)}`
+  const text = Math.abs(v).toFixed(2)
+  if (Number(text) === 0) return '0.00'
+  return `${v < 0 ? '−' : '+'}${text}`
 }
 
 /** "2 h 54 min", "35 min", "45 s". */

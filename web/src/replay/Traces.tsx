@@ -56,6 +56,7 @@ export function Traces({ replay, index, width, height }: TracesProps) {
           const chart = (
             <LineChart
               data={buildSeries(replay, key, index)}
+              accessibilityLayer={false}
               width={width}
               height={height}
               margin={{ top: 6, right: 4, bottom: 4, left: 0 }}

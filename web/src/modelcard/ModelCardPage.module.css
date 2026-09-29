@@ -166,14 +166,69 @@
   background: var(--bg-secondary);
 }
 
+.phoneLabel {
+  display: none;
+}
+
+/* Phones: each row becomes the measure on one line, then result, target and status. */
 @media (max-width: 639px) {
   .title {
     font-size: var(--text-title-1);
     line-height: var(--leading-title-1);
   }
 
-  .table th,
-  .table td {
-    padding: var(--space-3);
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas:
+      'measure measure measure'
+      'result target status';
+    align-items: baseline;
+    column-gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table tbody th,
+  .table tbody td {
+    padding: 0;
+    border: 0;
+  }
+
+  .table tbody th {
+    grid-area: measure;
+    margin-bottom: var(--space-1);
+  }
+
+  .table .result {
+    grid-area: result;
+    text-align: left;
+  }
+
+  .table .target {
+    grid-area: target;
+    text-align: left;
+    color: var(--text-secondary);
+  }
+
+  .statusCell {
+    grid-area: status;
+    justify-self: end;
+  }
+
+  .phoneLabel {
+    display: inline;
   }
 }

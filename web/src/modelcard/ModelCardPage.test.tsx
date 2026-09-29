@@ -17,7 +17,7 @@ describe('ModelCardPage', () => {
     // The targets table comes first, with a worded status on every row.
     const rows = screen.getAllByRole('row').slice(1)
     expect(rows).toHaveLength(9)
-    expect(rows[0].textContent).toContain('Macro F1 on held-out loads0.7170.80Not met')
+    expect(rows[0].textContent).toContain('Macro F1 on held-out loads0.717Target 0.80Not met')
     expect(screen.getByText(/2 of 9 targets met/)).toBeTruthy()
     const img = screen.getByRole('img', { name: /confusion matrix/i })
     expect(img.getAttribute('src')).toContain('figures/07_confusion.png')

@@ -27,7 +27,7 @@
 }
 
 .md {
-  min-height: var(--control-md);
+  min-height: var(--touch-min);
   min-width: var(--touch-min);
   padding: 0 var(--space-4);
   font-size: var(--text-callout);

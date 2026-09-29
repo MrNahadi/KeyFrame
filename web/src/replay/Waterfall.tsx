@@ -52,7 +52,9 @@ export function Waterfall({ groups, base, target }: WaterfallProps) {
               </span>
               <span className={styles.value}>
                 {signed(s.value)}
-                <span className={styles.direction}>{towards ? ' towards' : ' away'}</span>
+                {signed(s.value) !== '0.00' && (
+                  <span className={styles.direction}>{towards ? ' towards' : ' away'}</span>
+                )}
               </span>
             </li>
           )
