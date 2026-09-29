@@ -2,14 +2,14 @@
 
 ## T-001: Map features to source channels and sensor groups
 
-Status: open
+Status: done
 Blocked by:
 Slice: Any model feature can be traced to the engine channels it comes from and to one sensor group.
 Test seam: `keyframe.explain.source_channel`, `keyframe.explain.SENSOR_GROUPS`, `keyframe.explain.group_of`
 Context: requirements R1-R2; `grep -n '^def ' keyframe/features.py`; `grep -n 'def add_physics_features' -A25 keyframe/features.py`; `cut -d, -f1,7 data/raw/variable_dictionary.csv`
 Acceptance:
-- [ ] Every sensor channel in the feature table has exactly one group (data-marked test; skip if absent)
-- [ ] Source mapping tests for raw, rolling, residual and each physics feature
+- [x] Every sensor channel in the feature table has exactly one group (data-marked test; skip if absent)
+- [x] Source mapping tests for raw, rolling, residual and each physics feature
 Notes:
 
 ## T-002: SHAP experiment per fold
