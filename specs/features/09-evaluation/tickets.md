@@ -2,13 +2,13 @@
 
 ## T-001: Calibration metrics
 
-Status: open
+Status: done
 Blocked by:
 Slice: Top-label ECE and reliability curves from held-out probabilities.
 Test seam: `keyframe.calibration.expected_calibration_error`, `reliability_curve`
 Context: requirements R2; `grep -n 'proba_' keyframe/evaluate.py | head`
 Acceptance:
-- [ ] Hand-made cases: perfect calibration gives 0; always-certain-half-wrong gives 0.5; bins with no rows are skipped
+- [x] Hand-made cases: perfect calibration gives 0; always-certain-half-wrong gives 0.5; bins with no rows are skipped
 Notes:
 
 ## T-002: Recalibration inside the training folds
