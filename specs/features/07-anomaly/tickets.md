@@ -48,23 +48,37 @@ Acceptance:
 - [x] `reports/results/05_anomaly.csv` with pooled and per-fold AUROC per detector, and per-class AUROC
 Notes:
 
-## T-005: Thresholds, alarms and detection delay
+## T-008: Residual input arm for the detectors
 
 Status: open
 Blocked by: T-004
-Slice: Each detector's scores become sustained alarms with a 2% training-fold false alarm budget, giving detection delay per run.
+Slice: Every detector can run on load-normalised inputs; all 12 residual runs exist and the AUROC table covers both arms.
+Test seam: `keyframe.anomaly.detector_inputs(df, arm)`; `uv run python -m keyframe.experiments anomaly --detector <d> --fold <bin> --inputs residual`
+Context: requirements R1b, R4-R5; `docs/adr/0008-anomaly-detector-inputs.md`; `grep -n 'class HealthyEngineResiduals' -A12 keyframe/features.py`; `grep -n 'def run_anomaly' -A45 keyframe/experiments.py`
+Acceptance:
+- [ ] Test: the residual arm's columns contain no raw level, no rolling mean and none of the three residual inputs; the residual model is fitted on training-fold healthy rows only (spy)
+- [ ] 12 residual score files written (one foreground command each, under 9 minutes)
+- [ ] `reports/results/05_anomaly.csv` has an `inputs` column with rows for both arms
+Notes:
+
+## T-005: Thresholds, alarms and detection delay
+
+Status: open
+Blocked by: T-008
+Slice: For both input arms (residual primary), each detector's scores become sustained alarms with a 2% training-fold false alarm budget, giving detection delay per run.
 Test seam: `keyframe.anomaly.threshold_for_far`, alarm helpers from `keyframe.alarm`
 Context: requirements R6; `grep -n '^def ' keyframe/alarm.py`
 Acceptance:
 - [ ] Threshold chosen from training healthy rows only (test)
 - [ ] `reports/results/05_alarms.csv`: per detector, per run delay, alarm-level false alarm rate
 Notes:
+- Parked stash: T-005 parked (work started on the raw arm only before T-008 was added; pop it, then extend to both arms)
 
 ## T-006: Notebook 05 and findings
 
 Status: open
 Blocked by: T-005
-Slice: Notebook 05 presents AUROC, per-class results, delays and score traces, against the brief's targets.
+Slice: Notebook 05 leads with the residual arm and presents AUROC, per-class results, delays and score traces, against the brief's targets.
 Test seam: executing `notebooks/05_anomaly_detection.py`
 Context: requirements R7; `grep -n '^# %%' notebooks/04_modelling.py`; `head -3 reports/results/05_anomaly.csv reports/results/05_alarms.csv`
 Acceptance:
