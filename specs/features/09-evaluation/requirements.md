@@ -1,0 +1,29 @@
+# 09 Evaluation: requirements
+
+## Final held-out scores
+
+- R1. The final scores are those of the best model (XGBoost, ADR 0007) from `data/processed/experiments/modelling_xgboost.parquet`: pooled macro F1, per-fold macro F1 (each fold and mean ± std), per-class recall and precision, lowest per-class recall and class, false alarm rate, accuracy (reported, not a target), and the pooled confusion matrix (counts and row-normalised). Per-class results that rest on two training runs are flagged (brief risk "Thin coverage": CW has two runs; TD three; 75% load has no CW or TD).
+
+## Calibration
+
+- R2. `keyframe.calibration.expected_calibration_error(y_true, proba, classes, n_bins=15)` computes top-label ECE; `reliability_curve(...)` returns per-bin confidence, accuracy and count. Tests on hand-made cases (perfectly calibrated gives 0; always-100%-confident-and-half-wrong gives 0.5).
+- R3. ECE is reported pooled and per fold. If pooled ECE > 0.05, recalibrate: for each outer fold, fit a multiclass calibrator (sklearn `CalibratedClassifierCV`-style isotonic or sigmoid per class, or temperature scaling on log-probabilities; choose one and justify) on the outer training set's inner-fold predictions only (reuse `keyframe.evaluate.lolo_predict` over `inner_lolo_folds` with the fold's tuned params), then apply it to the outer held-out probabilities. Report ECE and macro F1 before and after. The outer test rows never fit a calibrator. Experiment `uv run python -m keyframe.experiments calibration --fold <bin>`, under 9 minutes per fold (inner predictions may be cached from feature 06's alarm step if available).
+
+## Error analysis
+
+- R4. Per run: rows, share correct, the most common wrong label and its share, recall inside the first 10 minutes after switch-on versus after, and the alarm result from `reports/results/04_alarms.csv`. Saved to `reports/results/07_runs.csv`. The notebook writes one plain sentence per poorly handled run on the likely reason (thin coverage, load extrapolation, warm-up drift, gradual onset, test-day conditions), citing evidence already in notebooks 00 to 06.
+
+## Shortcut sensitivity (brief: a mismatch "gets investigated before the scores are trusted")
+
+- R4b. `reports/physics_check.md` found AF and CW explained by day-dependent channels. Re-run the best model's LOLO (same per-fold tuned params, same folds) with every day-dependent channel removed together with every feature derived from it (LO Cooling Water Temp. In, Charge Air IC Cooling Water Temp. In, Fuel Temp., Fuel Oil Temp. Flow meter In, Sea Cooling Water Press., and their rolling and physics derivatives; use `keyframe.explain.source_channel` to find derivatives). Experiment `uv run python -m keyframe.experiments sensitivity --fold <bin>`, under 9 minutes per fold. Report per-class recall, macro F1 and false alarm rate side by side with the headline, and the SHAP top 5 for AF and CW without those channels if affordable. This is a robustness check, not model selection: the locked headline stays the pre-registered pipeline's score, and the model card states both numbers and what the gap means.
+
+## Lockbox (used once)
+
+- R5. `keyframe.lockbox.evaluate_lockbox(force_first_run=False)` is the only code in the repository that reads `data/lockbox/`. It (1) refuses to run if `reports/results/07_lockbox.csv` exists, returning the stored result instead; (2) fits the best model with the median of its per-fold tuned params (document the choice) on every row of the clean feature table (all loads; the lockbox is a different run, so this is not a leak); (3) loads the lockbox file with `keyframe.load.load_run`, builds its physics and rolling features with the same functions (per run, causal); (4) predicts every row and writes the share labelled INJ, the full label distribution, per load bin, and a timestamp to `reports/results/07_lockbox.csv`. A test asserts no other module or notebook references `data/lockbox` or `paths.LOCKBOX` (grep over `keyframe/`, `notebooks/`, `api/`, excluding `download.py` and `lockbox.py`).
+- R6. Experiment `uv run python -m keyframe.experiments lockbox` calls it. The ticket that runs it runs it once. Brief target: 90% (stretch 97%). Report met / not met.
+
+## Notebook 07 and the model card
+
+- R7. Notebook 07 presents R1 (tables, `07_confusion.png` row-normalised with counts, per-fold figure), calibration (`07_reliability.png` before and after if recalibrated), the run-by-run error table, the lockbox result, and one final target table: every brief target with baseline, target, stretch, achieved (with spread where it exists) and met / not met, including the explainability physics check from `reports/physics_check.md` and the shortcut sensitivity result (R4b) and the demo response time as "measured in roadmap item 11". It opens with findings.
+- R8. `reports/model_card.md`, one page (about 600 to 900 words), for an engine-maker engineer: model details (XGBoost on 833 features; what the features are); intended use (a showcase of fault diagnosis on bench data, not an onboard tool); data (dataset, citation both works, CC BY 4.0, what was excluded and why); evaluation protocol (leave one load out, nested tuning, lockbox); results with spread and the confusion matrix summary; calibration; explainability summary; limits, stated plainly: bench not ship, one small engine at steady loads, few runs, TD and CW thin, AF and CW partly explained by test-day channels (with the R4b sensitivity numbers), alarm detects 6 of 13 runs, warm-up drift in healthy segments, anomaly detectors near chance, **not tested on a ship**; and the date results were locked.
+- R9. An ADR "results locked" records the final numbers and states that no score changes after this point (brief milestone 10). Roadmap items 10 onwards may not retrain for better scores; export retrains on all loads for the demo only.
