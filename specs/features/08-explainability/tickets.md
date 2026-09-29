@@ -26,14 +26,14 @@ Notes:
 
 ## T-003: Grouped and per-class SHAP views
 
-Status: open
+Status: done
 Blocked by: T-002
 Slice: Rankings per class, grouped SHAP per class and grouped waterfalls for single moments.
 Test seam: `keyframe.explain` view functions
 Context: requirements R4, R10 (figures); `grep -n '^def ' keyframe/explain.py`
 Acceptance:
-- [ ] Tests: grouped SHAP sums equal the per-feature sums; rankings are by mean |SHAP| on the class's rows
-- [ ] Beeswarm, grouped SHAP and waterfall figures written by notebook 06 (first sections), which executes and is committed
+- [x] Tests: grouped SHAP sums equal the per-feature sums; rankings are by mean |SHAP| on the class's rows
+- [x] Beeswarm, grouped SHAP and waterfall figures written by notebook 06 (first sections), which executes and is committed
 Notes:
 
 ## T-004: Physics check against the pre-registered checklist

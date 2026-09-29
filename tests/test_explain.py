@@ -1,5 +1,6 @@
 """Every model feature traces to a source channel and to exactly one sensor group (R1-R2)."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -121,3 +122,56 @@ def test_every_sensor_channel_in_the_feature_table_has_exactly_one_group():
 
     for channel in features.sensor_channels(table):
         assert channel in explain.SENSOR_GROUPS, channel
+
+
+_COLUMNS = ["Fuel Flow", "Fuel Temp.", "phys_fuel_flow_per_kw", "Shaft Power"]
+
+
+def test_feature_ranking_orders_by_mean_abs_shap():
+    values = np.array(
+        [
+            [1.0, -0.5, 0.2, 0.1],
+            [-3.0, 0.5, -0.2, -0.1],
+        ]
+    )
+    ranking = explain.feature_ranking(values, _COLUMNS)
+    assert list(ranking.index) == [
+        "Fuel Flow",
+        "Fuel Temp.",
+        "phys_fuel_flow_per_kw",
+        "Shaft Power",
+    ]
+    assert ranking["Fuel Flow"] == pytest.approx(2.0)
+
+
+def test_channel_ranking_credits_every_channel_a_multi_channel_feature_maps_to():
+    values = np.array([[0.0, 0.0, 4.0, 0.0]])  # only phys_fuel_flow_per_kw has weight
+    ranking = explain.channel_ranking(values, _COLUMNS)
+    assert ranking["Fuel Flow"] == pytest.approx(4.0)
+    assert ranking["Shaft Power"] == pytest.approx(4.0)
+
+
+def test_grouped_shap_sums_equal_the_per_feature_sums():
+    values = np.array(
+        [
+            [1.0, -0.5, 0.2, 0.1],
+            [-3.0, 0.5, -0.2, -0.1],
+        ]
+    )
+    grouped = explain.grouped_shap(values, _COLUMNS)
+    per_feature_mean = pd.DataFrame(values, columns=_COLUMNS).mean(axis=0)
+    assert grouped.sum() == pytest.approx(per_feature_mean.sum())
+    # Fuel Flow, Fuel Temp. and phys_fuel_flow_per_kw's group is "fuel system"; Shaft Power's
+    # group is "combustion and power".
+    assert grouped["fuel system"] == pytest.approx(
+        per_feature_mean[["Fuel Flow", "Fuel Temp.", "phys_fuel_flow_per_kw"]].sum()
+    )
+    assert grouped["combustion and power"] == pytest.approx(per_feature_mean["Shaft Power"])
+
+
+def test_waterfall_grouped_matches_the_row_and_lists_top_features():
+    row = np.array([1.0, -0.5, 0.2, -3.0])
+    grouped, top = explain.waterfall(row, _COLUMNS, top_n=2)
+    assert grouped.sum() == pytest.approx(row.sum())
+    assert list(top.index) == ["Shaft Power", "Fuel Flow"]
+    assert top["Shaft Power"] == pytest.approx(-3.0)

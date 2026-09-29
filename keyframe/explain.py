@@ -1,6 +1,12 @@
-"""Traces a model feature to the engine channel(s) it comes from and to a sensor group (R1-R2)."""
+"""Traces a model feature to the engine channel(s) it comes from and to a sensor group (R1-R2),
+and views over SHAP arrays: rankings, grouped SHAP and single-moment waterfalls (R4)."""
 
 from __future__ import annotations
+
+from collections.abc import Sequence
+
+import numpy as np
+import pandas as pd
 
 WARMUP_LABEL = "window warm-up"
 
@@ -186,3 +192,44 @@ def group_of(feature: str) -> str:
     if feature.startswith("phys_"):
         return PHYSICS_GROUPS[feature]
     return SENSOR_GROUPS[feature]
+
+
+def feature_ranking(shap_values: np.ndarray, columns: Sequence[str]) -> pd.Series:
+    """Mean |SHAP| per feature over the rows in `shap_values` (n_rows, n_features),
+    descending. Callers pick the class slice and the rows (e.g. a class's own rows) first."""
+    return pd.Series(np.abs(shap_values).mean(axis=0), index=list(columns)).sort_values(
+        ascending=False
+    )
+
+
+def channel_ranking(shap_values: np.ndarray, columns: Sequence[str]) -> pd.Series:
+    """Mean |SHAP| per source channel (R4): each feature's mean |SHAP| is added to every
+    channel `source_channel` names for it, so a multi-channel `phys_*` feature counts fully
+    toward each of its inputs."""
+    per_feature = feature_ranking(shap_values, columns)
+    channels = [channel for feature in per_feature.index for channel in source_channel(feature)]
+    weights = [
+        per_feature[feature] for feature in per_feature.index for _ in source_channel(feature)
+    ]
+    return pd.Series(weights, index=channels).groupby(level=0).sum().sort_values(ascending=False)
+
+
+def grouped_shap(shap_values: np.ndarray, columns: Sequence[str]) -> pd.Series:
+    """Signed SHAP summed within each sensor group, then averaged over rows (R4). Since
+    `group_of` assigns each feature to exactly one group, the groups partition the features
+    and this sums to the same total as the per-feature signed mean."""
+    values = np.atleast_2d(shap_values)
+    groups = [group_of(feature) for feature in columns]
+    per_row = pd.DataFrame(values, columns=list(columns)).T.groupby(groups).sum().T
+    return per_row.mean(axis=0).sort_values(key=lambda s: s.abs(), ascending=False)
+
+
+def waterfall(
+    shap_row: np.ndarray, columns: Sequence[str], top_n: int = 8
+) -> tuple[pd.Series, pd.Series]:
+    """A grouped waterfall for one moment (R4): signed SHAP summed per sensor group for that
+    row, and the `top_n` individual features by |SHAP| within that same row."""
+    grouped = grouped_shap(shap_row, columns)
+    row = pd.Series(np.asarray(shap_row), index=list(columns))
+    top = row.reindex(row.abs().sort_values(ascending=False).index[:top_n])
+    return grouped, top
