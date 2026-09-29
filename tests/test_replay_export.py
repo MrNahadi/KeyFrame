@@ -46,3 +46,30 @@ def test_exported_files_fit_the_limits():
         assert entry["title"]
     total = sum(p.stat().st_size for p in directory.glob("*.json"))
     assert total < replay.MAX_TOTAL_BYTES
+
+
+def test_replays_use_each_folds_own_alarm_settings():
+    """The demo must show the alarms the locked evaluation scored, not a pooled setting."""
+    from keyframe import predict
+
+    alarms = pd.read_csv(paths.RESULTS / "04_alarms.csv")
+    for fold in (40, 60, 75, 85):
+        row = alarms[(alarms["model"] == "xgboost") & (alarms["fold"] == fold)].iloc[0]
+        assert predict.fold_alarm_settings(fold) == {
+            "min_duration_s": float(row["min_duration_s"]),
+            "min_probability": float(row["min_probability"]),
+        }
+
+
+def test_replay_alarm_delays_match_the_locked_evaluation():
+    """Each replay's alarm delay equals the evaluated one, up to the 10 s frame thinning."""
+    index = json.loads((paths.MODELS / "replays" / "index.json").read_text())
+    delays = {r["id"]: r["alarm_delay_s"] for r in index}
+    alarms = pd.read_csv(paths.RESULTS / "04_alarms.csv")
+    evaluated = alarms[alarms["model"] == "xgboost"].set_index("run")["delay_s"]
+    for run, delay in evaluated.items():
+        if pd.isna(delay):
+            assert delays[run] is None, run
+        else:
+            assert delays[run] is not None, run
+            assert 0 <= delays[run] - delay < 10, (run, delays[run], delay)

@@ -203,13 +203,14 @@ def reference_segment(table: pd.DataFrame, load: int) -> pd.DataFrame:
 
 
 def fold_models(table: pd.DataFrame, bins: list[int]) -> dict[int, KeyframeModel]:
-    """Leave-one-load-out XGBoost models (each outer fold's tuned params) for the given bins."""
+    """Leave-one-load-out XGBoost models for the given bins, each with its outer fold's tuned
+    params and the alarm settings chosen for that fold, as in the locked evaluation."""
     models = {}
     for bin_value, train_index, _ in splits.lolo_folds(table):
         if int(bin_value) in bins:
             params = experiments.load_tuned_params(lockbox.MODEL, bin_value)
             models[int(bin_value)] = KeyframeModel.fit(
-                table.loc[train_index], params, predict.alarm_settings()
+                table.loc[train_index], params, predict.fold_alarm_settings(int(bin_value))
             )
     return models
 
