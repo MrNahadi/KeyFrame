@@ -1,0 +1,13 @@
+detector,inputs,healthy_definition,auroc,n_healthy,experiment,date,git_commit
+iforest,raw,reference,0.5353927501261352,25302,05_diagnostic_auroc,2026-09-29,564be28
+iforest,raw,pre-fault,0.46798109836890395,26591,05_diagnostic_auroc,2026-09-29,564be28
+iforest,residual,reference,0.41241768907051246,25302,05_diagnostic_auroc,2026-09-29,564be28
+iforest,residual,pre-fault,0.43318357817806874,26591,05_diagnostic_auroc,2026-09-29,564be28
+pca,raw,reference,0.6274893907704828,25302,05_diagnostic_auroc,2026-09-29,564be28
+pca,raw,pre-fault,0.4891964989008128,26591,05_diagnostic_auroc,2026-09-29,564be28
+pca,residual,reference,0.5767374279457286,25302,05_diagnostic_auroc,2026-09-29,564be28
+pca,residual,pre-fault,0.48230101517878143,26591,05_diagnostic_auroc,2026-09-29,564be28
+autoencoder,raw,reference,0.6135465363524342,25302,05_diagnostic_auroc,2026-09-29,564be28
+autoencoder,raw,pre-fault,0.4803263793249555,26591,05_diagnostic_auroc,2026-09-29,564be28
+autoencoder,residual,reference,0.5440219501768845,25302,05_diagnostic_auroc,2026-09-29,564be28
+autoencoder,residual,pre-fault,0.46609540279096656,26591,05_diagnostic_auroc,2026-09-29,564be28

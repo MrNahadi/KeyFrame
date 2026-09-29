@@ -76,15 +76,15 @@ Notes:
 
 ## T-006: Notebook 05 and findings
 
-Status: open
+Status: done
 Blocked by: T-005
 Slice: Notebook 05 leads with the residual arm and presents AUROC, per-class results, delays and score traces, against the brief's targets.
 Test seam: executing `notebooks/05_anomaly_detection.py`
 Context: requirements R7; `grep -n '^# %%' notebooks/04_modelling.py`; `head -3 reports/results/05_anomaly.csv reports/results/05_alarms.csv`
 Acceptance:
-- [ ] `05_roc.png`, `05_detection_delay.png`, `05_scores_switch_on.png`
-- [ ] Targets marked met / not met; comparison with notebook 04's classifier delays
-- [ ] Executes under 5 minutes; committed
-- [ ] Diagnostic section (selects nothing, changes no score): AUROC per detector and arm with "healthy" restricted to reference-file rows (steady running) versus with "healthy" restricted to pre-fault segments, plus score distributions by source (reference, pre-fault, faulty) per fold (`05_scores_by_source.png`)
+- [x] `05_roc.png`, `05_detection_delay.png`, `05_scores_switch_on.png`
+- [x] Targets marked met / not met; comparison with notebook 04's classifier delays
+- [x] Executes under 5 minutes; committed
+- [x] Diagnostic section (selects nothing, changes no score): AUROC per detector and arm with "healthy" restricted to reference-file rows (steady running) versus with "healthy" restricted to pre-fault segments, plus score distributions by source (reference, pre-fault, faulty) per fold (`05_scores_by_source.png`)
 Notes:
 - Planner: both arms land near chance (pooled AUROC raw 0.50-0.56, residual 0.42-0.53) and several per-class AUROCs are below 0.5 (AF, CW), i.e. faulty rows look more normal than healthy ones. Hypothesis to test in the diagnostic: the healthy rows at the held-out load include pre-fault warm-up segments that are not at steady state (see `reports/figures/00_switch_on.png`), and the detectors correctly flag that non-steady running. Report the outcome either way; ADR 0008's pre-declared primary arm (residual) stays primary regardless of which scores better. State the brief's AUROC target (0.95) as not met if it is not met.
