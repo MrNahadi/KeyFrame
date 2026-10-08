@@ -1,0 +1,104 @@
+{
+  "outer_fold": 40,
+  "label": "calibrated track (feature 17), separately labelled; v1 locked results unchanged",
+  "primary_arm": "raw+calibrated",
+  "arms": {
+    "zero_shot": {
+      "macro_f1_mean": 0.2658169155294063,
+      "per_seed": [
+        {
+          "seed": 42,
+          "fold": "pooled",
+          "macro_f1": 0.26778376700365547,
+          "accuracy": 0.4088145896656535,
+          "false_alarm_rate": 0.28452330055579306,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 1,
+          "fold": "pooled",
+          "macro_f1": 0.2506118430772335,
+          "accuracy": 0.39028803010565927,
+          "false_alarm_rate": 0.5034202650705429,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 2,
+          "fold": "pooled",
+          "macro_f1": 0.27905513650732994,
+          "accuracy": 0.42401215805471126,
+          "false_alarm_rate": 0.27960666951688756,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        }
+      ]
+    },
+    "calibrated": {
+      "macro_f1_mean": 0.3043032509706005,
+      "per_seed": [
+        {
+          "seed": 42,
+          "fold": "pooled",
+          "macro_f1": 0.31180400210785,
+          "accuracy": 0.48429584599797365,
+          "false_alarm_rate": 0.30376229157759727,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 1,
+          "fold": "pooled",
+          "macro_f1": 0.29068195217060316,
+          "accuracy": 0.45860471848313794,
+          "false_alarm_rate": 0.37002992731936724,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 2,
+          "fold": "pooled",
+          "macro_f1": 0.31042379863334846,
+          "accuracy": 0.473585178752352,
+          "false_alarm_rate": 0.3257802479692176,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        }
+      ]
+    },
+    "raw+calibrated": {
+      "macro_f1_mean": 0.2804930454361185,
+      "per_seed": [
+        {
+          "seed": 42,
+          "fold": "pooled",
+          "macro_f1": 0.273488316804644,
+          "accuracy": 0.411202778983934,
+          "false_alarm_rate": 0.39311671654553226,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 1,
+          "fold": "pooled",
+          "macro_f1": 0.2977271656603202,
+          "accuracy": 0.45230858300767113,
+          "false_alarm_rate": 0.30889268918341173,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 2,
+          "fold": "pooled",
+          "macro_f1": 0.2702636538433914,
+          "accuracy": 0.4096830221450282,
+          "false_alarm_rate": 0.37772552372808893,
+          "worst_recall": 0.0,
+          "worst_recall_class": "TD"
+        }
+      ]
+    }
+  },
+  "git_commit": "c15942d"
+}

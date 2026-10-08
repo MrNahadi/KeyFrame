@@ -1,0 +1,104 @@
+{
+  "outer_fold": 60,
+  "label": "calibrated track (feature 17), separately labelled; v1 locked results unchanged",
+  "primary_arm": "calibrated",
+  "arms": {
+    "zero_shot": {
+      "macro_f1_mean": 0.8574302523048193,
+      "per_seed": [
+        {
+          "seed": 42,
+          "fold": "pooled",
+          "macro_f1": 0.8502174742023605,
+          "accuracy": 0.8752234873435588,
+          "false_alarm_rate": 0.10856301283399958,
+          "worst_recall": 0.47098464994384126,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 1,
+          "fold": "pooled",
+          "macro_f1": 0.862548748567668,
+          "accuracy": 0.8879269784511151,
+          "false_alarm_rate": 0.05322953923837576,
+          "worst_recall": 0.46349681767128414,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 2,
+          "fold": "pooled",
+          "macro_f1": 0.8595245341444298,
+          "accuracy": 0.8867977792415546,
+          "false_alarm_rate": 0.08668209551861981,
+          "worst_recall": 0.46574316735305127,
+          "worst_recall_class": "TD"
+        }
+      ]
+    },
+    "calibrated": {
+      "macro_f1_mean": 0.23335230065345525,
+      "per_seed": [
+        {
+          "seed": 42,
+          "fold": "pooled",
+          "macro_f1": 0.22761812042863797,
+          "accuracy": 0.3237508233744236,
+          "false_alarm_rate": 0.0856301283399958,
+          "worst_recall": 0.0,
+          "worst_recall_class": "CW"
+        },
+        {
+          "seed": 1,
+          "fold": "pooled",
+          "macro_f1": 0.1923743728729591,
+          "accuracy": 0.2991436905994166,
+          "false_alarm_rate": 0.025247212286976645,
+          "worst_recall": 0.0,
+          "worst_recall_class": "AC"
+        },
+        {
+          "seed": 2,
+          "fold": "pooled",
+          "macro_f1": 0.2800644086587687,
+          "accuracy": 0.3967723722593394,
+          "false_alarm_rate": 0.05049442457395329,
+          "worst_recall": 0.0,
+          "worst_recall_class": "CW"
+        }
+      ]
+    },
+    "raw+calibrated": {
+      "macro_f1_mean": 0.7327139111077027,
+      "per_seed": [
+        {
+          "seed": 42,
+          "fold": "pooled",
+          "macro_f1": 0.7334350575810972,
+          "accuracy": 0.8201279759104169,
+          "false_alarm_rate": 0.03829160530191458,
+          "worst_recall": 0.06140022463496818,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 1,
+          "fold": "pooled",
+          "macro_f1": 0.7529763754985719,
+          "accuracy": 0.8281735202785359,
+          "false_alarm_rate": 0.023143277929728593,
+          "worst_recall": 0.11344065892923999,
+          "worst_recall_class": "TD"
+        },
+        {
+          "seed": 2,
+          "fold": "pooled",
+          "macro_f1": 0.7117303002434393,
+          "accuracy": 0.7941563940905242,
+          "false_alarm_rate": 0.017041868293709236,
+          "worst_recall": 0.06140022463496818,
+          "worst_recall_class": "TD"
+        }
+      ]
+    }
+  },
+  "git_commit": "c15942d"
+}
