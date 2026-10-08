@@ -112,7 +112,7 @@ def select_columns(available: list[str]) -> list[str]:
     ]
 
 
-NORMAL_WEIGHT = 2.0
+NORMAL_WEIGHT = 1.5
 
 
 def _class_weight(y) -> dict:
