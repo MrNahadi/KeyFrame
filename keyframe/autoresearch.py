@@ -247,23 +247,34 @@ def run_identifiability(
     came from on the first 60% of every run's healthy time and names the run for the last
     40%. Returns balanced accuracy per load; chance is 1 / number of runs at that load.
     """
-    import lightgbm as lgb
-    from sklearn.metrics import balanced_accuracy_score
-
     candidate = candidate or load_candidate()
     base = table if table is not None else _feature_table()
     full = candidate_table(candidate, base, no_day=False)
     columns = select_checked(candidate, _available(base, full, no_day=False))
     healthy = tuning.thin(development_rows(full, outer_fold), thin_step)
-    healthy = healthy[healthy["label"] == "Normal"]
+    return identify_runs(healthy[healthy["label"] == "Normal"], columns)
+
+
+def identify_runs(healthy: pd.DataFrame, columns: Sequence[str]) -> dict[int, float]:
+    """Per load bin of ``healthy`` (healthy rows only): balanced accuracy of a small
+    LightGBM naming each row's run, trained on the first 60% of every run's rows in time
+    order and tested on the last 40%. Shared by the autoresearch and calibrated harnesses.
+    """
+    import lightgbm as lgb
+    from sklearn.metrics import balanced_accuracy_score
+
+    columns = list(columns)
     result: dict[int, float] = {}
     for load, rows in healthy.groupby("load_bin"):
         early, late = [], []
         for _, run in rows.groupby("run"):
+            run = run.sort_values("t")
             cut = int(len(run) * 0.6)
             early.append(run.iloc[:cut])
             late.append(run.iloc[cut:])
         train, test = pd.concat(early), pd.concat(late)
+        if train["run"].nunique() < 2:
+            continue
         model = lgb.LGBMClassifier(n_estimators=100, verbose=-1, random_state=42)
         model.fit(train[columns], train["run"])
         result[int(str(load))] = float(
