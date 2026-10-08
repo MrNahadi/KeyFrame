@@ -1,0 +1,38 @@
+{
+  "outer_fold": 40,
+  "label": "v1 re-scored on unseen runs only (reference for v2); locked v1 numbers unchanged",
+  "macro_f1_mean": 0.4037337512748742,
+  "per_seed": [
+    {
+      "seed": 42,
+      "fold": "pooled",
+      "macro_f1": 0.3930992815955653,
+      "accuracy": 0.5294746775715634,
+      "false_alarm_rate": 0.1920059215396003,
+      "worst_recall": 0.0,
+      "worst_recall_class": "TD",
+      "seen_run_macro_f1": 0.9921368085340372
+    },
+    {
+      "seed": 1,
+      "fold": "pooled",
+      "macro_f1": 0.46675351279665833,
+      "accuracy": 0.5897452028939918,
+      "false_alarm_rate": 0.1545521835677276,
+      "worst_recall": 0.0,
+      "worst_recall_class": "TD",
+      "seen_run_macro_f1": 0.9989692958663339
+    },
+    {
+      "seed": 2,
+      "fold": "pooled",
+      "macro_f1": 0.35134845943239895,
+      "accuracy": 0.5319282793331236,
+      "false_alarm_rate": 0.06824574389341229,
+      "worst_recall": 0.0,
+      "worst_recall_class": "TD",
+      "seen_run_macro_f1": 1.0
+    }
+  ],
+  "git_commit": "e1d9cb5"
+}
