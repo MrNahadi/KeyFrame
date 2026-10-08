@@ -1,0 +1,62 @@
+commit	macro_f1	sd	noday_f1	identify	worst_recall	status	description
+1223ce5	0.242665	0.022225	0.279848	0.879630	0.000000	keep	baseline (v1 fold85 params)
+d77451f	0.186784	0.010802	-	-	0.000000	discard	lr 0.1, 200 trees
+ab1d7ab	0.293837	0.014469	0.316222	0.879630	0.000000	keep	healthy residuals pipeline (resid replaces raw)
+0fd441f	0.115333	0.014707	-	-	0.000000	discard	curated checklist features (35 cols) + residuals
+3eb7954	0.222792	0.000000	-	-	0.000000	discard	logreg C=0.01 on residuals, all features
+2992827	0.104579	0.000000	-	-	0.000000	discard	random forest 200 trees leaf20 on residuals
+52c7f55	0.278807	0.009121	-	-	0.000000	discard	delta vs run-start 10min baseline, 28 channels
+2068e60	0.225188	0.003388	-	-	0.000000	discard	deltas-only (32 cols) xgb d3 lr.05 n200
+cc3529d	0.147733	0.007871	-	-	0.000000	discard	no rolling features, residuals+physics
+094cfbd	0.222604	0.012477	-	-	0.000000	discard	only rolling std+slope + 3 load inputs
+0e502fd	0.264692	0.006259	-	-	0.000000	discard	xgb d3 lr.02 n100 (residuals)
+534b987	0.174715	0.023224	-	-	0.000000	discard	smoothed residuals (300/900s rolling means)
+835d9a3	0.187658	0.004681	-	-	0.000000	discard	curated 35 cols + xgb d2 lr.1 n150
+21bcd74	0.260057	0.001838	-	-	0.000000	discard	residual change since run start + imbalance + CW instability; xgb d2 lr.1 n150
+3b0d2a3	0.246012	0.010399	-	-	0.000000	discard	residual change with 300s-mean current reading
+859deed	0.277941	0.033571	-	-	0.000000	discard	residual inputs speed+brake only (fuel residualised)
+e8419b3	0.273116	0.013289	-	-	0.000000	discard	depth 4 (weak lr kept)
+1c55cd5	0.150469	0.029371	-	-	0.000000	discard	lgbm extra_trees nl7 lr.05 n200 cs.3
+6dd989e	0.151279	0.018474	-	-	0.000000	discard	colsample 0.2 (weak xgb)
+c9493ed	0.213402	0.011510	-	-	0.000000	discard	residual change features + weak xgb (d7 lr.0034 n59)
+0bf6823	0.225176	0.021774	-	-	0.000000	discard	checklist source channels + all their rolling stats
+f290172	0.272047	0.019866	-	-	0.000000	discard	residual model degree 1
+6cf38e1	0.257754	0.009220	-	-	0.000000	discard	drop load inputs (speed/brake/fuel + rolling) after residuals
+b05cbca	0.296783	0.003341	-	-	0.000000	discard	n_estimators 150 at lr .0034
+3aaee12	0.301360	0.006202	-	-	0.000000	discard	7 air-path ratio features
+6ae6db1	0.316222	0.012249	-	-	0.000000	discard	without_day_channels in select_columns
+dd4f35f	0.293837	0.014469	-	-	0.000000	crash	NO-OP: edit did not apply (select_columns unchanged), identical to best; redone next
+a0b29c8	0.248622	0.028158	-	-	0.000000	discard	no-day + drop 5 session-marker levels (keep their roll std)
+3e8880b	0.315375	0.006495	-	-	0.000000	discard	7 air-path ratios + no day channels
+d75f41c	0.320081	0.010548	-	-	0.000000	discard	coolant inlet T16 as residual input, dropped from classifier
+8488977	0.264137	0.012481	-	-	0.000000	discard	6 ambient channels as residual inputs, dropped from classifier
+6724526	0.332390	0.005013	0.332390	0.922130	0.000000	keep	T16 residual input + no day channels
+b7743fa	0.308001	0.003546	-	-	0.000000	discard	T6 engine CW inlet as 2nd ambient residual input
+ffc5832	0.305159	0.032276	-	-	0.000000	discard	7 air-path ratios on top of T16-input/no-day
+fbd7563	0.242356	0.023517	-	-	0.000000	discard	T14 as 2nd ambient residual input (room air proxy)
+6485141	0.269537	0.005938	-	-	0.000000	discard	physics features residualised too
+80c515a	0.275198	0.005424	-	-	0.000000	discard	healthy model ridge alpha 10
+32b8bef	0.321597	0.018460	-	-	0.000000	discard	drop engine CW flow level (keep its roll std)
+682401c	0.323870	0.002600	-	-	0.000000	discard	min_child_weight 20
+65795ac	0.250027	0.013727	-	-	0.000000	discard	min_child_weight 200
+c9984a4	0.249266	0.035068	-	-	0.000000	discard	add residual-change-since-start for 13 checklist sensors
+99b5437	0.243052	0.016614	-	-	0.000000	discard	drop 60s rolling window features
+e7c4efd	0.294652	0.008297	-	-	0.000000	discard	drop rolling slope features
+674bd1d	0.317748	0.011755	-	-	0.000000	discard	lr 0.01, 59 trees
+c775ad2	0.322607	0.018123	-	-	0.000000	discard	subsample 0.3
+bd135f1	0.328998	0.013390	-	-	0.000000	discard	soft vote residual view + raw view
+5cc9a87	0.276895	0.026717	-	-	0.000000	discard	healthy model degree 3
+60d2f7f	0.208050	0.013314	-	-	0.000000	discard	Normal prob x0.7 at decision
+379db4c	0.332661	0.008815	-	-	0.000000	discard	n_estimators 150
+7660f52	0.270589	0.033402	-	-	0.000000	discard	drop TCH LO pump + fuel transfer pump pressures
+d94cd64	0.303022	0.009191	-	-	0.000000	discard	max_depth 10
+0753f5f	0.295968	0.019924	-	-	0.000000	discard	drop rolling stats of phys features
+16aadcd	0.324215	0.007185	-	-	0.000000	discard	reg_lambda 10
+349873e	0.301872	0.013826	-	-	0.000000	discard	max_bin 16
+3cde5c2	0.224693	0.020445	-	-	0.000000	discard	drop 17 heat-balance bookkeeping channels
+92860c4	0.327015	0.009699	-	-	0.000000	discard	8 heat-balance shares of input energy
+4655564	0.280000	0.012429	-	-	0.000000	discard	colsample 0.9
+42c3c5b	0.359090	0.005932	-	-	0.000000	discard	healthy model ridge alpha 0.1
+96678f0	0.349515	0.007587	-	-	0.000000	discard	healthy model ridge alpha 0.01
+05183ee	0.352794	0.001022	-	-	0.000000	discard	ridge alpha 0.1 + 150 trees
+0cd4ab3	0.358227	0.005951	-	-	0.000000	discard	heat-balance shares + ridge alpha 0.1
