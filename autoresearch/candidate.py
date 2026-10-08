@@ -28,10 +28,21 @@ PARAMS = {
     "learning_rate": 0.13983740016490973,
     "n_estimators": 200,
     "subsample": 0.8540362888980227,
-    "colsample_bytree": 0.5102922471479012,
+    "colsample_bytree": 0.2,
     "reg_lambda": 7.579479953348009,
 }
 
+
+IMBALANCE = (
+    "phys_exhaust_temp_spread",
+    "phys_exhaust_temp_dev_1",
+    "phys_exhaust_temp_dev_2",
+    "phys_exhaust_temp_dev_3",
+    "phys_pmax_spread",
+    "phys_indicated_work_spread",
+)
+"""Cylinder imbalance; a healthy engine's grows with load, so it reaches the model only as
+a residual from what a healthy engine shows at the same load."""
 
 CHECKLIST_CHANNELS = (
     "Charge Air IC Air Temp. Out",
@@ -54,6 +65,7 @@ CHECKLIST_CHANNELS = (
     "phys_turbine_temp_drop",
     "phys_pressure_ratio",
     "phys_cooling_water_rise",
+    *IMBALANCE,
 )
 """The channels the engineering checklist says the faults move."""
 
@@ -65,12 +77,24 @@ def add_features(run: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(index=run.index)
 
 
+LUBE_OIL = ("LO ", "TCH LO", "Loss with LO", "Loss with TCH LO", "phys_lo_share", "phys_tch_lo_share")
+"""The lube oil system: no fault in the checklist acts on it, so it can only tell sessions apart."""
+
+
 def select_columns(available: list[str]) -> list[str]:
-    return available
+    return [
+        c
+        for c in available
+        if (not c.startswith(IMBALANCE) or c in RESIDUAL_SOURCES) and not c.startswith(LUBE_OIL)
+    ]
+
+
+SMOOTH = "_roll_300s_mean"
+RESIDUAL_SOURCES = {c + SMOOTH for c in IMBALANCE}
 
 
 def build_model(seed: int) -> Pipeline:
-    smooth = "_roll_300s_mean"
+    smooth = SMOOTH
     residuals = HealthyEngineResiduals(
         inputs=[c + smooth for c in LOAD_INPUTS],
         targets=[c + smooth for c in CHECKLIST_CHANNELS],
