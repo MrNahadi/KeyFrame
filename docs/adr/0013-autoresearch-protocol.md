@@ -45,3 +45,9 @@ Decision:
 4. Trial results scored before this amendment are superseded. The trial restarts with a new baseline and a new ETA under the corrected score.
 
 Consequences: v1's locked numbers (ADR 0009) include seen-run rows. They stay unchanged, and the v2 write-up names this as a caveat on v1. The trial's first kept change (lr 0.05, 300 trees, depth 3) is re-tested under the new score rather than carried over.
+
+## Amendment 2 (8 Oct 2026): zero-shot features have a 15-minute memory
+
+During the four searches, one agent tried features measured relative to the run's first 10 minutes. That is calibration: it assumes each run starts healthy, which is the separate calibrated track (ADR 0014). It does not belong in the zero-shot track.
+
+Decision: a zero-shot feature may depend only on rows within the trailing 900 s, the longest window v1 used. `check_bounded_memory` enforces this: features computed on a run with its first 30% removed must match the whole-run values for rows more than 900 s after the cut. It runs in `search_score` and `examine`. The four running searches cloned the harness before this check existed, so they were told the rule by message. `examine` refuses any candidate that breaks it, so no search can be examined with a start-anchored feature.

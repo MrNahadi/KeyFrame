@@ -48,7 +48,7 @@ A single experiment should finish in under 10 minutes. Kill anything slower and 
 Anything that keeps to the contract. For example:
 - Model settings: learning rate against number of trees (a very low learning rate with few trees cannot converge), depth, regularisation, class weights.
 - Model family: LightGBM, random forest and logistic regression are installed. Do not add packages.
-- Features, physics first: the engineering checklist names the sensors each fault should move. Build features that follow it, such as differences, ratios, exhaust temperature spread, or trends over trailing windows. Only causal features: the current row and earlier rows of the same run.
+- Features, physics first: the engineering checklist names the sensors each fault should move. Build features that follow it, such as differences, ratios, exhaust temperature spread, or trends over trailing windows. Only causal features: the current row and earlier rows of the same run, and nothing more than 15 minutes (900 s) back. A feature anchored to the run's start (such as "change since the first N minutes") assumes a known-healthy start. That belongs to the separate calibrated track (feature 17), and the harness refuses it.
 - Fewer features: dropping a noisy group that scores the same or better is a win.
 - Steps fitted inside `build_model` (scaling, selection, healthy-engine residuals via `keyframe.features.HealthyEngineResiduals`) are fitted on training rows only. Use them freely.
 

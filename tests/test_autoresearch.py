@@ -180,3 +180,24 @@ def test_run_identifiability_scores_each_training_load():
     )
     assert set(scores) == {40, 75, 85}
     assert all(0.0 <= v <= 1.0 for v in scores.values())
+
+
+def test_features_anchored_to_the_run_start_are_refused():
+    def since_start(run: pd.DataFrame) -> pd.DataFrame:
+        delta = run["Engine Speed"] - run["Engine Speed"].iloc[0]
+        return pd.DataFrame({"cand_since_start": delta}, index=run.index)
+
+    table = _table()
+    table["t"] = table["t"] * 120.0  # rows two minutes apart, so runs outlast the memory
+    with pytest.raises(autoresearch.CandidateError, match="remembers"):
+        autoresearch.check_bounded_memory(_candidate(add_features=since_start), table, False)
+
+
+def test_trailing_window_features_pass_the_memory_check():
+    def trailing(run: pd.DataFrame) -> pd.DataFrame:
+        mean = run["Engine Speed"].rolling(3, min_periods=1).mean()
+        return pd.DataFrame({"cand_mean3": mean}, index=run.index)
+
+    table = _table()
+    table["t"] = table["t"] * 120.0
+    autoresearch.check_bounded_memory(_candidate(add_features=trailing), table, False)

@@ -141,6 +141,34 @@ def check_causal(candidate: ModuleType, table: pd.DataFrame, no_day: bool) -> No
             raise CandidateError("add_features looks ahead: a prefix of a run gives other values")
 
 
+MEMORY_S = 900.0
+"""Zero-shot features may only depend on the trailing 15 minutes (ADR 0013, amendment 2)."""
+
+
+def check_bounded_memory(
+    candidate: ModuleType, table: pd.DataFrame, no_day: bool, memory_s: float = MEMORY_S
+) -> None:
+    """Fail if a feature depends on rows more than ``memory_s`` before the current row,
+    such as a baseline taken from the start of the run (the calibrated track's assumption).
+    Features computed on a run with its first part cut off must match, for rows more than
+    ``memory_s`` after the cut, the same rows computed on the whole run."""
+    inputs = ["t", *model_inputs(table, no_day)]
+    sizes = table.groupby("run").size()
+    run = table[table["run"] == sizes.idxmin()].sort_values("t")[inputs]
+    full = candidate.add_features(run.copy())
+    if full is None or full.empty:
+        return
+    cut = int(len(run) * 0.3)
+    tail = candidate.add_features(run.iloc[cut:].copy())
+    settled = run.index[cut:][run["t"].iloc[cut:] - run["t"].iloc[cut] > memory_s]
+    left = full.loc[settled, tail.columns].to_numpy(dtype=float)
+    right = tail.loc[settled].to_numpy(dtype=float)
+    if not np.allclose(left, right, equal_nan=True, rtol=1e-6, atol=1e-9):
+        raise CandidateError(
+            f"add_features remembers more than {memory_s:.0f} s: values depend on the run start"
+        )
+
+
 def select_checked(candidate: ModuleType, available: Sequence[str]) -> list[str]:
     """The candidate's chosen columns, refused if any is not an allowed input."""
     chosen = list(candidate.select_columns(list(available)))
@@ -200,6 +228,7 @@ def search_score(
     candidate = candidate or load_candidate()
     base = table if table is not None else _feature_table()
     check_causal(candidate, base, no_day)
+    check_bounded_memory(candidate, base, no_day)
     full = candidate_table(candidate, base, no_day)
     dev = development_rows(full, outer_fold)
     available = _available(base, full, no_day)
@@ -308,6 +337,8 @@ def examine(
         raise RuntimeError(f"{out_path} exists: fold {outer_fold} has already been examined")
     candidate = candidate or load_candidate()
     base = table if table is not None else _feature_table()
+    check_causal(candidate, base, no_day=False)
+    check_bounded_memory(candidate, base, no_day=False)
     full = candidate_table(candidate, base, no_day=False)
     available = _available(base, full, no_day=False)
     columns = select_checked(candidate, available)
