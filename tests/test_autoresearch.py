@@ -201,3 +201,10 @@ def test_trailing_window_features_pass_the_memory_check():
     table = _table()
     table["t"] = table["t"] * 120.0
     autoresearch.check_bounded_memory(_candidate(add_features=trailing), table, False)
+
+
+def test_v1_candidate_uses_the_folds_tuned_parameters():
+    module = autoresearch.v1_candidate(85)
+    model = module.build_model(7)
+    assert model.random_state == 7
+    assert model.params["learning_rate"] == pytest.approx(0.0033572967053517922)

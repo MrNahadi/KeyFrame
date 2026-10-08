@@ -326,13 +326,15 @@ def examine(
     candidate: ModuleType | None = None,
     table: pd.DataFrame | None = None,
     exam_dir: Path = EXAM_DIR,
+    tag: str = "v2",
+    label: str = "v2 (autoresearch), separately labelled; v1 locked results unchanged",
 ) -> dict[str, Any]:
     """Score the finished search's candidate on its held-out load, once.
 
     Fits on every row of the training loads (not thinned, like the v1 refit) and predicts
     every held-out row; the headline counts rows of unseen runs only, as the search did. Refuses to run twice for one fold: the result file is the record.
     """
-    out_path = exam_dir / f"v2_fold{outer_fold}.json"
+    out_path = exam_dir / f"{tag}_fold{outer_fold}.json"
     if out_path.exists():
         raise RuntimeError(f"{out_path} exists: fold {outer_fold} has already been examined")
     candidate = candidate or load_candidate()
@@ -354,7 +356,7 @@ def examine(
         per_seed.append({"seed": seed, **summary, "seen_run_macro_f1": seen_f1})
     result = {
         "outer_fold": outer_fold,
-        "label": "v2 (autoresearch), separately labelled; v1 locked results unchanged",
+        "label": label,
         "macro_f1_mean": float(np.mean([r["macro_f1"] for r in per_seed])),
         "per_seed": per_seed,
         "git_commit": evaluate.git_commit(),
@@ -376,6 +378,33 @@ def prepare() -> Path:
         audit.write_clean_table(load.load_all(paths.RAW))
     experiments.load_feature_table()
     return experiments.FEATURE_TABLE
+
+
+def v1_candidate(outer_fold: int) -> ModuleType:
+    """v1's locked model for ``outer_fold`` as a candidate: XGBoost on v1's columns with
+    that fold's nested-tuned parameters. The starting point of every search."""
+    from keyframe import experiments
+
+    params = experiments.load_tuned_params("xgboost", outer_fold)
+    module = ModuleType(f"v1_fold{outer_fold}")
+    module.add_features = lambda run: pd.DataFrame(index=run.index)  # type: ignore[attr-defined]
+    module.select_columns = lambda available: list(available)  # type: ignore[attr-defined]
+    module.build_model = lambda seed: tuning._BalancedXGBClassifier(  # type: ignore[attr-defined]
+        random_state=seed, n_jobs=4, **params
+    )
+    return module
+
+
+def v1_reference(outer_fold: int, **kwargs: Any) -> dict[str, Any]:
+    """v1 re-scored on its held-out load under v2's rule (rows of unseen runs only, 3 seeds),
+    so v1 and v2 compare like with like. v1's locked numbers (ADR 0009) are unchanged."""
+    return examine(
+        outer_fold,
+        candidate=v1_candidate(outer_fold),
+        tag="v1_unseen",
+        label="v1 re-scored on unseen runs only (reference for v2); locked v1 numbers unchanged",
+        **kwargs,
+    )
 
 
 def _feature_table() -> pd.DataFrame:
@@ -405,6 +434,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     ident.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     exam = sub.add_parser("examine", help="Score the held-out load once, after the search.")
     exam.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
+    exam.add_argument("--candidate", type=Path, default=CANDIDATE, help="candidate.py to examine")
+    ref = sub.add_parser("v1-reference", help="v1 on its held-out load, unseen runs only.")
+    ref.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     args = parser.parse_args(argv)
     if args.command == "score":
         _print_score(search_score(args.outer_fold, no_day=args.no_day))
@@ -416,8 +448,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         for load, accuracy in scores.items():
             print(f"identify_load_{load}: {accuracy:.6f}")
         print(f"identify_mean: {np.mean(list(scores.values())):.6f}")
+    elif args.command == "v1-reference":
+        print(json.dumps(v1_reference(args.outer_fold), indent=2, default=str))
     else:
-        print(json.dumps(examine(args.outer_fold), indent=2, default=str))
+        candidate = load_candidate(args.candidate)
+        print(json.dumps(examine(args.outer_fold, candidate=candidate), indent=2, default=str))
 
 
 if __name__ == "__main__":
