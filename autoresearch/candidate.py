@@ -42,11 +42,19 @@ def select_columns(available: list[str]) -> list[str]:
     return available
 
 
+def _load_free_view(X: pd.DataFrame) -> pd.DataFrame:
+    """Drop the operating-point inputs and every remaining rolling mean, so the classifier
+    sees deviations from a healthy engine, spreads, ratios and trends, not load levels."""
+    drop = [c for c in X.columns if c in RESIDUAL_INPUTS or c.endswith("_mean")]
+    return X.drop(columns=drop)
+
+
 def build_model(seed: int) -> Pipeline:
     return Pipeline(
         [
             ("residuals", HealthyEngineResiduals(inputs=RESIDUAL_INPUTS)),
             ("residual_view", FunctionTransformer(_residual_view)),
+            ("load_free", FunctionTransformer(_load_free_view)),
             ("model", _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)),
         ]
     )
