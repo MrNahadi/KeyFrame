@@ -1,0 +1,62 @@
+commit	macro_f1	sd	noday_f1	identify	worst_recall	status	description
+d4ae072	0.196365	0.009942	0.224152	0.830612	0.000000	keep	baseline (v1 fold-60 tuned XGBoost params)
+47b30c3	0.228654	0.005666	0.227908	0.830612	0.000000	keep	healthy-engine residuals step replacing raw levels
+9d2a0f9	0.244507	0.012423			0.000000	discard	degree-1 residuals
+d9fc56a	0.293021	0.033754	0.307789	0.830612	0.000000	keep	drop operating-point inputs and rolling means after residualising
+dd87223	0.303106	0.006380			0.000000	discard	depth 3, lr 0.05, 300 trees
+6ff4f29	0.278600	0.044161			0.000000	discard	residualise physics features too
+8a4b17d	0.266657	0.003232			0.000000	discard	linear residuals with load-free view
+099d19b	0.241110	0.009570			0.000000	discard	residuals from setpoint (speed, brake) only
+cda340c	0.245227	0.000000			0.000000	discard	logistic regression C=0.05 on load-free residual view
+141d748	0.300539	0.010352			0.000000	discard	checklist channels only
+8328f3c	0.244013	0.023260			0.000000	discard	drift vs trailing 30/60 min mean features
+f6d9e4a	0.243493	0.015729			0.000000	discard	drop rolling std features
+64f6ac2	0.154246	0.004240			0.000000	discard	random forest instead of XGBoost
+ed59ab3	0.258431	0.022698			0.000000	discard	regularised XGB (colsample 0.3, mcw 10, lambda 5, 200 trees)
+53ba17b	0.319107	0.008349	0.304315	0.830612	0.000000	keep	relative healthy-engine residuals
+dc35eb2	0.337995	0.008589	0.354063	0.830612	0.000000	keep	relative rolling std and slope
+4b85a54	0.298926	0.007563			0.000000	discard	relative residuals for physics features too
+f2a6cc0	0.303531	0.012229			0.000000	discard	smoothed relative residuals from 5/15 min rolling means
+d6efee0	0.381429	0.009827	0.381429	0.903053	0.000000	keep	checklist channels only (with relative transforms)
+58f395c	0.384651	0.005773			0.000000	discard	lr 0.05 with 250 trees
+e6c4f8a	0.364265	0.003675			0.000000	discard	drop rolling slopes
+c91a9a2	0.326989	0.016171			0.000000	discard	degree-1 relative residuals
+c0bac0e	0.324878	0.015341			0.000000	discard	drop 15 min window features
+18efed4	0.336962	0.017720			0.000000	discard	LightGBM instead of XGBoost
+337e107	0.347338	0.009806			0.000000	discard	cylinder spreads as shares of mean
+3c3c15e	0.382269	0.014854			0.000000	discard	drop 1 min window features (equal score)
+3eff562	0.392344	0.001902			0.000000	discard	dimensionless turbine/cooler temp ratios + TCH power share
+ff3f81d	0.195703	0.001010			0.000000	discard	day-marker temps as healthy-model inputs
+7c1a9c9	0.374129	0.014523			0.000000	discard	ridge alpha 10 healthy model
+e65e5f2	0.358171	0.001771			0.000000	discard	ridge alpha 0.1 healthy model
+37cbfd3	0.356793	0.019819			0.000000	discard	add 30 min relative rolling std/slope
+f0ce0fb	0.320429	0.007431			0.000000	discard	depth-1 trees x200
+5f3cf2f	0.340288	0.018254			0.000000	discard	drop rolling stats of speed/brake/fuel
+446100d	0.307272	0.026447			0.000000	discard	residuals of 5 min trailing mean
+340aa86	0.360460	0.004377			0.000000	discard	cooling water temps only as rise
+8fce964	0.379817	0.007805			0.000000	discard	colsample 0.3
+f9925b4	0.300329	0.008398			0.000000	discard	soft vote XGB + logreg
+2b2eccf	0.380328	0.008916			0.000000	discard	max_depth 3
+e0dc82c	0.383280	0.003406			0.000000	discard	gamma 1
+bed37f4	0.386197	0.001708			0.000000	discard	drop T14 raw channel
+9824523	0.373532	0.020290			0.000000	discard	30 trees
+53dfd2e	0.347439	0.014796			0.000000	discard	common-mode removal on temperature residuals
+d1be4aa	0.372184	0.015345			0.000000	discard	sqrt-balanced class weights
+758358c	0.361263	0.004163			0.000000	discard	indicated work only as spread
+4c48a53	0.379397	0.008671			0.000000	discard	exhaust temps as rise over intake air temp
+128df81	0.369582	0.004048			0.000000	discard	healthy model from brake+fuel only
+5cab9a2	0.315273	0.013312			0.000000	discard	power-law (log-log) healthy model
+9d92922	0.391756	0.008255			0.000000	discard	dimensionless ratios + T14 only via ratios
+1bc5075	0.374295	0.011206			0.000000	discard	drop per-cylinder exhaust deviations
+d4f0497	0.368812	0.007656			0.000000	discard	rolling std divided by brake unsteadiness
+081a14a	0.383992	0.004104			0.000000	discard	num_parallel_tree 4
+018fb43	0.332254	0.012920			0.000000	discard	cubic healthy model
+625af04	0.382161	0.007260			0.000000	discard	keep rolling means of physics ratios
+5a2e1be	0.312888	0.021620			0.000000	discard	two-stage detect then diagnose
+ba9489f	0.389559	0.017279			0.000000	discard	drop absolute turbine temp drop and CW rise
+1bb5673	0.375939	0.011651			0.000000	discard	min_child_weight 5
+b6c3a8c	0.383282	0.019891			0.000000	discard	drop per-cylinder exhaust temps T1-T3
+ceffaf1	0.375627	0.002019			0.000000	discard	subsample 0.6
+a820c7f	0.373062	0.005265			0.000000	discard	drop 5 min window features
+056836e	0.384012	0.009876			0.000000	discard	relative residual floor 0.1 sd
+3fb63bf	0.387056	0.004301			0.000000	discard	turbine outlet/inlet temperature ratio
