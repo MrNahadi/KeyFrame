@@ -146,3 +146,37 @@ def test_examine_runs_once_per_fold(tmp_path: Path):
     assert (tmp_path / "v2_fold40.json").exists()
     with pytest.raises(RuntimeError, match="already been examined"):
         autoresearch.examine(40, candidate=candidate, table=table, seeds=(1,), exam_dir=tmp_path)
+
+
+def test_rows_of_runs_seen_at_a_training_load_are_not_scored():
+    predictions = pd.DataFrame(
+        {
+            "run": ["spans", "spans", "single", "other"],
+            "fold": [40, 60, 40, 60],
+        }
+    )
+    table = pd.DataFrame(
+        {"run": ["spans", "spans", "single", "other"], "load_bin": [40, 60, 40, 60]}
+    )
+    mask = autoresearch.unseen_run_mask(predictions, table)
+    assert mask.tolist() == [False, False, True, True]
+
+
+def test_search_score_reports_seen_runs_apart():
+    table = _table()
+    shared = table["run"].isin(["healthy_40", "healthy_60"])
+    table.loc[shared, "run"] = "reference"
+    score = autoresearch.search_score(
+        75, candidate=_candidate(), table=table, seeds=(1,), thin_step=1
+    )
+    dev = table[table["load_bin"] != 75]
+    assert score.n_scored_rows == len(dev) - shared.sum()
+    assert not np.isnan(score.seen_run_macro_f1)
+
+
+def test_run_identifiability_scores_each_training_load():
+    scores = autoresearch.run_identifiability(
+        60, candidate=_candidate(), table=_table(), thin_step=1
+    )
+    assert set(scores) == {40, 75, 85}
+    assert all(0.0 <= v <= 1.0 for v in scores.values())

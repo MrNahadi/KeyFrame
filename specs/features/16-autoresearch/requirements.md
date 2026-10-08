@@ -8,6 +8,7 @@ Owner request (8 Oct 2026): improve the model with Karpathy's autoresearch metho
 - R2. `score --no-day` computes the same score with every day-dependent channel, and every feature derived from one, hidden from the candidate (`features.without_day_channels`).
 - R3. Candidate contract: `add_features(run)` gets one run in time order with `t` and the allowed inputs (no label, run, load bin or excluded column) and returns new `cand_*` columns with the same index; `select_columns(available)` returns a subset of `available`; `build_model(seed)` returns an unfitted classifier. Anything fitted lives inside the model.
 - R4. Guards, each with a test: look-ahead features are refused (prefix test); columns outside `available` or in `EXCLUDED_COLUMNS` are refused; new columns need the `cand_` prefix; candidate source that reads files, labels or load bins, or reaches the shell, is refused.
+- R4a. (ADR 0013, amendment 1) `macro_f1` counts only rows of runs absent from each fold's training loads; rows of runs that span loads (the injector run and `Reference_Data`) are reported as `seen_run_macro_f1` and never decide anything. `identify --outer-fold K` reports, per training load, how well the candidate's columns name the run from healthy rows alone (balanced accuracy, first 60% / last 40% of each run).
 - R5. `keep_threshold(sd)` = max(0.01, 2 × sd × √(2/3)).
 - R6. `examine --outer-fold K` fits the candidate on every row of the training loads, predicts load K, writes `reports/autoresearch/v2_foldK.json` (labelled v2) and refuses to run a second time for the same fold.
 
@@ -21,5 +22,6 @@ Owner request (8 Oct 2026): improve the model with Karpathy's autoresearch metho
 
 ## Out of scope here
 
+- The calibrated track (features relative to each run's own known-healthy stretch), which gets its own spec.
 - The four real searches and their examinations (a later step, after the owner reads the trial report).
 - Any change to v1's locked results, the exported model, the API or the demo.

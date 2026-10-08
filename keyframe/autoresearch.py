@@ -7,7 +7,8 @@ fitted or scored, so a search for outer fold k never sees how it does on load k.
 held-out load is scored once per search, by ``examine``, after the search has stopped.
 
 Run ``uv run python -m keyframe.autoresearch score --outer-fold 75`` for the search score,
-``... score --outer-fold 75 --no-day`` for the day-robust gate, and
+``... score --outer-fold 75 --no-day`` for the day-robust gate,
+``... identify --outer-fold 75`` for the batch-effect check on kept changes, and
 ``... examine --outer-fold 75`` exactly once at the end of a search.
 """
 
@@ -48,13 +49,18 @@ _FORBIDDEN_SOURCE = re.compile(
 
 @dataclass(frozen=True)
 class Score:
-    """One search score: the mean and spread over seeds of inner-LOLO macro F1."""
+    """One search score: the mean and spread over seeds of inner-LOLO macro F1 on rows of
+    runs the model has not seen. ``seen_run_macro_f1`` (reported, never the keep signal)
+    covers rows of runs that also appear at a training load: the injector run and the
+    healthy reference run each span several loads (ADR 0013, amendment 1)."""
 
     outer_fold: int
     no_day: bool
     macro_f1: float
     macro_f1_sd: float
     per_seed: tuple[float, ...]
+    seen_run_macro_f1: float
+    n_scored_rows: int
     worst_recall: float
     worst_recall_class: str
     n_features: int
@@ -160,6 +166,25 @@ def development_rows(table: pd.DataFrame, outer_fold: int) -> pd.DataFrame:
     return table[table["load_bin"] != outer_fold]
 
 
+def unseen_run_mask(predictions: pd.DataFrame, table: pd.DataFrame) -> pd.Series:
+    """True for prediction rows whose run has no rows at that fold's training loads.
+
+    ``predictions`` is ``lolo_predict`` output over ``table``. A run that spans several
+    loads is seen in training whenever one of its other loads is, so its held-out rows
+    test recognition of that run as much as of the fault.
+    """
+    loads_by_run: dict[object, set[object]] = {}
+    for run, load in zip(table["run"], table["load_bin"], strict=True):
+        loads_by_run.setdefault(run, set()).add(load)
+    return pd.Series(
+        [
+            not (loads_by_run.get(run, set()) - {fold})
+            for run, fold in zip(predictions["run"], predictions["fold"], strict=True)
+        ],
+        index=predictions.index,
+    )
+
+
 def search_score(
     outer_fold: int,
     *,
@@ -169,7 +194,8 @@ def search_score(
     candidate: ModuleType | None = None,
     table: pd.DataFrame | None = None,
 ) -> Score:
-    """Mean inner-LOLO macro F1 over ``seeds`` on the training loads of ``outer_fold``."""
+    """Mean inner-LOLO macro F1 over ``seeds`` on the training loads of ``outer_fold``,
+    counting only rows of runs absent from each inner fold's training loads."""
     started = time.monotonic()
     candidate = candidate or load_candidate()
     base = table if table is not None else _feature_table()
@@ -181,11 +207,16 @@ def search_score(
     thinned = tuning.thin(dev, thin_step)
 
     per_seed: list[float] = []
+    seen_per_seed: list[float] = []
     pooled: list[pd.DataFrame] = []
     for seed in seeds:
         predictions = evaluate.lolo_predict(partial(candidate.build_model, seed), thinned, columns)
-        per_seed.append(evaluate.macro_f1(predictions["y_true"], predictions["y_pred"]))
-        pooled.append(predictions)
+        unseen = unseen_run_mask(predictions, thinned)
+        scored, seen = predictions[unseen], predictions[~unseen]
+        per_seed.append(evaluate.macro_f1(scored["y_true"], scored["y_pred"]))
+        if len(seen):
+            seen_per_seed.append(evaluate.macro_f1(seen["y_true"], seen["y_pred"]))
+        pooled.append(scored)
     everything = pd.concat(pooled)
     recall = evaluate.per_class_recall(everything["y_true"], everything["y_pred"])
     return Score(
@@ -194,11 +225,51 @@ def search_score(
         macro_f1=float(np.mean(per_seed)),
         macro_f1_sd=float(np.std(per_seed, ddof=1)) if len(per_seed) > 1 else 0.0,
         per_seed=tuple(per_seed),
+        seen_run_macro_f1=float(np.mean(seen_per_seed)) if seen_per_seed else float("nan"),
+        n_scored_rows=len(pooled[0]),
         worst_recall=float(recall.min()),
         worst_recall_class=str(recall.idxmin()),
         n_features=len(columns),
         seconds=time.monotonic() - started,
     )
+
+
+def run_identifiability(
+    outer_fold: int,
+    *,
+    candidate: ModuleType | None = None,
+    table: pd.DataFrame | None = None,
+    thin_step: int = THIN_STEP,
+) -> dict[int, float]:
+    """How well the candidate's columns tell runs apart on healthy rows alone (batch effect).
+
+    Per training load of ``outer_fold``: a small LightGBM learns which run each healthy row
+    came from on the first 60% of every run's healthy time and names the run for the last
+    40%. Returns balanced accuracy per load; chance is 1 / number of runs at that load.
+    """
+    import lightgbm as lgb
+    from sklearn.metrics import balanced_accuracy_score
+
+    candidate = candidate or load_candidate()
+    base = table if table is not None else _feature_table()
+    full = candidate_table(candidate, base, no_day=False)
+    columns = select_checked(candidate, _available(base, full, no_day=False))
+    healthy = tuning.thin(development_rows(full, outer_fold), thin_step)
+    healthy = healthy[healthy["label"] == "Normal"]
+    result: dict[int, float] = {}
+    for load, rows in healthy.groupby("load_bin"):
+        early, late = [], []
+        for _, run in rows.groupby("run"):
+            cut = int(len(run) * 0.6)
+            early.append(run.iloc[:cut])
+            late.append(run.iloc[cut:])
+        train, test = pd.concat(early), pd.concat(late)
+        model = lgb.LGBMClassifier(n_estimators=100, verbose=-1, random_state=42)
+        model.fit(train[columns], train["run"])
+        result[int(str(load))] = float(
+            balanced_accuracy_score(test["run"], model.predict(test[columns]))
+        )
+    return result
 
 
 def keep_threshold(seed_sd: float, n_seeds: int = len(SEARCH_SEEDS)) -> float:
@@ -219,7 +290,7 @@ def examine(
     """Score the finished search's candidate on its held-out load, once.
 
     Fits on every row of the training loads (not thinned, like the v1 refit) and predicts
-    every held-out row. Refuses to run twice for one fold: the result file is the record.
+    every held-out row; the headline counts rows of unseen runs only, as the search did. Refuses to run twice for one fold: the result file is the record.
     """
     out_path = exam_dir / f"v2_fold{outer_fold}.json"
     if out_path.exists():
@@ -234,8 +305,11 @@ def examine(
         predictions = evaluate.lolo_predict(
             partial(candidate.build_model, seed), full, columns, only_folds=[outer_fold]
         )
-        summary = evaluate.summarise(predictions).iloc[0].to_dict()
-        per_seed.append({"seed": seed, **summary})
+        unseen = unseen_run_mask(predictions, full)
+        summary = evaluate.summarise(predictions[unseen]).iloc[0].to_dict()
+        seen = predictions[~unseen]
+        seen_f1 = evaluate.macro_f1(seen["y_true"], seen["y_pred"]) if len(seen) else None
+        per_seed.append({"seed": seed, **summary, "seen_run_macro_f1": seen_f1})
     result = {
         "outer_fold": outer_fold,
         "label": "v2 (autoresearch), separately labelled; v1 locked results unchanged",
@@ -270,11 +344,19 @@ def main(argv: Sequence[str] | None = None) -> None:
     score = sub.add_parser("score", help="Inner-LOLO search score of autoresearch/candidate.py.")
     score.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     score.add_argument("--no-day", action="store_true", help="Day-robust gate: no day channels.")
+    ident = sub.add_parser("identify", help="Batch effect: can healthy rows name their run?")
+    ident.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     exam = sub.add_parser("examine", help="Score the held-out load once, after the search.")
     exam.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     args = parser.parse_args(argv)
     if args.command == "score":
         _print_score(search_score(args.outer_fold, no_day=args.no_day))
+    elif args.command == "identify":
+        scores = run_identifiability(args.outer_fold)
+        print("---")
+        for load, accuracy in scores.items():
+            print(f"identify_load_{load}: {accuracy:.6f}")
+        print(f"identify_mean: {np.mean(list(scores.values())):.6f}")
     else:
         print(json.dumps(examine(args.outer_fold), indent=2, default=str))
 

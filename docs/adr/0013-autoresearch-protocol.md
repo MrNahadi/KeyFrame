@@ -29,3 +29,19 @@ Consequences:
 - The person who wrote this protocol has seen v1's outer results (for example "turbine degradation is weakest" and ADR 0011's fold-85 diagnosis). That knowledge is not in `program.md`, and the search agents are told not to read the files that hold it, but it cannot be fully undone. The write-up says so.
 - The trial run on fold 75 (`specs/features/16-autoresearch/trial-fold75.md`) measured noise and run time only. Its candidate changes are thrown away and its log is closed to the search agents.
 - No deployable model changes until the four examinations are in and a separate decision picks a v2 configuration.
+
+## Amendment 1 (8 Oct 2026): score unseen runs only, and measure the batch effect
+
+Question: Review by a marine condition-monitoring engineer (G. W. M. Maina) raised two doubts: whether the model recognises test sessions rather than faults, and whether near-perfect injector and cavitation recall reflects run-specific information.
+
+Checked on the data the same day:
+- **Healthy rows name their run.** On healthy rows alone, a small LightGBM trained on the first 60% of each run's healthy time names the run for the last 40% with balanced accuracy 0.96 / 0.95 / 1.00 / 0.97 at 40 / 60 / 75 / 85% load (chance 0.25 / 0.20 / 0.33 / 0.20). Removing the four day-dependent channels leaves 0.80 / 0.95 / 1.00 / 0.96. The session signature is spread across most channels, so the `--no-day` gate (decision 3) is necessary but far from sufficient.
+- **Two runs span several loads.** `Clogged_Injector_Nozzle1_40_60_85_Load` (the only injector training run) covers 40, 60 and 85% load, and `Reference_Data` covers all four. In every leave-one-load-out fold, the model has trained on the same run at another load, so their held-out rows test run recognition as much as fault recognition. Every other fault run sits at one load.
+
+Decision:
+1. The keep signal (`macro_f1`) counts only rows of runs absent from that fold's training loads (`unseen_run_mask`). Seen-run rows are scored separately (`seen_run_macro_f1`) and never drive a decision. The examination headline uses the same rule. In practice the scored classes are air cooler fouling, air filter clogging, cooling water pump cavitation, turbine degradation, and Normal from the fault runs' pre-fault stretches. Injector clogging is judged only by the lockbox, a different run, which v1 already scored.
+2. `identify --outer-fold K` runs the batch-effect test on the candidate's columns, over the training loads. It is logged for every kept change. It is a diagnostic, not a gate: it starts near its ceiling, so a margin rule on it would decide nothing.
+3. Two results, separately labelled, as the reviewer recommended: **zero-shot** (no data from the held-out run; the primary v2 result, what the loop optimises) and, later, **calibrated** (features relative to the same run's own known-healthy stretch before the fault, as commissioning data would provide). Calibrated is out of scope for this feature. It will be specified on its own, and it cannot detect the injector fault, which is present from the start of its run.
+4. Trial results scored before this amendment are superseded. The trial restarts with a new baseline and a new ETA under the corrected score.
+
+Consequences: v1's locked numbers (ADR 0009) include seen-run rows. They stay unchanged, and the v2 write-up names this as a caveat on v1. The trial's first kept change (lr 0.05, 300 trees, depth 3) is re-tested under the new score rather than carried over.
