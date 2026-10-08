@@ -18,16 +18,16 @@ rolling features, that fold's nested-tuned parameters from models/tuning/).
 from __future__ import annotations
 
 import pandas as pd
-
-from keyframe.tuning import _BalancedXGBClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline, make_pipeline
 
 PARAMS = {
-    "max_depth": 2,
-    "learning_rate": 0.1788532743297921,
-    "n_estimators": 63,
-    "subsample": 0.831261142176991,
-    "colsample_bytree": 0.6558555380447055,
-    "reg_lambda": 0.12030178871154672,
+    "n_estimators": 57,
+    "max_depth": 4,
+    "min_samples_leaf": 44,
+    "max_features": 0.40055750587160444,
+    "max_samples": 0.5832290311184182,
 }
 
 
@@ -39,5 +39,8 @@ def select_columns(available: list[str]) -> list[str]:
     return available
 
 
-def build_model(seed: int) -> _BalancedXGBClassifier:
-    return _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)
+def build_model(seed: int) -> Pipeline:
+    return make_pipeline(
+        SimpleImputer(strategy="median"),
+        RandomForestClassifier(class_weight="balanced", random_state=seed, n_jobs=4, **PARAMS),
+    )
