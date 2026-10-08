@@ -31,8 +31,35 @@ PARAMS = {
 }
 
 
+DELTA_CHANNELS = (
+    "Charge Air IC Air Temp. Out",
+    "phys_cooler_effectiveness",
+    "Charge Air Press.",
+    "Exh.Gas Temp. Turbine In",
+    "Exh.Gas Temp. Turbine Out",
+    "phys_turbine_temp_drop",
+    "phys_exhaust_temp_spread",
+    "phys_pmax_spread",
+    "Engine Cooling water flow",
+    "Fresh Cooling Water Press.",
+    "phys_cooling_water_rise",
+    "Exh. Gas Mass Flow",
+    "Charge Air IC Air Temp. In",
+    "Shaft Power",
+    "phys_fuel_flow_per_kw",
+)
+BASELINE_S = 600.0
+
+
 def add_features(run: pd.DataFrame) -> pd.DataFrame:
-    return pd.DataFrame(index=run.index)
+    """Change since the run's first ``BASELINE_S`` seconds (expanding mean until then)."""
+    early = (run["t"] - run["t"].iloc[0]) < BASELINE_S
+    out = {}
+    for channel in DELTA_CHANNELS:
+        x = run[channel]
+        ref = x.where(early).expanding().mean().ffill()
+        out[f"cand_delta_{channel}"] = x - ref
+    return pd.DataFrame(out, index=run.index)
 
 
 def select_columns(available: list[str]) -> list[str]:
