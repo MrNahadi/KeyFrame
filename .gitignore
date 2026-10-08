@@ -23,14 +23,13 @@ paper/*.fls
 paper/*.log
 paper/*.out
 
-# Ralph loop runtime state
-.ralph/logs/
-.ralph/done
-.ralph/progress.md
+# AI agent tooling and build-loop state (kept local, not part of the project)
+.claude/
+.ralph/
+CLAUDE.md
+questions/
 
 # OS / editors
 .DS_Store
 .vscode/
 .idea/
-.ralph/loop.pid
-.ralph/iteration.pgid
