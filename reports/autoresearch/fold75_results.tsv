@@ -1,0 +1,62 @@
+commit	macro_f1	sd	noday_f1	identify	worst_recall	status	description
+2d0041c	0.532475	0.014050	0.443865	0.865386	0.182204	keep	baseline: v1 fold75 XGB params, all 833 features
+9ff0ef9	0.322183	0.016619	-	-	0.000000	discard	healthy-engine residuals of every sensor + residual view
+0704501	0.443865	0.011424	-	-	0.137996	discard	drop day-dependent channels (without_day_channels)
+c547763	0.236778	0.000031	-	-	0.000579	discard	raw + physics only, no rolling features
+2089bba	0.430637	0.008370	-	-	0.066412	discard	delta of each raw/physics reading from the run's first 10 min (expanding)
+39bbfc0	0.573548	0.004336	0.521309	0.865386	0.191713	keep	XGB depth 1 stumps, 200 trees
+bffb2f6	0.579672	0.003308	-	-	0.303787	discard	depth 1, 80 trees
+53c68ee	0.569070	0.001772	-	-	0.194770	discard	drop rolling slopes
+9be53d8	0.592070	0.008288	-	-	0.218203	discard	add linear (degree 1) healthy-engine residuals, keep raw
+4958ee5	0.423840	0.002370	-	-	0.213958	discard	linear residuals + residual view (drop raw levels)
+aa90765	0.581846	0.007097	-	-	0.193411	discard	colsample_bytree 0.2
+71bad38	0.611235	0.005490	0.469316	-	0.326541	discard-day	linear residuals of 5-min means of 20 checklist channels (inputs: 5-min mean speed/brake/fuel), appended
+0a6c05a	0.600904	0.004217	0.506975	0.865386	0.223977	keep	linear residuals of 5-min means of checklist channels from speed+brake only, appended
+ce44500	0.582688	0.006171	-	-	0.249109	discard	checklist residuals on 60s and 900s means (instead of 300s)
+dc953ea	0.573232	0.003351	-	-	0.204789	discard	residuals of every channel's 5-min mean (not just checklist) from speed+brake
+ca55832	0.393502	0.007581	-	-	0.000000	discard	select only checklist channels + load inputs + all physics (raw+rolling)
+a9a0217	0.606453	0.006455	-	-	0.225335	discard	add turbine temp ratio T5/T4, boost per brake load, cooler approach T15-T16, + 5-min means
+6ff3785	0.611853	0.004415	-	-	0.306843	discard	exhaust spread/devs relative to mean exhaust temp (+1/5/15-min means), drop absolute spread/devs
+b0943dd	0.623191	0.005772	-	-	0.291730	discard	cylinder imbalance (exh spread/devs, pmax, work spreads) only as 5-min-mean residuals vs speed+brake; drop absolute
+25b50f3	0.614410	0.016751	-	-	0.301579	discard	imbalance only as residuals, absolute 5-min means dropped after residualising
+170a9b8	0.307938	0.012900	-	-	0.002314	discard	5-min mean minus run's first-10-min reference, NaN when brake load moved >5%
+d757577	0.623573	0.004564	-	-	0.284089	discard	combine: imbalance-as-residual + T5/T4 ratio, boost per load, cooler approach (+5-min means)
+9b38e40	0.599592	0.000829	-	-	0.242316	discard	checklist residuals divided by healthy prediction (relative residuals)
+6ab2017	0.566032	0.015998	-	-	0.154186	discard	LightGBM linear_tree, 4 leaves, 200 trees lr .05, balanced
+c5e9889	0.616135	0.005366	-	-	0.302258	discard	imbalance-as-residual + drop absolute Fuel Flow and Total Input Energy (raw+rolling)
+f36cbb5	0.622402	0.003439	-	-	0.331465	discard	drop lube-oil system channels (LO temps/pressures/flows, LO heat losses and shares)
+cdc37ec	0.634510	0.004178	0.478703	-	0.340295	discard-day	combine: imbalance-as-residual + drop lube-oil channels
+3c3efaa	0.624948	0.002367	0.395968	-	0.340295	discard-day	imbalance-as-residual + drop session markers: lube oil, IC cooling water temp in (T16), fuel transfer/injector cooling pressures
+0d0a9db	0.631829	0.001433	0.456591	-	0.340295	discard-day	imbalance-as-residual + drop lube oil + fuel transfer/injector cooling pressures
+c2b5a63	0.641250	0.006930	0.489484	0.908520	0.340295	keep	imbalance-as-residual + drop lube oil + colsample_bytree 0.2
+d894bc2	0.582475	0.023131	-	-	0.332824	discard	colsample_bytree 0.1
+e351c88	0.637590	0.003954	-	-	0.340295	discard	add T5/T4 ratio, boost per brake load, cooler approach T15-T16 (+5-min means)
+1c4fb4a	0.635570	0.005525	-	-	0.340295	discard	drop all 15-min (900s) rolling features
+75026b5	0.651485	0.002370	-	-	0.282391	discard	checklist channels as residuals only: drop raw + 1/5/15-min mean levels after residualising
+79ee7a0	0.641391	0.018952	-	-	0.338937	discard	drop raw+rolling-mean levels of 20 load/power channels after residualising (keep std/slope)
+6332c8b	0.638745	0.006610	-	-	0.340295	discard	Normal class weight x0.5 of balanced
+2f57431	0.633920	0.002810	-	-	0.185931	discard	drop raw+rolling-mean levels of load readings AND checklist channels after residualising
+cc1a45e	0.638243	0.003087	-	-	0.340295	discard	500 trees lr 0.05 (vs 200 at 0.14)
+0b71eb2	0.623891	0.011119	-	-	0.259516	discard	reg_lambda 50
+c5fefd1	0.297167	0.038029	-	-	0.000000	discard	ExtraTrees 300 trees, min leaf 20, max_features 0.2, balanced (median impute)
+a8c059d	0.385392	0.000000	-	-	0.196600	discard	logistic regression C=0.01 balanced, median impute + standard scale
+b6de917	0.620491	0.001980	-	-	0.316210	discard	max_bin 32
+13d3898	0.595940	0.002444	-	-	0.340295	discard	drop instantaneous raw/physics readings; keep rolling stats + speed/brake
+9a2ec5c	0.643405	0.003375	-	-	0.340295	discard	n_estimators 100
+38d59e0	0.533369	0.020244	-	-	0.074048	discard	residual inputs: speed + brake + IC cooling water inlet temp T16 (heat-sink temperature)
+f478bad	0.635844	0.004349	-	-	0.340295	discard	cand_trend = 60s mean - 900s mean for each checklist channel
+7bce2a3	0.559331	0.020896	-	-	0.260825	discard	max_depth 2 with current features
+c0a3390	0.515878	0.001912	-	-	0.000000	discard	all non-day channels: 5-min-mean residual vs speed+brake replaces raw/1/5/15-min mean levels
+ff8e693	0.640564	0.003245	-	-	0.340295	discard	CW: coefficient of variation of fresh CW pressure and engine CW flow, 1/5/15-min
+8944a85	0.637296	0.006200	-	-	0.340295	discard	add relative exhaust devs/spread as share of mean exhaust temp (5-min means)
+1e7b934	0.639095	0.006774	-	-	0.282391	discard	checklist levels dropped after residualising + drop all 900s rolling features
+9527d73	0.638022	0.004979	-	-	0.340295	discard	bag 5 XGB stump models (different sampling seeds), mean probability
+3aff038	0.643630	0.007409	-	-	0.340295	discard	subsample 0.5
+1fa98bb	0.609676	0.018000	-	-	0.216707	discard	residual inputs: brake load only (no speed)
+266f9f4	0.630549	0.002592	-	-	0.340295	discard	drop all rolling slope features
+acb9c9c	0.651500	0.006819	-	-	0.340295	discard	add imbalance residuals on 900s means (and keep their 900s means as residual sources)
+7aaf563	0.641903	0.001676	-	-	0.340295	discard	colsample_bytree 0.3
+4db7f37	0.643820	0.004000	-	-	0.340295	discard	drop Mechanical Loss and Other Loss (heat-balance remainders)
+30bd76f	0.673719	0.006050	0.484221	0.908817	0.300391	keep	checklist channels (incl. imbalance) only as residuals of 300s and 900s means; all their levels dropped
+b08bf5b	0.649594	0.017391	-	-	0.237052	discard	n_estimators 100
+4e304b9	0.661448	0.010788	-	-	0.326201	discard	add checklist residuals of 60s means (levels still dropped)
