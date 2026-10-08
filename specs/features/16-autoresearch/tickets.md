@@ -45,3 +45,31 @@ Test seam: `trial-fold75.md`, "Recommendation"
 Context: ADR 0013
 Acceptance:
 - [x] States plainly whether the trial found gains above the noise margin and what that means for the full run
+
+## T-005: Four isolated searches
+
+Status: in progress
+Blocked by: T-004
+Slice: four cloud sessions (8 Oct 2026, 11:38 UTC), one per held-out load, each following `program.md` on branch `autoresearch/foldK` for 60 experiments.
+Test seam: `reports/autoresearch/foldK_results.tsv` on each branch
+Acceptance:
+- [ ] Four branches pushed with their logs
+- [ ] Each final candidate passes `check_causal` and `check_bounded_memory` (ADR 0013, amendment 2)
+
+## T-006: v1 reference and examinations
+
+Status: in progress
+Blocked by: T-005
+Slice: `reports/autoresearch/v1_unseen_foldK.json` (v1 on its held-out load, unseen runs only) and `v2_foldK.json` (each search's final candidate, once).
+Test seam: `uv run python -m keyframe.autoresearch v1-reference|examine --outer-fold K [--candidate PATH]`
+Acceptance:
+- [x] v1 reference for all four folds: 0.404 / 0.818 / 0.500 / 0.517 (mean 0.560; locked per-fold mean 0.679 included seen-run rows)
+- [ ] One examination per fold, run after its search has stopped
+
+## T-007: v2 write-up
+
+Status: todo
+Blocked by: T-006
+Slice: `reports/autoresearch/README.md`: v1 reference against v2 per fold, seed spread, experiments run and kept per search, what the searches learned, and the caveats (ADR 0013).
+Acceptance:
+- [ ] Every number traceable to a JSON or TSV in `reports/autoresearch/`
