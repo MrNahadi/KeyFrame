@@ -22,9 +22,9 @@ import pandas as pd
 from keyframe.tuning import _BalancedXGBClassifier
 
 PARAMS = {
-    "max_depth": 2,
+    "max_depth": 1,
     "learning_rate": 0.13983740016490973,
-    "n_estimators": 80,
+    "n_estimators": 200,
     "subsample": 0.8540362888980227,
     "colsample_bytree": 0.5102922471479012,
     "reg_lambda": 7.579479953348009,
