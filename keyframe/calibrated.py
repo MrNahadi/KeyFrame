@@ -95,8 +95,8 @@ def arm_columns(table: pd.DataFrame, arm: str) -> list[str]:
     """Model inputs for one arm. ``zero_shot`` is v1's set; ``calibrated`` keeps only
     deviations from the baseline, level-free rolling stats and the operating point;
     ``raw+calibrated`` is v1's set plus the deviations."""
-    v1 = features.FEATURE_SETS["raw+physics+rolling"].columns(table)
     cal = [c for c in table.columns if c.startswith("cal_")]
+    v1 = [c for c in features.FEATURE_SETS["raw+physics+rolling"].columns(table) if c not in cal]
     if arm == "zero_shot":
         return v1
     if arm == "raw+calibrated":

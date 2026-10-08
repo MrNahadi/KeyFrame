@@ -90,5 +90,9 @@ def test_calibrated_arm_drops_absolute_levels_but_keeps_the_operating_point():
     assert "Fuel Temp." not in columns
     assert "cal_Fuel Temp." in columns
     assert set(calibrated.LOAD_INPUTS) <= set(columns)
+    zero_shot = calibrated.arm_columns(table, "zero_shot")
+    assert not any(c.startswith("cal_") for c in zero_shot)
+    both = calibrated.arm_columns(table, "raw+calibrated")
+    assert len(both) == len(set(both))
     with pytest.raises(ValueError, match="unknown arm"):
         calibrated.arm_columns(table, "nope")
