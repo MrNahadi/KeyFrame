@@ -397,6 +397,17 @@ def v1_candidate(outer_fold: int) -> ModuleType:
     return module
 
 
+def default_candidate() -> ModuleType:
+    """XGBoost with the library's default settings on v1's columns (ADR 0015)."""
+    module = ModuleType("xgboost_defaults")
+    module.add_features = lambda run: pd.DataFrame(index=run.index)  # type: ignore[attr-defined]
+    module.select_columns = lambda available: list(available)  # type: ignore[attr-defined]
+    module.build_model = lambda seed: tuning._BalancedXGBClassifier(  # type: ignore[attr-defined]
+        random_state=seed, n_jobs=4
+    )
+    return module
+
+
 def v1_reference(outer_fold: int, **kwargs: Any) -> dict[str, Any]:
     """v1 re-scored on its held-out load under v2's rule (rows of unseen runs only, 3 seeds),
     so v1 and v2 compare like with like. v1's locked numbers (ADR 0009) are unchanged."""
@@ -445,6 +456,8 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
     ref = sub.add_parser("v1-reference", help="v1 on its held-out load, unseen runs only.")
     ref.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
+    default = sub.add_parser("default", help="Untuned XGBoost defaults, once (ADR 0015).")
+    default.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     args = parser.parse_args(argv)
     if args.command == "score":
         _print_score(search_score(args.outer_fold, no_day=args.no_day))
@@ -456,6 +469,14 @@ def main(argv: Sequence[str] | None = None) -> None:
         for load, accuracy in scores.items():
             print(f"identify_load_{load}: {accuracy:.6f}")
         print(f"identify_mean: {np.mean(list(scores.values())):.6f}")
+    elif args.command == "default":
+        result = examine(
+            args.outer_fold,
+            candidate=default_candidate(),
+            tag="default",
+            label="untuned XGBoost defaults on v1's features (ADR 0015); not v1, not v2",
+        )
+        print(json.dumps(result, indent=2, default=str))
     elif args.command == "v1-reference":
         print(json.dumps(v1_reference(args.outer_fold), indent=2, default=str))
     else:
