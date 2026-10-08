@@ -24,7 +24,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline, make_pipeline
 
 PARAMS = {
-    "n_estimators": 57,
+    "n_estimators": 250,
     "max_depth": 4,
     "min_samples_leaf": 44,
     "max_features": 0.40055750587160444,
@@ -86,8 +86,30 @@ def add_features(run: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(out, index=run.index)
 
 
+RAW_KEEP = (
+    "Engine Speed",
+    "Water Brake Weight",
+    "Fuel Flow",
+    "Shaft Power",
+    "Charge Air IC Air Temp. Out",
+    "Charge Air Press.",
+    "Exh.Gas Temp. Turbine In",
+    "Exh.Gas Temp. Turbine Out",
+    "Exh. Gas Mass Flow",
+    "Engine Cooling water flow",
+    "Fresh Cooling Water Press.",
+    "Sea Cooling Water Press.",
+)
+
+
 def select_columns(available: list[str]) -> list[str]:
-    return [c for c in available if not c.endswith(("_mean", "_slope"))]
+    return [
+        c
+        for c in available
+        if c.startswith("cand_")
+        or (c.startswith("phys_") and "_roll_" not in c)
+        or c in RAW_KEEP
+    ]
 
 
 NORMAL_WEIGHT = 2.0
