@@ -322,6 +322,20 @@ def examine(
     return result
 
 
+def prepare() -> Path:
+    """One-time data setup for a fresh clone: download and verify dataset v1.0 if it is
+    missing, write the clean table, and build the cached feature table."""
+    from keyframe import audit, download, experiments, load
+
+    if not any(paths.RAW.glob("**/*.csv")):
+        download.build(None)
+    clean = paths.PROCESSED / "clean.parquet"
+    if not clean.exists():
+        audit.write_clean_table(load.load_all(paths.RAW))
+    experiments.load_feature_table()
+    return experiments.FEATURE_TABLE
+
+
 def _feature_table() -> pd.DataFrame:
     from keyframe import experiments
 
@@ -344,6 +358,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     score = sub.add_parser("score", help="Inner-LOLO search score of autoresearch/candidate.py.")
     score.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     score.add_argument("--no-day", action="store_true", help="Day-robust gate: no day channels.")
+    sub.add_parser("prepare", help="Download the data and build the feature table (once).")
     ident = sub.add_parser("identify", help="Batch effect: can healthy rows name their run?")
     ident.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     exam = sub.add_parser("examine", help="Score the held-out load once, after the search.")
@@ -351,6 +366,8 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if args.command == "score":
         _print_score(search_score(args.outer_fold, no_day=args.no_day))
+    elif args.command == "prepare":
+        print(f"feature table ready: {prepare()}")
     elif args.command == "identify":
         scores = run_identifiability(args.outer_fold)
         print("---")

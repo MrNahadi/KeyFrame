@@ -22,6 +22,7 @@ To keep the held-out load unseen, do not open `README.md`, `reports/`, `paper/`,
 
 ## Setup
 
+0. `uv sync`, then `uv run python -m keyframe.autoresearch prepare` (downloads the dataset and builds the feature table; about 2 minutes, once).
 1. `git checkout -b autoresearch/foldK auto-research`
 2. Put this fold's v1 parameters in `PARAMS` in `candidate.py`: copy `best_params` from `models/tuning/xgboost_foldK.json`. That file holds only inner scores. Commit it as `baseline`.
 3. Create `autoresearch/results.tsv` with the header `commit	macro_f1	sd	noday_f1	identify	worst_recall	status	description` (tab-separated).
