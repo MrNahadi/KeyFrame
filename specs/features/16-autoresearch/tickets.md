@@ -26,21 +26,22 @@ Acceptance:
 
 ## T-003: Trial run on fold 75
 
-Status: todo
+Status: done
 Blocked by: T-002
 Slice: about 20 experiments on fold 75 following `program.md`.
 Test seam: `specs/features/16-autoresearch/trial-fold75.md`
 Context: requirements R8
 Acceptance:
-- [ ] Run time per experiment, seed sd, ETA, keep rate and crashes recorded
-- [ ] Candidate reset to the baseline afterwards; `examine` not run
+- [x] Run time per experiment, seed sd, ETA, keep rate and crashes recorded
+- [x] Candidate reset to the baseline afterwards; `examine` not run
+Notes: 20 experiments, 6 before and 15 after ADR 0013 amendment 1 (the shared baseline counted in both). Trial branch kept local.
 
 ## T-004: Trial report and go/no-go
 
-Status: todo
+Status: done
 Blocked by: T-003
 Slice: a recommendation on running the four searches, with what to change in the protocol first.
 Test seam: `trial-fold75.md`, "Recommendation"
 Context: ADR 0013
 Acceptance:
-- [ ] States plainly whether the trial found gains above the noise margin and what that means for the full run
+- [x] States plainly whether the trial found gains above the noise margin and what that means for the full run
