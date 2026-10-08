@@ -83,6 +83,11 @@ def add_features(run: pd.DataFrame) -> pd.DataFrame:
         ref = grouped.transform(lambda v: v.expanding().mean().ffill())
         noise = grouped.transform(lambda v: v.expanding().std().ffill())
         out[f"cand_delta_{channel}"] = (x - ref) / noise.where(noise > 0)
+    # Turbine restriction heats the exhaust far more per unit of boost lost than an inlet
+    # restriction does (checklist: telling AF and TD apart).
+    boost = out["cand_delta_Charge Air Press."]
+    out["cand_t4_beyond_boost"] = out["cand_delta_Exh.Gas Temp. Turbine In"] + boost
+    out["cand_t5_beyond_boost"] = out["cand_delta_Exh.Gas Temp. Turbine Out"] + boost
     return pd.DataFrame(out, index=run.index)
 
 
