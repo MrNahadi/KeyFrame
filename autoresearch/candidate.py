@@ -18,7 +18,10 @@ rolling features, that fold's nested-tuned parameters from models/tuning/).
 from __future__ import annotations
 
 import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
 
+from keyframe.features import RESIDUAL_INPUTS, HealthyEngineResiduals, _residual_view
 from keyframe.tuning import _BalancedXGBClassifier
 
 PARAMS = {
@@ -39,5 +42,11 @@ def select_columns(available: list[str]) -> list[str]:
     return available
 
 
-def build_model(seed: int) -> _BalancedXGBClassifier:
-    return _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)
+def build_model(seed: int) -> Pipeline:
+    return Pipeline(
+        [
+            ("residuals", HealthyEngineResiduals(inputs=RESIDUAL_INPUTS)),
+            ("residual_view", FunctionTransformer(_residual_view)),
+            ("model", _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)),
+        ]
+    )
