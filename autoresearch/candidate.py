@@ -36,7 +36,7 @@ def add_features(run: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_columns(available: list[str]) -> list[str]:
-    return available
+    return [c for c in available if not c.endswith(("_mean", "_slope"))]
 
 
 def build_model(seed: int) -> Pipeline:
