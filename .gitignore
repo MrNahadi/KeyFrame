@@ -33,3 +33,7 @@ questions/
 .DS_Store
 .vscode/
 .idea/
+
+# Autoresearch loop scratch (logs are copied to reports/autoresearch/ when a search ends)
+autoresearch/results.tsv
+run.log
