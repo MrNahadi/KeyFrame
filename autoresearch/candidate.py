@@ -26,6 +26,53 @@ from sklearn.preprocessing import FunctionTransformer
 from keyframe.features import RESIDUAL_INPUTS, HealthyEngineResiduals, _residual_view
 from keyframe.tuning import _BalancedXGBClassifier
 
+PHYSICS_CHANNELS = frozenset(
+    {
+        *RESIDUAL_INPUTS,
+        "Max. In-Cylinder Press. No.1",
+        "Max. In-Cylinder Press. No.2",
+        "Max. In-Cylinder Press. No.3",
+        "Charge Air Press.",
+        "No.1 Exh.Gas Temp.",
+        "No.2 Exh.Gas Temp.",
+        "No.3 Exh.Gas Temp.",
+        "Exh.Gas Temp. Turbine In",
+        "Exh.Gas Temp. Turbine Out",
+        "Cooling Water Temp. Engine In",
+        "Cooling Water Temp. Engine Out I",
+        "Cooling Water Temp. Engine Out II",
+        "Cooling Water Temp. Engine Out III",
+        "Charge Air IC Air Temp. In",
+        "Charge Air IC Air Temp. Out",
+        "Charge Air IC Cooling Water Temp. Out",
+        "Fresh Cooling Water Press.",
+        "Engine Cooling water flow",
+        "Indicated Work No.1",
+        "Indicated Work No.2",
+        "Indicated Work No.3",
+        "Loss with cooling water",
+        "Loss in Charge Air IC",
+        "Exh. Gas Mass Flow",
+        "TCH Power",
+        "Indicated Efficiency",
+        "phys_pressure_ratio",
+        "phys_cooler_effectiveness",
+        "phys_exhaust_temp_spread",
+        "phys_exhaust_temp_dev_1",
+        "phys_exhaust_temp_dev_2",
+        "phys_exhaust_temp_dev_3",
+        "phys_turbine_temp_drop",
+        "phys_pmax_spread",
+        "phys_indicated_work_spread",
+        "phys_fuel_flow_per_kw",
+        "phys_exhaust_mass_flow_per_fuel",
+        "phys_cooling_water_rise",
+    }
+)
+"""The channels the engineering checklist ties to a fault mechanism, plus the
+healthy-engine model's inputs; day-driven temperatures, auxiliary pumps and
+heat-balance bookkeeping are left out."""
+
 PARAMS = {
     "max_depth": 2,
     "learning_rate": 0.1788532743297921,
@@ -41,7 +88,7 @@ def add_features(run: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_columns(available: list[str]) -> list[str]:
-    return available
+    return [c for c in available if c.split("_roll_")[0] in PHYSICS_CHANNELS]
 
 
 class _RelativeResiduals(HealthyEngineResiduals):
