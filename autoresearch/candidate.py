@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
@@ -63,6 +64,30 @@ class _RelativeResiduals(HealthyEngineResiduals):
         return out
 
 
+class _RelativeRolling(BaseEstimator, TransformerMixin):
+    """Rolling standard deviations and slopes as a share of the channel's rolling mean
+    (plus its healthy sd, so near-zero channels stay finite), for the same reason."""
+
+    def fit(self, X, y):
+        healthy = X.loc[np.asarray(y) == "Normal"]
+        self.pairs_ = []
+        for column in X.columns:
+            for stat in ("_std", "_slope"):
+                if column.endswith(stat) and "_roll_" in column:
+                    mean = column.removesuffix(stat) + "_mean"
+                    source = column.split("_roll_")[0]
+                    if mean in X.columns and source in X.columns:
+                        scale = float(healthy[source].std()) + 1e-9
+                        self.pairs_.append((column, mean, scale))
+        return self
+
+    def transform(self, X):
+        out = X.copy()
+        for column, mean, scale in self.pairs_:
+            out[column] = X[column] / (X[mean].abs() + scale)
+        return out
+
+
 def _load_free_view(X: pd.DataFrame) -> pd.DataFrame:
     """Drop the operating-point inputs and every remaining rolling mean, so the classifier
     sees deviations from a healthy engine, spreads, ratios and trends, not load levels."""
@@ -74,6 +99,7 @@ def build_model(seed: int) -> Pipeline:
     return Pipeline(
         [
             ("residuals", _RelativeResiduals(inputs=RESIDUAL_INPUTS)),
+            ("relative_rolling", _RelativeRolling()),
             ("residual_view", FunctionTransformer(_residual_view)),
             ("load_free", FunctionTransformer(_load_free_view)),
             ("model", _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)),
