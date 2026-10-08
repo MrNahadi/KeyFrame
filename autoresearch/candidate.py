@@ -21,7 +21,12 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
-from keyframe.features import RESIDUAL_INPUTS, HealthyEngineResiduals, _residual_view
+from keyframe.features import (
+    RESIDUAL_INPUTS,
+    HealthyEngineResiduals,
+    _residual_view,
+    without_day_channels,
+)
 from keyframe.tuning import _BalancedXGBClassifier
 
 PARAMS = {
@@ -39,14 +44,25 @@ def add_features(run: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_columns(available: list[str]) -> list[str]:
-    return available
+    """No day-dependent channels nor anything derived from them."""
+    return without_day_channels(available)
+
+
+COOLANT_IN = "Charge Air IC Cooling Water Temp. In"
+"""Cooling water supply temperature: set by the day, it shifts every engine temperature, so
+the healthy-engine model takes it as an input and the classifier never sees it."""
+
+
+def _drop_coolant(X: pd.DataFrame) -> pd.DataFrame:
+    return X.drop(columns=[c for c in X.columns if c.split("_roll_")[0] == COOLANT_IN])
 
 
 def build_model(seed: int) -> Pipeline:
     return Pipeline(
         [
-            ("residuals", HealthyEngineResiduals(inputs=RESIDUAL_INPUTS)),
+            ("residuals", HealthyEngineResiduals(inputs=(*RESIDUAL_INPUTS, COOLANT_IN))),
             ("residual_view", FunctionTransformer(_residual_view)),
+            ("drop_coolant", FunctionTransformer(_drop_coolant)),
             ("model", _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)),
         ]
     )
