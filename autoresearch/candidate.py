@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import pandas as pd
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
 
 from keyframe.features import HealthyEngineResiduals
 from keyframe.tuning import _BalancedXGBClassifier
@@ -90,7 +91,15 @@ def select_columns(available: list[str]) -> list[str]:
 
 
 SMOOTH = "_roll_300s_mean"
-RESIDUAL_SOURCES = {c + SMOOTH for c in IMBALANCE}
+SLOW = "_roll_900s_mean"
+RESIDUAL_SOURCES = {c + SMOOTH for c in IMBALANCE} | {c + SLOW for c in IMBALANCE}
+
+
+def _drop_levels(X: pd.DataFrame) -> pd.DataFrame:
+    """Checklist channels reach the model as residuals, spreads and trends, not as levels,
+    which follow the load and extrapolate badly to an unseen load."""
+    levels = {f"{c}{w}" for c in CHECKLIST_CHANNELS for w in ("", "_roll_60s_mean", SMOOTH, SLOW)}
+    return X.drop(columns=[c for c in X.columns if c in levels])
 
 
 def build_model(seed: int) -> Pipeline:
@@ -100,9 +109,16 @@ def build_model(seed: int) -> Pipeline:
         targets=[c + smooth for c in CHECKLIST_CHANNELS],
         degree=1,
     )
+    slow = HealthyEngineResiduals(
+        inputs=[c + SLOW for c in LOAD_INPUTS],
+        targets=[c + SLOW for c in CHECKLIST_CHANNELS],
+        degree=1,
+    )
     return Pipeline(
         [
             ("residuals", residuals),
+            ("slow_residuals", slow),
+            ("drop_levels", FunctionTransformer(_drop_levels)),
             ("model", _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)),
         ]
     )
