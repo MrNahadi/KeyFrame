@@ -45,3 +45,20 @@ SHAP explanations were checked against an engineering checklist written before a
 - Alarm detects 6 of 13 fault runs; the other 7 never raise one.
 - Known tuning defect (ADR 0011): the model tuned for the 85% held-out load settled on a learning rate of 0.0034 with 59 trees after only 9 trials, so it is barely confident on any reading (highest class probability 0.26). It explains that load's calibration error (0.499) and why no alarm fires at 85% load. The locked scores include it unchanged; a fix belongs in a separately reported version 2.
 - Demo response time (target 300 ms for a prediction plus explanation) is measured when the API is built, after this card was locked.
+
+## Re-analysis, 8 October 2026 (separately labelled; the locked results above are unchanged)
+
+An outside review by a marine condition-monitoring engineer prompted two checks. Both changed how the numbers above should be read (ADR 0013, amendment 1):
+
+- **Every test session is recognisable from healthy readings alone.** A small model names the run of a healthy reading with 95–100% balanced accuracy at every load, and still 80–100% without the four day-dependent channels.
+- **Two runs span several loads**: the only injector clogging training run (40, 60 and 85% load) and the healthy reference run (all four loads). Under leave-one-load-out, the model has always trained on another part of the same run, so those rows test recognition of the run as much as of the fault.
+
+Scored only on runs it never trained on (3 seeds), this model's macro F1 is **0.404 / 0.818 / 0.500 / 0.517** at 40 / 60 / 75 / 85% load (mean 0.560, against 0.679 for the locked per-load mean). At 75% load its false alarm rate on healthy running from unseen runs is **0.64**, rising to 1.0 after each run's first 20 minutes. Its locked 25% there was measured mostly on the reference run.
+
+Three attempts to improve on it were each evaluated once on the held-out loads, and none did:
+
+- **Autonomous search** (Karpathy-style autoresearch, four isolated searches of 60 experiments): 0.254 / 0.299 / 0.158 at 40 / 60 / 85% load. Fold 75 was still running when this section was written.
+- **Readings relative to each run's own healthy start** (calibrated track): 0.340 mean, against 0.484 on the same rows.
+- **Untuned XGBoost defaults**: 0.518 mean.
+
+Model selection with scores computed inside this dataset does not transfer to unseen loads. More runs of each fault on different days are needed before any change can be shown to help. Details: `reports/autoresearch/README.md`, `reports/calibrated/README.md`, ADRs 0013 to 0015.
