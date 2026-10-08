@@ -18,7 +18,9 @@ rolling features, that fold's nested-tuned parameters from models/tuning/).
 from __future__ import annotations
 
 import pandas as pd
+from sklearn.pipeline import Pipeline
 
+from keyframe.features import HealthyEngineResiduals
 from keyframe.tuning import _BalancedXGBClassifier
 
 PARAMS = {
@@ -31,6 +33,34 @@ PARAMS = {
 }
 
 
+CHECKLIST_CHANNELS = (
+    "Charge Air IC Air Temp. Out",
+    "Charge Air IC Air Temp. In",
+    "Charge Air IC Cooling Water Temp. Out",
+    "Charge Air Press.",
+    "Exh.Gas Temp. Turbine In",
+    "Exh.Gas Temp. Turbine Out",
+    "No.1 Exh.Gas Temp.",
+    "No.2 Exh.Gas Temp.",
+    "No.3 Exh.Gas Temp.",
+    "Max. In-Cylinder Press. No.1",
+    "Max. In-Cylinder Press. No.2",
+    "Max. In-Cylinder Press. No.3",
+    "TCH Power",
+    "Exh. Gas Mass Flow",
+    "Fresh Cooling Water Press.",
+    "Engine Cooling water flow",
+    "phys_cooler_effectiveness",
+    "phys_turbine_temp_drop",
+    "phys_pressure_ratio",
+    "phys_cooling_water_rise",
+)
+"""The channels the engineering checklist says the faults move."""
+
+LOAD_INPUTS = ("Engine Speed", "Water Brake Weight")
+"""The operating point; fuel flow is left out because the governor adds fuel under a fault."""
+
+
 def add_features(run: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(index=run.index)
 
@@ -39,5 +69,16 @@ def select_columns(available: list[str]) -> list[str]:
     return available
 
 
-def build_model(seed: int) -> _BalancedXGBClassifier:
-    return _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)
+def build_model(seed: int) -> Pipeline:
+    smooth = "_roll_300s_mean"
+    residuals = HealthyEngineResiduals(
+        inputs=[c + smooth for c in LOAD_INPUTS],
+        targets=[c + smooth for c in CHECKLIST_CHANNELS],
+        degree=1,
+    )
+    return Pipeline(
+        [
+            ("residuals", residuals),
+            ("model", _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)),
+        ]
+    )
