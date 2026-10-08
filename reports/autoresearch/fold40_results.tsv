@@ -1,0 +1,62 @@
+commit	macro_f1	sd	noday_f1	identify	worst_recall	status	description
+719850f	0.540136	0.003522	0.319143	0.852181	0.000000	keep	baseline v1 xgboost fold40 params
+c5318d4	0.306868	0.003537			0.000000	discard	healthy-engine residuals pipeline (speed, brake, fuel inputs)
+64b8e55	0.520693	0.004312			0.000000	discard	start-relative deltas of checklist channels vs first 10 min of run
+b8e87f4	0.513955	0.001412			0.000000	discard	add load-only healthy residuals of 15 checklist channels, keep raw view
+7dad381	0.564523	0.045149	0.339458	0.852181	0.000000	keep	random forest with v1 fold-40 tuned params
+c998e12	0.538023	0.000164			0.000000	discard	RF 200 trees
+8268ed7	0.523802	0.007387			0.000000	discard	RF + start-relative deltas of checklist channels
+d7aae74	0.603277	0.031712	0.359478	0.811985	0.017610	keep	drop rolling means and slopes (keep raw, physics, rolling std)
+24b4ece	0.628352	0.016869	0.405821	0.825028	0.061384	keep	lean set + start-relative deltas of checklist channels
+af27c90	0.485600	0.021060			0.011321	discard	deltas for every sensor and physics channel
+8b5f826	0.534835	0.025310			0.000000	discard	RF max_features 0.1
+9328f4f	0.571214	0.014029			0.041761	discard	XGBoost (v1 params) on lean+delta features
+9ff4fff	0.590492	0.004513			0.051572	discard	deltas on 60s rolling mean instead of raw reading
+7f09826	0.604771	0.006488			0.000000	discard	reset delta baseline at each load setpoint change (causal shaft-power segments)
+43d7da1	0.431938	0.040636			0.019119	discard	ExtraTrees instead of random forest
+715d431	0.582733	0.030352			0.017610	discard	drop 60s rolling std
+f643dd7	0.511625	0.003819			0.001006	discard	RF max_depth 8
+e294255	0.623170	0.039000			0.095346	discard	RF max_depth 3
+83c3c0c	0.351005	0.013223			0.000000	discard	drop raw absolute sensor levels except load inputs
+41a0a3a	0.592067	0.044985			0.057107	discard	add relative deltas (x/baseline-1) for boost, mass flow, exhaust temps, fuel
+31f39c1	0.348710	0.000000			0.020377	discard	logistic regression (v1 fold-40 C) on lean+delta features
+c1d427e	0.492706	0.022496			0.100126	discard	checklist channels enter only as deltas (drop their raw levels)
+e55bae7	0.620969	0.020016			0.058868	discard	RF min_samples_leaf 200
+58b4396	0.601378	0.033488			0.027170	discard	drop slow day temperatures (fuel temps, LO cooling water in)
+1099a13	0.539635	0.008939			0.009811	discard	LightGBM small leaves, feature/bagging fraction, balanced
+d533659	0.598079	0.029536			0.045535	discard	compact set: deltas, physics, load inputs, 8 raw checklist channels + sea CW press
+8643871	0.589440	0.010439			0.020377	discard	deltas also for T1-T3, Pmax 1-3, exhaust total power
+ea5a3d2	0.492119	0.041625			0.000000	discard	soft-vote blend: full RF + physics-only RF (deltas, physics, load inputs)
+bc34eba	0.587774	0.011676			0.078742	discard	balanced class weights with Normal x3
+6bf91c2	0.634665	0.019598			0.118742	discard	segment-reset deltas + Normal x2 class weight
+6d00a07	0.611976	0.005055			0.102642	discard	temperatures referenced to IC cooling water inlet (T - T16)
+6db025e	0.578790	0.007366			0.152704	discard	non-exhaust temperatures only relative to IC cooling water inlet (drop raw levels)
+8ac5664	0.600056	0.016807			0.036730	discard	cylinder-balance features only as start-relative deltas (drop raw levels)
+49635fb	0.577893	0.009199			0.100377	discard	change-detection design: all levels as segment-reset deltas, raw only load + sea CW press, Normal x2
+031944b	0.594113	0.012180			0.028931	discard	log ratio of 300s rolling std to its value at end of baseline period, 10 channels
+b07bb2b	0.617572	0.024638			0.043019	discard	deltas for cooling circuit: sea CW press, LO CW flow, engine CW in temp, IC CW out temp
+5108dfb	0.632724	0.010451			0.107925	discard	deltas standardised by baseline-period std (z-scores)
+8dc74d6	0.648379	0.023904	0.427916	0.814314	0.160585	keep	z-scored segment-reset deltas + Normal x2 class weight
+a8f4977	0.605566	0.089127			0.105122	discard	z-deltas also for cooling circuit channels
+ff506ce	0.602289	0.024363			0.078116	discard	absolute deltas alongside z-scored deltas
+7fc8d77	0.619419	0.006042			0.149760	discard	drop raw T15 and cooler effectiveness levels (AC via deltas)
+8c19b00	0.642694	0.019921			0.136034	discard	z-deltas also for T1-T3
+d7168fe	0.658101	0.013582			0.191950	discard	Normal class weight x1.5
+cd5dec2	0.627377	0.005689			0.102893	discard	baseline window 1200 s
+e8bc82d	0.632089	0.060679			0.061377	discard	z-deltas of 300s means of boost, mass flow, IC air in temp (AF)
+30146cf	0.631103	0.008403			0.152773	discard	RF 150 trees
+ec76566	0.630625	0.028417			0.122977	discard	TD-vs-AF composites: exhaust temp z-rise plus boost z-change
+1c35048	0.649930	0.035410			0.107354	discard	compact set on z-delta design: deltas, physics, load, 8 raw checklist + sea CW press
+d7a8742	0.669292	0.011749	0.420279	0.909224	0.127664	keep	compact set + 250 trees
+e9e8682	0.577450	0.002685			0.140275	discard	z-deltas for cooling circuit channels (compact design)
+3f3ace4	0.694644	0.028056	0.448509	0.909224	0.149425	keep	Normal class weight x1.5 (compact design)
+b39b19d	0.717022	0.008246	0.496080	0.911043	0.122196	keep	TD-vs-AF composites on compact design
+f4b21ac	0.721239	0.002327			0.204999	discard	5-min trailing mean of boost z-delta (AF)
+7f9d437	0.650639	0.012268			0.166834	discard	compact set without raw T15, T4, T5, boost, mass flow levels
+84fa963	0.705741	0.022670			0.096418	discard	drop heat-exchanger share physics features
+4ffc686	0.718385	0.005664			0.177659	discard	5-min trailing means of boost z-delta and exhaust-beyond-boost composites
+f315877	0.698527	0.021701			0.263363	discard	Normal class weight x1.2
+bcd173a	0.640414	0.009794			0.017074	discard	RF max_features 0.7
+189e6b9	0.626400	0.019712			0.069937	discard	RF max_features 0.25
+21baa94	0.699091	0.021567			0.156791	discard	mean cylinder exhaust z-delta and its beyond-boost composite
+822d2f1	0.710149	0.016248			0.120522	discard	RF min_samples_leaf 20
