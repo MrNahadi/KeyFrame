@@ -20,9 +20,10 @@ from keyframe import paths, splits
 EXAM_DIR = paths.REPORTS / "autoresearch"
 
 
-def search_summary(log_path: Path) -> dict[str, Any]:
+def search_summary(log_path: Path, examined_commit: str | None = None) -> dict[str, Any]:
     """Experiments run and kept in one search log (tab-separated, ``status`` and
-    ``macro_f1`` columns, first row the baseline)."""
+    ``macro_f1`` columns, first row the baseline). ``inner_examined`` is the inner score of
+    the commit that was examined (ADR 0013, amendment 3), or of the last keep if not given."""
     log = pd.read_csv(log_path, sep="\t")
     status = log["status"].astype(str).str.strip()
     experiments = log.iloc[1:]
@@ -34,6 +35,13 @@ def search_summary(log_path: Path) -> dict[str, Any]:
         "crashed": int((status.iloc[1:] == "crash").sum()),
         "inner_baseline": float(log["macro_f1"].iloc[0]),
         "inner_final": float(keeps["macro_f1"].iloc[-1]),
+        "inner_examined": float(
+            keeps.loc[keeps["commit"].astype(str).str.startswith(examined_commit), "macro_f1"].iloc[
+                0
+            ]
+            if examined_commit
+            else keeps["macro_f1"].iloc[-1]
+        ),
     }
 
 
@@ -54,12 +62,14 @@ def _exam(path: Path) -> dict[str, Any] | None:
 
 def summary_table(exam_dir: Path = EXAM_DIR) -> pd.DataFrame:
     """One row per held-out load: v1 reference, v2 examination and the search's log."""
+    examined_path = exam_dir / "examined.json"
+    examined = json.loads(examined_path.read_text()) if examined_path.exists() else {}
     rows = []
     for fold in splits.LOAD_BINS:
         v1 = _exam(exam_dir / f"v1_unseen_fold{fold}.json")
         v2 = _exam(exam_dir / f"v2_fold{fold}.json")
         log_path = exam_dir / f"fold{fold}_results.tsv"
-        log = search_summary(log_path) if log_path.exists() else {}
+        log = search_summary(log_path, examined.get(str(fold))) if log_path.exists() else {}
         row: dict[str, Any] = {"held_out_load": fold}
         for tag, exam in (("v1", v1), ("v2", v2)):
             for key in ("mean", "sd", "worst_recall", "worst_class", "false_alarm_rate"):
@@ -78,6 +88,10 @@ def _fmt(value: Any, digits: int = 3) -> str:
     return str(value)
 
 
+def _count(value: Any) -> str:
+    return str(int(value)) if value is not None and pd.notna(value) else "pending"
+
+
 def render(table: pd.DataFrame) -> str:
     """Markdown summary: per-load scores, mean over loads, search effort."""
     lines = [
@@ -89,7 +103,7 @@ def render(table: pd.DataFrame) -> str:
         "unchanged.",
         "",
         "| Held-out load | v1 | v2 | v2 − v1 | v2 worst recall | v2 false alarms"
-        " | Experiments | Kept | Inner F1 (start → end) |",
+        " | Experiments | Kept | Inner F1 (baseline → examined) |",
         "|---|---:|---:|---:|---|---:|---:|---:|---|",
     ]
     for _, r in table.iterrows():
@@ -101,16 +115,15 @@ def render(table: pd.DataFrame) -> str:
             else "pending"
         )
         inner = (
-            f"{_fmt(r.get('inner_baseline'))} → {_fmt(r.get('inner_final'))}"
+            f"{_fmt(r.get('inner_baseline'))} → {_fmt(r.get('inner_examined'))}"
             if "inner_baseline" in r and pd.notna(r.get("inner_baseline"))
             else "pending"
         )
-        experiments = r.get("experiments")
+        experiments = r.get("experiments")  # NaN while a search is running
         lines.append(
             f"| {r['held_out_load']}% | {v1} | {v2} | {_fmt(r['delta'])} | {worst}"
             f" | {_fmt(r['v2_false_alarm_rate'])}"
-            f" | {_fmt(experiments) if pd.notna(experiments) else 'pending'}"
-            f" | {_fmt(r.get('kept')) if pd.notna(r.get('kept')) else 'pending'} | {inner} |"
+            f" | {_count(experiments)} | {_count(r.get('kept'))} | {inner} |"
         )
     done = table.dropna(subset=["v1_mean", "v2_mean"])
     if len(done):

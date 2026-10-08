@@ -1,0 +1,38 @@
+{
+  "outer_fold": 40,
+  "label": "search final that uses a run-start baseline (calibration-style); not zero-shot, not v2",
+  "macro_f1_mean": 0.3248532098719298,
+  "per_seed": [
+    {
+      "seed": 42,
+      "fold": "pooled",
+      "macro_f1": 0.32399049082162446,
+      "accuracy": 0.5030512739855301,
+      "false_alarm_rate": 0.004145077720207254,
+      "worst_recall": 0.0,
+      "worst_recall_class": "AC",
+      "seen_run_macro_f1": 0.6835717305907361
+    },
+    {
+      "seed": 1,
+      "fold": "pooled",
+      "macro_f1": 0.3287638194577966,
+      "accuracy": 0.5063227430009437,
+      "false_alarm_rate": 0.00458919319022946,
+      "worst_recall": 0.0,
+      "worst_recall_class": "AC",
+      "seen_run_macro_f1": 0.690617459509385
+    },
+    {
+      "seed": 2,
+      "fold": "pooled",
+      "macro_f1": 0.32180531933636825,
+      "accuracy": 0.5014784523435043,
+      "false_alarm_rate": 0.0044411547002220575,
+      "worst_recall": 0.0,
+      "worst_recall_class": "AC",
+      "seen_run_macro_f1": 0.9826728948952235
+    }
+  ],
+  "git_commit": "67d6593"
+}

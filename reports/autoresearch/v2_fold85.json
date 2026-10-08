@@ -1,0 +1,38 @@
+{
+  "outer_fold": 85,
+  "label": "v2 (autoresearch), separately labelled; v1 locked results unchanged",
+  "macro_f1_mean": 0.15795498637271985,
+  "per_seed": [
+    {
+      "seed": 42,
+      "fold": "pooled",
+      "macro_f1": 0.15948794292620566,
+      "accuracy": 0.3691634036461623,
+      "false_alarm_rate": 0.002364066193853428,
+      "worst_recall": 0.0,
+      "worst_recall_class": "AF",
+      "seen_run_macro_f1": 1.0
+    },
+    {
+      "seed": 1,
+      "fold": "pooled",
+      "macro_f1": 0.15741760121421003,
+      "accuracy": 0.36587933139657275,
+      "false_alarm_rate": 0.006096802289411472,
+      "worst_recall": 0.0,
+      "worst_recall_class": "AF",
+      "seen_run_macro_f1": 1.0
+    },
+    {
+      "seed": 2,
+      "fold": "pooled",
+      "macro_f1": 0.1569594149777438,
+      "accuracy": 0.36651088375226304,
+      "false_alarm_rate": 0.004728132387706856,
+      "worst_recall": 0.0,
+      "worst_recall_class": "AF",
+      "seen_run_macro_f1": 1.0
+    }
+  ],
+  "git_commit": "67d6593"
+}

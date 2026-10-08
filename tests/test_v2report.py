@@ -36,6 +36,10 @@ def test_summary_pairs_v1_and_v2_per_load_and_counts_the_search(tmp_path: Path):
     assert table.loc[40, "kept"] == 1
     assert table.loc[40, "crashed"] == 1
     assert table.loc[40, "inner_final"] == pytest.approx(0.35)
+    assert table.loc[40, "inner_examined"] == pytest.approx(0.35)
+    (tmp_path / "examined.json").write_text('{"40": "a"}')
+    table = v2report.summary_table(tmp_path).set_index("held_out_load")
+    assert table.loc[40, "inner_examined"] == pytest.approx(0.30)
     assert pd.isna(table.loc[60, "v2_mean"])
     text = v2report.render(table.reset_index())
     assert "pending" in text
