@@ -11,3 +11,15 @@ Decision: one comparison, fixed before it runs, with nothing chosen by any score
 - Reading: the default model "beats" v1 only if its mean over the four loads is higher **and** it is higher on at least three of the four loads. Either way, the result is reported and no further variant is tried on these held-out loads.
 
 Consequences: if the default wins, the honest recommendation is to stop tuning on this dataset, and the deployable model should use default settings. If it loses, v1's tuned model stands, and the write-up says that no change tested on 8 October beat it.
+
+## Result (8 Oct 2026)
+
+| Held-out load | v1 tuned (unseen runs) | XGBoost defaults |
+|---|---:|---:|
+| 40% | 0.404 | **0.509** |
+| 60% | **0.818** | 0.717 |
+| 75% | **0.500** | 0.355 |
+| 85% | **0.517** | 0.493 |
+| Mean | **0.560** | 0.518 |
+
+The default model is higher on one load of four and lower on average, so by the rule fixed above it does **not** beat v1. (With no subsampling the default model is deterministic, so its three seeds agree.) v1's tuned model stands. Tuning on inner folds did not help reliably, but it did not hurt on average either: the fold 85 learning-rate defect costs less than the defaults lose at 60% and 75% load. Files: `reports/autoresearch/default_fold*.json`.

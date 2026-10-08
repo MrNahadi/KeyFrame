@@ -1,0 +1,38 @@
+{
+  "outer_fold": 75,
+  "label": "untuned XGBoost defaults on v1's features (ADR 0015); not v1, not v2",
+  "macro_f1_mean": 0.355218349807548,
+  "per_seed": [
+    {
+      "seed": 42,
+      "fold": "pooled",
+      "macro_f1": 0.355218349807548,
+      "accuracy": 0.46952411994784876,
+      "false_alarm_rate": 0.8043639970245475,
+      "worst_recall": 0.08,
+      "worst_recall_class": "AF",
+      "seen_run_macro_f1": 1.0
+    },
+    {
+      "seed": 1,
+      "fold": "pooled",
+      "macro_f1": 0.355218349807548,
+      "accuracy": 0.46952411994784876,
+      "false_alarm_rate": 0.8043639970245475,
+      "worst_recall": 0.08,
+      "worst_recall_class": "AF",
+      "seen_run_macro_f1": 1.0
+    },
+    {
+      "seed": 2,
+      "fold": "pooled",
+      "macro_f1": 0.355218349807548,
+      "accuracy": 0.46952411994784876,
+      "false_alarm_rate": 0.8043639970245475,
+      "worst_recall": 0.08,
+      "worst_recall_class": "AF",
+      "seen_run_macro_f1": 1.0
+    }
+  ],
+  "git_commit": "81e102e"
+}
