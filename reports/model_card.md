@@ -55,9 +55,9 @@ An outside review by a marine condition-monitoring engineer prompted two checks.
 
 Scored only on runs it never trained on (3 seeds), this model's macro F1 is **0.404 / 0.818 / 0.500 / 0.517** at 40 / 60 / 75 / 85% load (mean 0.560, against 0.679 for the locked per-load mean). At 75% load its false alarm rate on healthy running from unseen runs is **0.64**, rising to 1.0 after each run's first 20 minutes. Its locked 25% there was measured mostly on the reference run.
 
-Three attempts to improve on it were each evaluated once on the held-out loads, and none did:
+Three attempts to improve on it were each evaluated once on the held-out loads. None did on average:
 
-- **Autonomous search** (Karpathy-style autoresearch, four isolated searches of 60 experiments): 0.254 / 0.299 / 0.158 at 40 / 60 / 85% load. Fold 75 was still running when this section was written.
+- **Autonomous search** (Karpathy-style autoresearch, four isolated searches of 60 experiments): 0.254 / 0.299 / **0.853** / 0.158 at 40 / 60 / 75 / 85% load, mean 0.391. The 75% load design (linear healthy-engine residuals of smoothed checklist channels, single-split trees) is a promising hypothesis that this dataset cannot confirm.
 - **Readings relative to each run's own healthy start** (calibrated track): 0.340 mean, against 0.484 on the same rows.
 - **Untuned XGBoost defaults**: 0.518 mean.
 

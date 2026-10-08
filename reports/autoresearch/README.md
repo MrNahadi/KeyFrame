@@ -4,7 +4,7 @@
 
 ## The short answer
 
-**Nothing tested today beats v1 on loads it has not seen, and that is the finding.** Four autonomous searches ran 60 experiments each, under a protocol built to stop them fooling themselves. They raised their own development scores, and those gains reversed on the held-out loads. With 4 engine loads and 14 fault runs, this dataset cannot tell a better model from a luckier one through any score computed inside it. The protocol made that visible instead of hiding it.
+**Across the four held-out loads, nothing tested today beats v1 on average.** Four autonomous searches ran 60 experiments each, under a protocol built to stop them fooling themselves. All four raised their own development scores. On the held-out loads, three of them fell well below v1, and one (75% load) rose far above it: 0.853 against 0.500, with false alarms down from 0.64 to 0.17. With 4 engine loads and 14 fault runs, this dataset cannot reliably tell a better model from a luckier one through any score computed inside it. The protocol made that visible instead of hiding it.
 
 Along the way, the work produced a more honest view of v1 itself, driven by an outside engineer's review:
 
@@ -30,12 +30,24 @@ Macro F1 on rows of runs unseen in training, mean of 3 seeds:
 |---|---:|---:|---|---|
 | 40% | 0.404 | 0.254 | 0.540 → 0.603 | 60 / 7 |
 | 60% | 0.818 | 0.299 | 0.196 → 0.381 | 60 / 5 |
-| 75% | 0.500 | *pending* | *pending* | *pending* |
+| 75% | 0.500 | **0.853** | 0.532 → 0.674 | 60 / 4 |
 | 85% | 0.517 | 0.158 | 0.243 → 0.332 | 60 / 2 |
+| Mean | 0.560 | 0.391 | | 240 / 18 |
 
 Fold 40's search kept features measured from each run's start from its fourth keep onward. That breaks the zero-shot rule (ADR 0013, amendment 2), so its v2 candidate is the last compliant keep. Its non-compliant final candidate (inner 0.717) scored 0.325 when examined, still below v1.
 
-## Why the searches failed
+## The one success, and why it cannot be confirmed yet
+
+The fold 75 search (`candidates/v2_fold75.py`) produced the most physics-led design of the four:
+- The checklist channels, smoothed over 5 and 15 minutes, are compared with a straight-line model of a healthy engine at the same speed and brake load. Fuel flow is left out because the governor adds fuel under a fault.
+- Absolute levels are dropped and lube oil channels removed.
+- The classifier is single-split trees (depth 1, 200 of them).
+
+On its held-out load it scores 0.853 (seed sd 0.002), with worst-class recall 0.78 against v1's 0.34. It is far less likely than v1 to alarm on healthy running from unseen sessions (0.17 against 0.64).
+
+75% load lies between two training loads (60% and 85%), where a linear healthy-engine baseline interpolates. At 40% and 85% it would have to extrapolate. This design cannot be tested honestly on the other three loads, because its search used them as development data. **It is a hypothesis for new data, not a result.** It is the first thing to test when more runs exist.
+
+## Why the searches failed elsewhere
 
 1. **The development score measures a different task.** Inside a search, each inner fold trains on two loads and predicts a third. The real task trains on three loads. With so few loads, the two tasks behave differently. v1's own inner and held-out scores disagree (fold 60: 0.196 inner, 0.818 held out), so "better inside" carries little information about "better outside".
 2. **The noise margin guards against seed luck, not against a misleading target.** The margin (about 0.02) stopped the loop from keeping changes that only shuffled random seeds. It cannot stop a loop that reliably improves the wrong number.
@@ -44,7 +56,7 @@ Fold 40's search kept features measured from each run's start from its fourth ke
 
 ## What this means for the model
 
-- **Keep v1 as the deployed model.** Report its unseen-run scores (mean 0.560) next to the locked ones, and state its 75% load false alarm problem plainly.
+- **Keep v1 as the deployed model.** Report its unseen-run scores (mean 0.560) next to the locked ones, and state its 75% load false alarm problem plainly. The fold 75 design is the leading candidate for v3, to be tested on new runs before it replaces anything.
 - **Stop optimising against this dataset's internal scores.** More tuning, more features or more search will not give trustworthy gains with 4 loads and 14 fault runs. That covers Optuna, autoresearch and manual work alike.
 - **The next real improvement needs new data, not new models.** In order of value:
   1. Repeat runs of each fault on different days. This breaks the link between session and fault and is the only way to measure generalisation honestly.
