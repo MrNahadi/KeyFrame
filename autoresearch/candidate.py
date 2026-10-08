@@ -17,6 +17,7 @@ rolling features, that fold's nested-tuned parameters from models/tuning/).
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -42,6 +43,26 @@ def select_columns(available: list[str]) -> list[str]:
     return available
 
 
+class _RelativeResiduals(HealthyEngineResiduals):
+    """Healthy-engine residuals as a share of the expected reading, (x - x_hat) / (|x_hat| +
+    healthy sd), so a deviation means the same at 40% and at 85% load."""
+
+    def fit(self, X, y, extra_healthy=None):
+        super().fit(X, y, extra_healthy)
+        healthy = X.loc[np.asarray(y) == "Normal"]
+        self.scale_ = {t: float(healthy[t].std()) + 1e-9 for t in self.targets_}
+        return self
+
+    def transform(self, X):
+        inputs = list(self.inputs)
+        out = X.copy()
+        for target in self.targets_:
+            predicted = self.models_[target].predict(X[inputs])
+            denominator = np.abs(predicted) + self.scale_[target]
+            out[f"resid_{target}"] = (X[target].to_numpy() - predicted) / denominator
+        return out
+
+
 def _load_free_view(X: pd.DataFrame) -> pd.DataFrame:
     """Drop the operating-point inputs and every remaining rolling mean, so the classifier
     sees deviations from a healthy engine, spreads, ratios and trends, not load levels."""
@@ -52,7 +73,7 @@ def _load_free_view(X: pd.DataFrame) -> pd.DataFrame:
 def build_model(seed: int) -> Pipeline:
     return Pipeline(
         [
-            ("residuals", HealthyEngineResiduals(inputs=RESIDUAL_INPUTS)),
+            ("residuals", _RelativeResiduals(inputs=RESIDUAL_INPUTS)),
             ("residual_view", FunctionTransformer(_residual_view)),
             ("load_free", FunctionTransformer(_load_free_view)),
             ("model", _BalancedXGBClassifier(random_state=seed, n_jobs=4, **PARAMS)),
