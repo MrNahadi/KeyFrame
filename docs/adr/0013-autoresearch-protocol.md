@@ -51,3 +51,9 @@ Consequences: v1's locked numbers (ADR 0009) include seen-run rows. They stay un
 During the four searches, one agent tried features measured relative to the run's first 10 minutes. That is calibration: it assumes each run starts healthy, which is the separate calibrated track (ADR 0014). It does not belong in the zero-shot track.
 
 Decision: a zero-shot feature may depend only on rows within the trailing 900 s, the longest window v1 used. `check_bounded_memory` enforces this: features computed on a run with its first 30% removed must match the whole-run values for rows more than 900 s after the cut. It runs in `search_score` and `examine`. The four running searches cloned the harness before this check existed, so they were told the rule by message. `examine` refuses any candidate that breaks it, so no search can be examined with a start-anchored feature.
+
+## Amendment 3 (8 Oct 2026): which candidate is examined
+
+Fixed after the fold 40, 60 and 85 searches stopped and before any of their held-out scores was computed.
+
+The fold 40 search kept start-anchored features (change since the first 10 minutes at each load step) from its fourth keep onward. Its final candidate fails `check_bounded_memory`, and the four keeps after that point were built on top of the start-anchored features. Rule: **a search's v2 candidate is its last kept commit that passes `check_causal` and `check_bounded_memory`.** For fold 40 that is `d7aae74` ("drop rolling means and slopes", inner 0.603). For folds 60 and 85 it is the final commit. The non-compliant fold 40 final candidate (inner 0.717) is examined once as well, labelled `start_anchored` and reported separately as a calibration-style result, never as v2 (`examine --start-anchored`).

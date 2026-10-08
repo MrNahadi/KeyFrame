@@ -328,6 +328,7 @@ def examine(
     exam_dir: Path = EXAM_DIR,
     tag: str = "v2",
     label: str = "v2 (autoresearch), separately labelled; v1 locked results unchanged",
+    enforce_memory: bool = True,
 ) -> dict[str, Any]:
     """Score the finished search's candidate on its held-out load, once.
 
@@ -340,7 +341,8 @@ def examine(
     candidate = candidate or load_candidate()
     base = table if table is not None else _feature_table()
     check_causal(candidate, base, no_day=False)
-    check_bounded_memory(candidate, base, no_day=False)
+    if enforce_memory:
+        check_bounded_memory(candidate, base, no_day=False)
     full = candidate_table(candidate, base, no_day=False)
     available = _available(base, full, no_day=False)
     columns = select_checked(candidate, available)
@@ -435,6 +437,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     exam = sub.add_parser("examine", help="Score the held-out load once, after the search.")
     exam.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     exam.add_argument("--candidate", type=Path, default=CANDIDATE, help="candidate.py to examine")
+    exam.add_argument(
+        "--start-anchored",
+        action="store_true",
+        help="examine a candidate that breaks the 15-minute memory rule, labelled as such "
+        "and never as v2 (ADR 0013, amendment 3)",
+    )
     ref = sub.add_parser("v1-reference", help="v1 on its held-out load, unseen runs only.")
     ref.add_argument("--outer-fold", type=int, required=True, choices=splits.LOAD_BINS)
     args = parser.parse_args(argv)
@@ -452,7 +460,16 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(json.dumps(v1_reference(args.outer_fold), indent=2, default=str))
     else:
         candidate = load_candidate(args.candidate)
-        print(json.dumps(examine(args.outer_fold, candidate=candidate), indent=2, default=str))
+        extra: dict[str, Any] = {}
+        if args.start_anchored:
+            extra = {
+                "tag": "start_anchored",
+                "label": "search final that uses a run-start baseline (calibration-style); "
+                "not zero-shot, not v2",
+                "enforce_memory": False,
+            }
+        result = examine(args.outer_fold, candidate=candidate, **extra)
+        print(json.dumps(result, indent=2, default=str))
 
 
 if __name__ == "__main__":
