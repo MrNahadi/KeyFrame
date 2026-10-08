@@ -23,11 +23,11 @@ from keyframe.tuning import _BalancedXGBClassifier
 
 PARAMS = {
     "max_depth": 2,
-    "learning_rate": 0.13983740016490973,
-    "n_estimators": 80,
-    "subsample": 0.8540362888980227,
-    "colsample_bytree": 0.5102922471479012,
-    "reg_lambda": 7.579479953348009,
+    "learning_rate": 0.1788532743297921,
+    "n_estimators": 63,
+    "subsample": 0.831261142176991,
+    "colsample_bytree": 0.6558555380447055,
+    "reg_lambda": 0.12030178871154672,
 }
 
 
