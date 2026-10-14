@@ -1,9 +1,10 @@
-import { AlertTriangle, ListX } from 'lucide-react'
+import { ChevronRight, CircleAlert, ListX, Play, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { hrefFor } from '../app/routes'
 import { Button, LinkButton } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { delay, length } from '../ui/format'
+import { Icon } from '../ui/Icon'
 import { Keyframe } from '../ui/Keyframe'
 import { loadIndex } from './data'
 import styles from './RunsPage.module.css'
@@ -51,6 +52,12 @@ export function startRun(runs: RunSummary[]): RunSummary | undefined {
     .sort((a, b) => (a.alarm_delay_s ?? 0) - (b.alarm_delay_s ?? 0))[0]
 }
 
+/** How the last column shows a run: plain text when the alarm worked, a status chip when it did not. */
+export function alarmTone(run: RunSummary): 'ok' | 'none' | 'missed' | 'false' {
+  if (run.switch_on_t === null) return run.alarm_delay_s === null ? 'none' : 'false'
+  return run.alarm_delay_s === null ? 'missed' : 'ok'
+}
+
 /** What the last column says for a run. */
 export function alarmLabel(run: RunSummary): string {
   if (run.switch_on_t === null) return run.alarm_delay_s === null ? 'No fault' : 'False alarm'
@@ -87,6 +94,19 @@ type State =
   | { kind: 'error'; message: string }
   | { kind: 'ready'; runs: RunSummary[] }
 
+function AlarmCell({ run }: { run: RunSummary }) {
+  const tone = alarmTone(run)
+  const label = alarmLabel(run)
+  if (tone === 'ok') return <span className={styles.delay}>{label}</span>
+  if (tone === 'none') return <span className={styles.none}>{label}</span>
+  return (
+    <span className={tone === 'false' ? `${styles.chip} ${styles.danger}` : `${styles.chip} ${styles.warning}`}>
+      <Icon icon={tone === 'false' ? CircleAlert : TriangleAlert} size={16} />
+      {label}
+    </span>
+  )
+}
+
 export function RunsPage({ load = loadIndex }: { load?: () => Promise<RunSummary[]> }) {
   const [state, setState] = useState<State>({ kind: 'loading' })
   const [attempt, setAttempt] = useState(0)
@@ -109,43 +129,55 @@ export function RunsPage({ load = loadIndex }: { load?: () => Promise<RunSummary
 
   return (
     <div className={styles.page}>
-      <section className={styles.intro}>
-        <h1 className={styles.title}>
-          Watch a marine diesel go from healthy to faulty, and see when the model raised the alarm.
-        </h1>
-        <p className={styles.lead}>
-          These are real runs from a test-bench engine. Each is replayed with predictions from a
-          model that never saw that engine load, so you see how it copes with a load it has not met.
-        </p>
-        <div className={styles.legend}>
-          <span>
-            <Keyframe kind="switch-on" /> Fault switched on
-          </span>
-          <span>
-            <Keyframe kind="alarm" /> Alarm raised
-          </span>
+      <header className={styles.header}>
+        <div className={styles.headText}>
+          <h1>Fault runs</h1>
+          <p className={styles.lead}>
+            Real test-bench runs of a marine diesel going from healthy to faulty. Each is replayed with a model
+            that never saw that engine load.
+          </p>
         </div>
         {start && (
-          <LinkButton href={hrefFor({ page: 'replay', runId: start.id })}>Play {start.title.toLowerCase()}</LinkButton>
+          <LinkButton href={hrefFor({ page: 'replay', runId: start.id })} size="lg">
+            <Icon icon={Play} size={16} />
+            Play {start.title.toLowerCase()}
+          </LinkButton>
         )}
-      </section>
+      </header>
 
       <section aria-labelledby="runs-title" className={styles.runs}>
-        <h2 id="runs-title">Fault runs</h2>
+        <div className={styles.runsHead}>
+          <h2 id="runs-title" className="visually-hidden">
+            All runs
+          </h2>
+          <p className={styles.legend}>
+            <span>
+              <Keyframe kind="switch-on" /> Fault switched on
+            </span>
+            <span>
+              <Keyframe kind="alarm" /> Alarm raised
+            </span>
+          </p>
+          {state.kind === 'ready' && state.runs.length > 0 && (
+            <p className={styles.count}>
+              {state.runs.length} {state.runs.length === 1 ? 'run' : 'runs'}
+            </p>
+          )}
+        </div>
         {state.kind === 'loading' && (
           <div role="status" aria-label="Loading runs" className={styles.skeletonTable}>
             {[0, 1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className={styles.skeletonRow} aria-hidden="true" />
+              <div key={i} className={`${styles.skeletonRow} skeleton`} aria-hidden="true" />
             ))}
           </div>
         )}
         {state.kind === 'error' && (
           <EmptyState
-            icon={AlertTriangle}
-            title="The run list could not be loaded"
+            icon={CircleAlert}
+            title="Couldn’t load the run list"
             action={
               <Button onClick={retry} variant="secondary">
-                Try again
+                Retry
               </Button>
             }
           >
@@ -154,56 +186,62 @@ export function RunsPage({ load = loadIndex }: { load?: () => Promise<RunSummary
         )}
         {state.kind === 'ready' && state.runs.length === 0 && (
           <EmptyState icon={ListX} title="No recorded runs yet">
-            Copy the replay files into the app with <code>npm --prefix web run sync-replays</code>,
-            then reload this page.
+            Copy the replay files into the app with <code>npm --prefix web run sync-replays</code>, then reload
+            this page.
           </EmptyState>
         )}
         {state.kind === 'ready' && state.runs.length > 0 && (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th scope="col">Load</th>
-                <th scope="col" className={styles.num}>
-                  Length
-                </th>
-                <th scope="col" className={styles.timelineHead}>
-                  Timeline
-                </th>
-                <th scope="col" className={styles.num}>
-                  Alarm after switch-on
-                </th>
-              </tr>
-            </thead>
-            {groupRuns(state.runs).map((g) => (
-              <tbody key={g.name} className={styles.group}>
-                <tr className={styles.groupRow}>
-                  <th scope="rowgroup" colSpan={4}>
-                    {g.name}
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Load</th>
+                  <th scope="col" className={`${styles.num} ${styles.length}`}>
+                    Length
+                  </th>
+                  <th scope="col" className={styles.timelineCell}>
+                    Timeline
+                  </th>
+                  <th scope="col" className={styles.num}>
+                    Alarm After Switch-on
+                  </th>
+                  <th scope="col" className={styles.chevron}>
+                    <span className="visually-hidden">Open</span>
                   </th>
                 </tr>
-                {sortByLoad(g.runs).map((run) => (
-                  <tr key={run.id} className={styles.row}>
-                    <th scope="row" className={styles.load}>
-                      <a href={hrefFor({ page: 'replay', runId: run.id })} className={styles.rowLink}>
-                        <span className="visually-hidden">{g.name}, </span>
-                        {loadLabel(run.id)}
-                        <span className="visually-hidden"> load</span>
-                      </a>
+              </thead>
+              {groupRuns(state.runs).map((g) => (
+                <tbody key={g.name} className={styles.group}>
+                  <tr className={styles.groupRow}>
+                    <th scope="rowgroup" colSpan={5}>
+                      {g.name}
                     </th>
-                    <td className={`${styles.num} ${styles.length}`}>{length(run.duration_s)}</td>
-                    <td className={styles.timelineCell}>
-                      <Strip run={run} />
-                    </td>
-                    <td
-                      className={`${styles.num} ${styles.alarm} ${run.alarm_delay_s !== null && run.switch_on_t !== null ? styles.alarmed : styles.quiet}`}
-                    >
-                      {alarmLabel(run)}
-                    </td>
                   </tr>
-                ))}
-              </tbody>
-            ))}
-          </table>
+                  {sortByLoad(g.runs).map((run) => (
+                    <tr key={run.id} className={styles.row}>
+                      <th scope="row" className={styles.load}>
+                        <a href={hrefFor({ page: 'replay', runId: run.id })} className={styles.rowLink}>
+                          <span className="visually-hidden">{g.name}, </span>
+                          {loadLabel(run.id)}
+                          <span className="visually-hidden"> load</span>
+                        </a>
+                      </th>
+                      <td className={`${styles.num} ${styles.length}`}>{length(run.duration_s)}</td>
+                      <td className={styles.timelineCell}>
+                        <Strip run={run} />
+                      </td>
+                      <td className={`${styles.num} ${styles.alarm}`}>
+                        <AlarmCell run={run} />
+                      </td>
+                      <td className={styles.chevron} aria-hidden="true">
+                        <Icon icon={ChevronRight} size={16} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
+            </table>
+          </div>
         )}
       </section>
     </div>

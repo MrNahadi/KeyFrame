@@ -1,7 +1,7 @@
 import { group } from '../app/vocabulary'
 import { signed } from '../ui/format'
 import styles from './Waterfall.module.css'
-import { buildWaterfall } from './waterfall'
+import { buildWaterfall } from './waterfallSteps'
 
 interface WaterfallProps {
   groups: Record<string, number>

@@ -10,11 +10,13 @@ interface EmptyStateProps {
   action?: ReactNode
 }
 
-/** What goes here, plus the one action that fills it (manifesto Part 14, "States"). */
+/** A short heading, one sentence, and the one action that fills the space (MY-DESIGN §10.16). */
 export function EmptyState({ icon, title, children, action }: EmptyStateProps) {
   return (
     <section className={styles.empty}>
-      <Icon icon={icon} size={24} />
+      <span className={styles.circle}>
+        <Icon icon={icon} size={24} />
+      </span>
       <h2 className={styles.title}>{title}</h2>
       <div className={styles.body}>{children}</div>
       {action ? <div className={styles.action}>{action}</div> : null}

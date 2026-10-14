@@ -98,7 +98,7 @@ describe('WhatIfScreen', () => {
     expect(screen.getByRole('group', { name: 'Fuel system' })).toBeTruthy()
     expect(slider().getAttribute('aria-valuetext')).toBe('28.0 m³/h')
     expect(screen.getByText('Healthy 28.0')).toBeTruthy()
-    const reset = screen.getByRole('button', { name: 'Reset to healthy baseline' }) as HTMLButtonElement
+    const reset = screen.getByRole('button', { name: 'Reset to Healthy Baseline' }) as HTMLButtonElement
     expect(reset.disabled).toBe(true)
     fireEvent.change(slider(), { target: { value: '31' } })
     expect(await screen.findByText('+3.00 m³/h from healthy')).toBeTruthy()

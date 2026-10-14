@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ExternalLink, X } from 'lucide-react'
+import { CircleAlert, CircleCheck, ExternalLink, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
@@ -47,7 +47,7 @@ export function ModelCardPage({ load = loadModelCard }: { load?: () => Promise<s
     return (
       <div className={styles.page} role="status" aria-label="Loading model card">
         {[0, 1, 2].map((i) => (
-          <div key={i} className={styles.skeleton} aria-hidden="true" />
+          <div key={i} className={`${styles.skeleton} skeleton`} aria-hidden="true" />
         ))}
       </div>
     )
@@ -56,11 +56,11 @@ export function ModelCardPage({ load = loadModelCard }: { load?: () => Promise<s
   if (state.kind === 'error') {
     return (
       <EmptyState
-        icon={AlertTriangle}
-        title="The model card could not be loaded"
+        icon={CircleAlert}
+        title="Couldn’t load the model card"
         action={
-          <Button variant="primary" onClick={() => setAttempt((a) => a + 1)}>
-            Try again
+          <Button variant="secondary" onClick={() => setAttempt((a) => a + 1)}>
+            Retry
           </Button>
         }
       >
@@ -114,7 +114,7 @@ export function ModelCardPage({ load = loadModelCard }: { load?: () => Promise<s
                   </td>
                   <td className={styles.statusCell}>
                     <span className={s.met ? `${styles.status} ${styles.met}` : styles.status}>
-                      <Icon icon={s.met ? Check : X} size={16} />
+                      <Icon icon={s.met ? CircleCheck : X} size={16} />
                       {s.met ? 'Met' : 'Not met'}
                     </span>
                   </td>

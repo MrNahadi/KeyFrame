@@ -1,4 +1,4 @@
-import { AlertTriangle, Info, Loader2, RotateCcw } from 'lucide-react'
+import { CircleAlert, Info, LoaderCircle, RotateCcw } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { channelUnit, faultName, featureName, GROUPS, groupOrder, sensorGroup, sensorLabel } from '../app/vocabulary'
 import { ProbabilityBars } from '../replay/ProbabilityBars'
@@ -96,16 +96,16 @@ export function WhatIfScreen() {
 
       {unreachable && (
         <section className={styles.problem} role="alert">
-          <Icon icon={AlertTriangle} size={20} />
+          <Icon icon={CircleAlert} size={20} />
           <div className={styles.problemBody}>
-            <h2 className={styles.problemTitle}>The model&rsquo;s API is not answering</h2>
+            <h2 className={styles.problemTitle}>Can&rsquo;t reach the model&rsquo;s API</h2>
             <p>{failure.message}</p>
             <p>
               Start it from the repository root with <code className={styles.code}>{START_COMMAND}</code>, then
               retry.
             </p>
             <div>
-              <Button variant="primary" onClick={() => void loadBaselines()}>
+              <Button variant="secondary" onClick={() => void loadBaselines()}>
                 Retry
               </Button>
             </div>
@@ -114,7 +114,7 @@ export function WhatIfScreen() {
       )}
 
       {!baselines && !failure && (
-        <div className={styles.skeleton} role="status" aria-label="Loading">
+        <div className={`${styles.skeleton} skeleton`} role="status" aria-label="Loading">
           Loading the healthy baselines…
         </div>
       )}
@@ -134,9 +134,9 @@ export function WhatIfScreen() {
                   onChange={setLoad}
                 />
               </div>
-              <Button variant="tertiary" onClick={() => load && resetTo(load)} disabled={changed === 0}>
+              <Button variant="ghost" onClick={() => load && resetTo(load)} disabled={changed === 0}>
                 <Icon icon={RotateCcw} size={16} />
-                Reset to healthy baseline
+                Reset to Healthy Baseline
               </Button>
             </div>
 
@@ -164,7 +164,7 @@ export function WhatIfScreen() {
               </p>
             )}
             {!result && !failure && (
-              <div className={styles.waiting} role="status" aria-label="Loading">
+              <div className={`${styles.waiting} skeleton`} role="status" aria-label="Loading">
                 Reading the model…
               </div>
             )}
@@ -252,7 +252,7 @@ function Diagnosis({ result, updating }: { result: Explanation; updating: boolea
           The model reads this as
           {updating && (
             <span className={styles.updatingNote}>
-              <Icon icon={Loader2} size={16} />
+              <Icon icon={LoaderCircle} size={16} className="spin" />
               Updating…
             </span>
           )}

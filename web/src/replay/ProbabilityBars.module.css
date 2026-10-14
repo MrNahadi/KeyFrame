@@ -10,9 +10,9 @@
   grid-template-columns: minmax(0, 1fr) minmax(4rem, 7rem) 2.75rem;
   align-items: center;
   gap: var(--space-3);
-  font-size: var(--text-callout);
-  line-height: var(--leading-callout);
-  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-2);
 }
 
 .lead {
@@ -27,7 +27,7 @@
 .track {
   display: block;
   height: 6px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   background: var(--bar-track);
   overflow: hidden;
 }

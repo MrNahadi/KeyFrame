@@ -5,9 +5,10 @@
 }
 
 html {
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   font-size: 100%;
   line-height: var(--leading-body);
+  font-synthesis-weight: none;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -33,36 +34,37 @@ dd {
 }
 
 h1,
-h2 {
-  font-family: var(--font-display);
+h2,
+h3 {
   font-weight: var(--weight-semibold);
-  letter-spacing: -0.005em;
 }
 
 h1 {
-  font-size: var(--text-title-1);
+  font-size: var(--title-1);
   line-height: var(--leading-title-1);
+  letter-spacing: var(--tracking-tight);
 }
 
 h2 {
-  font-size: var(--text-title-2);
-  line-height: var(--leading-title-2);
+  font-size: var(--title-3);
+  line-height: var(--leading-title-3);
 }
 
 h3 {
-  font-size: var(--text-title-3);
-  line-height: var(--leading-title-3);
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 a {
-  color: var(--text);
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 0.2em;
+  color: var(--accent);
+  text-decoration: none;
 }
 
-a:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) and (pointer: fine) {
+  a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
 }
 
 button,
@@ -72,12 +74,22 @@ select {
   color: inherit;
 }
 
+code,
+kbd {
+  padding: var(--space-0-5) var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--fill-soft);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  overflow-wrap: anywhere;
+}
+
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-/* Every number is a reading: equal-width figures so columns and live values do not jitter. */
+/* Numbers that change in place or sit in columns keep equal widths, so readings do not jitter. */
 body {
   font-variant-numeric: tabular-nums;
 }
@@ -91,11 +103,44 @@ body {
   white-space: nowrap;
 }
 
+/* Skeleton blocks: the real layout's shape, with a slow shimmer while loading (§10.15). */
+.skeleton {
+  background: linear-gradient(90deg, var(--fill-soft) 0%, var(--bg-secondary) 50%, var(--fill-soft) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition-duration: 0ms !important;
-    animation-duration: 0ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none;
+    background: var(--fill-soft);
   }
 }

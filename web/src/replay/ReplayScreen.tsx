@@ -1,4 +1,4 @@
-import { AlertTriangle, ChevronLeft, ChevronRight, Info, Pause, Play, SkipBack, SkipForward } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Info, Pause, Play, SkipBack, SkipForward, CircleAlert } from 'lucide-react'
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { hrefFor } from '../app/routes'
 import { Button } from '../ui/Button'
@@ -127,11 +127,11 @@ export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: 
   if (state.kind === 'loading') {
     return (
       <div className={styles.screen} role="status" aria-label="Loading replay">
-        <div className={`${styles.skeleton} ${styles.skeletonTitle}`} aria-hidden="true" />
-        <div className={`${styles.skeleton} ${styles.skeletonBar}`} aria-hidden="true" />
+        <div className={`${styles.skeleton} ${styles.skeletonTitle} skeleton`} aria-hidden="true" />
+        <div className={`${styles.skeleton} ${styles.skeletonBar} skeleton`} aria-hidden="true" />
         <div className={styles.body} aria-hidden="true">
-          <div className={`${styles.skeleton} ${styles.skeletonPanel}`} />
-          <div className={`${styles.skeleton} ${styles.skeletonPanel}`} />
+          <div className={`${styles.skeleton} ${styles.skeletonPanel} skeleton`} />
+          <div className={`${styles.skeleton} ${styles.skeletonPanel} skeleton`} />
         </div>
       </div>
     )
@@ -140,12 +140,12 @@ export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: 
   if (state.kind === 'error') {
     return (
       <EmptyState
-        icon={AlertTriangle}
-        title="This run could not be loaded"
+        icon={CircleAlert}
+        title="Couldn’t load this run"
         action={
           <>
             <Button variant="primary" onClick={() => setAttempt((a) => a + 1)}>
-              Try again
+              Retry
             </Button>
             <BackLink />
           </>
@@ -158,7 +158,7 @@ export function ReplayScreen({ runId, load = loadRun, loadTitles = loadIndex }: 
 
   if (state.replay.frames.length === 0) {
     return (
-      <EmptyState icon={AlertTriangle} title="This run has no frames" action={<BackLink />}>
+      <EmptyState icon={CircleAlert} title="This run has no frames" action={<BackLink />}>
         The recording is empty, so there is nothing to play back.
       </EmptyState>
     )
@@ -240,14 +240,15 @@ function Player({ replay, title }: { replay: Replay; title: string }) {
           <span className={styles.clockLabel}>into the run</span>
         </p>
         <div className={styles.buttons} role="group" aria-label="Playback controls">
-          <Button variant="tertiary" onClick={() => dispatch({ type: 'start' })} aria-label="Go to start">
+          <Button variant="ghost" size="lg" iconOnly onClick={() => dispatch({ type: 'start' })} aria-label="Go to start">
             <Icon icon={SkipBack} size={20} />
           </Button>
-          <Button variant="tertiary" onClick={() => dispatch({ type: 'back' })} aria-label="Step back">
+          <Button variant="ghost" size="lg" iconOnly onClick={() => dispatch({ type: 'back' })} aria-label="Step back">
             <Icon icon={ChevronLeft} size={20} />
           </Button>
           <Button
             variant="primary"
+            size="lg"
             className={styles.play}
             onClick={() => dispatch({ type: 'toggle' })}
             aria-label={pb.playing ? 'Pause' : 'Play'}
@@ -255,16 +256,16 @@ function Player({ replay, title }: { replay: Replay; title: string }) {
             <Icon icon={pb.playing ? Pause : Play} size={20} />
             <span aria-hidden="true">{pb.playing ? 'Pause' : 'Play'}</span>
           </Button>
-          <Button variant="tertiary" onClick={() => dispatch({ type: 'forward' })} aria-label="Step forward">
+          <Button variant="ghost" size="lg" iconOnly onClick={() => dispatch({ type: 'forward' })} aria-label="Step forward">
             <Icon icon={ChevronRight} size={20} />
           </Button>
-          <Button variant="tertiary" onClick={() => dispatch({ type: 'end' })} aria-label="Go to end">
+          <Button variant="ghost" size="lg" iconOnly onClick={() => dispatch({ type: 'end' })} aria-label="Go to end">
             <Icon icon={SkipForward} size={20} />
           </Button>
         </div>
-        <Button onClick={() => dispatch({ type: 'switchOn' })} disabled={replay.switch_on_t === null}>
+        <Button size="lg" onClick={() => dispatch({ type: 'switchOn' })} disabled={replay.switch_on_t === null}>
           <Keyframe kind="switch-on" size={14} />
-          Jump to switch-on
+          Jump to Switch-on
         </Button>
         <div className={styles.speed}>
           <span className={styles.speedLabel} aria-hidden="true">
@@ -279,7 +280,8 @@ function Player({ replay, title }: { replay: Replay; title: string }) {
         </div>
       </div>
       <p className={styles.keys}>
-        Keys: Space plays or pauses, arrows step, Home and End jump, S jumps to switch-on.
+        <kbd>Space</kbd> plays or pauses, <kbd>Left</kbd> and <kbd>Right</kbd> step, <kbd>Home</kbd> and{' '}
+        <kbd>End</kbd> jump, <kbd>S</kbd> jumps to switch-on.
       </p>
 
       <div className={styles.body}>

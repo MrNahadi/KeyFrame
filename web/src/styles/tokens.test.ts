@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-// Manifesto Part 14: "No raw hex values in components." Colours live in tokens.css only.
+// MY-DESIGN §3: tokens for every colour and size, no emoji. Colours live in tokens.css only.
 const SRC = join(__dirname, '..')
 const RAW_COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/
 
@@ -37,5 +37,21 @@ describe('design tokens', () => {
           .map((name) => `${relative(SRC, f)}: ${name}`),
       )
     expect(unknown).toEqual([])
+  })
+
+  it('sizes type with tokens, never px font sizes', () => {
+    const offenders = files(SRC)
+      .filter((f) => /\.css$/.test(f) && !f.endsWith('tokens.css'))
+      .filter((f) => /font-size:\s*\d+(\.\d+)?px/.test(readFileSync(f, 'utf8')))
+      .map((f) => relative(SRC, f))
+    expect(offenders).toEqual([])
+  })
+
+  it('has no emoji anywhere in the interface', () => {
+    const offenders = files(SRC)
+      .filter((f) => /\.(css|tsx?|json)$/.test(f))
+      .filter((f) => /\p{Extended_Pictographic}/u.test(readFileSync(f, 'utf8').replace(/[©®™]/g, '')))
+      .map((f) => relative(SRC, f))
+    expect(offenders).toEqual([])
   })
 })

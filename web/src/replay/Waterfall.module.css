@@ -6,7 +6,7 @@
 .caption {
   font-size: var(--text-caption);
   line-height: var(--leading-caption);
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .steps {
@@ -21,8 +21,8 @@
   grid-template-columns: minmax(0, 10.5rem) minmax(3rem, 1fr) 5.25rem;
   align-items: center;
   gap: var(--space-3);
-  font-size: var(--text-callout);
-  line-height: var(--leading-callout);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
 }
 
 .name {
@@ -75,7 +75,7 @@
 }
 
 .direction {
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .total {

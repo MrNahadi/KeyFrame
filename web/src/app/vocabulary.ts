@@ -52,7 +52,7 @@ export function group(key: string): SensorGroup {
     GROUPS.find((g) => g.key === key.toLowerCase()) ?? {
       key,
       label: key,
-      colour: 'var(--text-secondary)',
+      colour: 'var(--text-2)',
     }
   )
 }

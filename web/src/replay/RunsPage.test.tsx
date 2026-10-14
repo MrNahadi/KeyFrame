@@ -17,7 +17,7 @@ describe('RunsPage', () => {
     const table = await screen.findByRole('table')
     expect(table.textContent).toContain('Air cooler fouling')
     expect(table.textContent).toContain('Healthy running')
-    expect(screen.getByRole('columnheader', { name: 'Alarm after switch-on' })).toBeTruthy()
+    expect(screen.getByRole('columnheader', { name: 'Alarm After Switch-on' })).toBeTruthy()
   })
 
   it('opens a run from its row link', async () => {
@@ -48,7 +48,7 @@ describe('RunsPage', () => {
       .mockResolvedValue(runs)
     render(<RunsPage load={load} />)
     expect(await screen.findByText('Network down')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('table')).toBeTruthy()
     expect(load).toHaveBeenCalledTimes(2)
   })

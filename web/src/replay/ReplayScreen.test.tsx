@@ -51,7 +51,7 @@ describe('ReplayScreen', () => {
     const user = userEvent.setup()
     render(<ReplayScreen runId="r" load={load} />)
     expect(await screen.findByText('boom')).toBeTruthy()
-    await user.click(screen.getByRole('button', { name: 'Try again' }))
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('button', { name: 'Play' })).toBeTruthy()
   })
 

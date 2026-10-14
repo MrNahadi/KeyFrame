@@ -1,172 +1,196 @@
 /*
-  Design tokens: the only place a raw colour or size may appear (a test enforces it).
-  Structure and scale follow docs/design/manifesto.md Part 14; the palette, type and the
-  sensor-group colours are chosen in docs/design/keyframe-design-plan.md.
+  Design tokens: the only place a raw colour may appear (tokens.test.ts enforces it).
 
-  Sensor-group colours echo ship pipework colour coding (ISO 14726: air light blue, fuel
-  brown, water green, lube oil yellow). They are always shown in this fixed order and always
-  labelled with text; validated with the dataviz validator for colour-vision deficiency in
-  both modes (adjacent order). Light lube-oil yellow is under 3:1 on white, so every mark
-  in that colour carries a text label.
+  Sections 1 to 8 are MY-DESIGN.md §4.1 (light theme only; dark is opt-in and not shipped).
+  Type sizes are in rem so browser text-size settings work (§5); the px value is in the
+  comment beside each. Section 9 holds Keyframe's own data colours, which follow §6: colour
+  only where it means something (sensor groups, the alarm, the fault span).
 */
 
 :root {
   color-scheme: light;
 
-  /* Spacing, 4px base */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-24: 6rem;
+  /* ---------- 1. Type ---------- */
+  --font-sans: ui-sans-serif, -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
 
-  /* Type: Barlow for text, Barlow Semi Condensed for titles and big readouts */
-  --font-ui: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Barlow Semi Condensed', 'Barlow', system-ui, sans-serif;
-  --text-display: 2.5rem;
-  --leading-display: 1.1;
-  --text-title-1: 1.875rem;
-  --leading-title-1: 1.2;
-  --text-title-2: 1.5rem;
-  --leading-title-2: 1.25;
-  --text-title-3: 1.25rem;
-  --leading-title-3: 1.3;
-  --text-headline: 1rem;
-  --leading-headline: 1.4;
-  --text-body: 1rem;
-  --leading-body: 1.5;
-  --text-callout: 0.875rem;
-  --leading-callout: 1.45;
-  --text-label: 0.8125rem;
-  --leading-label: 1.3;
-  --text-caption: 0.75rem;
-  --leading-caption: 1.35;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
-  --measure: 68ch;
+  --weight-bold: 700;
 
-  /* Radius: 4 tags, 8 controls, 12 panels */
-  --radius-sm: 4px;
+  --text-caption: 0.75rem; /* 12 */
+  --leading-caption: 1rem;
+  --text-footnote: 0.8125rem; /* 13 */
+  --leading-footnote: 1.125rem;
+  --text-sm: 0.875rem; /* 14 */
+  --leading-sm: 1.25rem;
+  --text-body: 1rem; /* 16 */
+  --leading-body: 1.5rem;
+  --text-lg: 1.125rem; /* 18 */
+  --leading-lg: 1.75rem;
+  --title-3: 1.25rem; /* 20 */
+  --leading-title-3: 1.625rem;
+  --title-2: 1.5rem; /* 24 */
+  --leading-title-2: 1.875rem;
+  --title-1: 1.75rem; /* 28 */
+  --leading-title-1: 2.125rem;
+  --large-title: 2.125rem; /* 34 */
+  --leading-large-title: 2.5625rem;
+  --tracking-tight: -0.02em; /* 28px and up only */
+
+  /* ---------- 2. Space (4px grid) ---------- */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ---------- 3. Radius ---------- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
   --radius-full: 9999px;
+  --radius-button: var(--radius-full);
+  --radius-field: var(--radius-md);
 
-  /* Controls */
-  --control-sm: 32px;
-  --control-md: 40px;
-  --control-lg: 48px;
-  --touch-min: 44px;
+  /* ---------- 4. Controls and layout ---------- */
+  --control-sm: 28px;
+  --control-md: 32px;
+  --control-lg: 36px;
+  --control-xl: 40px;
+  --control-touch: 44px;
+  --control-default: var(--control-md);
+  --hairline: 1px;
+  --sidebar-width: 260px;
+  --topbar-height: 52px;
+  --content-max: 768px;
+  --page-max: 1200px;
+  --gutter: 16px;
+  --card-pad-sm: 16px;
+  --card-pad: 24px;
 
-  /* Motion: only in answer to an action */
-  --motion-fast: 150ms;
-  --motion-base: 200ms;
-  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  /* ---------- 5. Surfaces, text, lines ---------- */
+  --bg: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --fill-soft: #f4f4f4;
 
-  /* Base palette, light */
-  --bulkhead: #eef1f3;
-  --panel: #ffffff;
-  --hull-ink: #15212a;
-  --gauge-grey: #56636e;
-  --rule: #d3dae0;
+  --text: #0d0d0d;
+  --text-2: #5d5d5d;
+  --text-3: #6e6e6e;
+  --text-disabled: #a3a3a3;
 
-  /* Colour roles */
-  --bg: var(--bulkhead);
-  --bg-secondary: #e4e8eb;
-  --surface: var(--panel);
-  --border: var(--rule);
-  --border-strong: #b5bfc7;
-  --text: var(--hull-ink);
-  --text-secondary: var(--gauge-grey);
-  --text-tertiary: #5f6b76;
-  --accent: var(--hull-ink);
-  --accent-hover: #2b3a45;
-  --on-accent: #ffffff;
-  --focus-ring: #3d8fd1;
-  --success: #1b6e3a;
-  --danger: #c62828;
-  --alarm: #c62828;
-  --switch-on: var(--hull-ink);
-  --healthy-span: #dfe6ea;
-  --fault-span: #f0dada;
-  --playhead: var(--hull-ink);
+  --border-subtle: rgb(13 13 13 / 0.06);
+  --border: rgb(13 13 13 / 0.1);
+  --border-strong: rgb(13 13 13 / 0.16);
+  --control-border: #8a8a8a;
+  --hover: rgb(13 13 13 / 0.05);
+  --pressed: rgb(13 13 13 / 0.1);
+  --selected: rgb(13 13 13 / 0.07);
 
-  /* Sensor groups, fixed order */
+  /* ---------- 6. Actions and status ---------- */
+  --primary-fill: #0d0d0d;
+  --primary-hover: #2f2f2f;
+  --on-primary: #ffffff;
+  --accent: #1762e0;
+  --accent-soft: #ecf2fd;
+  --accent-line: #c5d8f7;
+  --focus-ring: var(--accent);
+
+  --danger: #ba2623;
+  --danger-fill: #e02e2a;
+  --danger-soft: #fff0f0;
+  --danger-line: #f6c0bf;
+  --success: #00692a;
+  --success-fill: #008635;
+  --success-soft: #edfaf2;
+  --success-line: #b2e3c6;
+  --warning: #b9480d;
+  --warning-fill: #b9480d;
+  --warning-soft: #fff5f0;
+  --warning-line: #f6ccb5;
+
+  /* ---------- 7. Elevation (overlays only) ---------- */
+  --shadow-overlay: 0 0 0 1px rgb(0 0 0 / 0.06), 0 8px 24px -6px rgb(0 0 0 / 0.12);
+  --backdrop-dim: rgb(0 0 0 / 0.3);
+
+  /* ---------- 8. Motion and layers ---------- */
+  --dur-instant: 100ms;
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --z-sticky: 10;
+  --z-chrome: 20;
+  --z-sheet: 40;
+
+  /* ---------- 9. Keyframe data colours ----------
+     Sensor groups echo ship pipework colour coding (ISO 14726: air light blue, fuel brown,
+     water green, lube oil yellow), always in this fixed order and always labelled with text.
+     Lube-oil yellow is under 3:1 on white, so every mark in that colour carries a label. */
   --group-air: #3d8fd1;
   --group-fuel: #a0561a;
   --group-cooling: #1f8a70;
   --group-lube: #c99a06;
   --group-combustion: #7b4fa8;
 
-  /* Charts */
-  --trace-future: #c3ccd3;
-  --chart-grid: #e7ecef;
-  --chart-axis: var(--gauge-grey);
-  --bar-lead: var(--hull-ink);
-  --bar-rest: #9aa6b0;
-  --bar-track: #e4e8eb;
+  --alarm: var(--danger-fill);
+  --switch-on: var(--text);
+  --playhead: var(--text);
+  --healthy-span: var(--fill-soft);
+  --fault-span: var(--danger-soft);
+
+  --trace-future: #d4d4d4;
+  --chart-grid: var(--border-subtle);
+  --chart-axis: var(--text-3);
+  --bar-lead: var(--text);
+  --bar-rest: #a3a3a3;
+  --bar-track: var(--fill-soft);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme='light'])) {
-    color-scheme: dark;
-    --bulkhead: #0e151b;
-    --panel: #151f27;
-    --hull-ink: #e3e9ed;
-    --gauge-grey: #9aa8b3;
-    --rule: #26333d;
-    --bg-secondary: #1b2731;
-    --border-strong: #3a4955;
-    --text-tertiary: #7f8e9a;
-    --accent-hover: #c9d3da;
-    --on-accent: #0e151b;
-    --focus-ring: #4a8fe0;
-    --success: #4fbf7a;
-    --danger: #ef6b6b;
-    --alarm: #ef6b6b;
-    --healthy-span: #1d2a34;
-    --fault-span: #3a2226;
-    --group-air: #4a8fe0;
-    --group-fuel: #c2602a;
-    --group-cooling: #22987a;
-    --group-lube: #ad8c16;
-    --group-combustion: #a45bc9;
-    --trace-future: #34434f;
-    --chart-grid: #1f2b35;
-    --bar-rest: #5d6c78;
-    --bar-track: #1f2b35;
+@media (resolution >= 2dppx) {
+  :root {
+    --hairline: 0.5px;
   }
 }
 
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --bulkhead: #0e151b;
-  --panel: #151f27;
-  --hull-ink: #e3e9ed;
-  --gauge-grey: #9aa8b3;
-  --rule: #26333d;
-  --bg-secondary: #1b2731;
-  --border-strong: #3a4955;
-  --text-tertiary: #7f8e9a;
-  --accent-hover: #c9d3da;
-  --on-accent: #0e151b;
-  --focus-ring: #4a8fe0;
-  --success: #4fbf7a;
-  --danger: #ef6b6b;
-  --alarm: #ef6b6b;
-  --healthy-span: #1d2a34;
-  --fault-span: #3a2226;
-  --group-air: #4a8fe0;
-  --group-fuel: #c2602a;
-  --group-cooling: #22987a;
-  --group-lube: #ad8c16;
-  --group-combustion: #a45bc9;
-  --trace-future: #34434f;
-  --chart-grid: #1f2b35;
-  --bar-rest: #5d6c78;
-  --bar-track: #1f2b35;
+@media (pointer: coarse) {
+  :root {
+    --control-default: var(--control-touch);
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --text-3: #5d5d5d;
+    --border: rgb(13 13 13 / 0.16);
+  }
 }

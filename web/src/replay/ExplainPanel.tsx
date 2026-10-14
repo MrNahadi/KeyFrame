@@ -5,7 +5,7 @@ import { number, signed } from '../ui/format'
 import styles from './ExplainPanel.module.css'
 import { className, lowConfidenceNote } from './status'
 import type { Replay } from './types'
-import { buildWaterfall } from './waterfall'
+import { buildWaterfall } from './waterfallSteps'
 import { Waterfall } from './Waterfall'
 
 interface ExplainPanelProps {

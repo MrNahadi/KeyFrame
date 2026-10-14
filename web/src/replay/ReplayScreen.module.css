@@ -13,43 +13,45 @@
   align-items: center;
   gap: var(--space-1);
   justify-self: start;
-  min-height: var(--touch-min);
-  font-size: var(--text-callout);
-  color: var(--text-secondary);
-  text-decoration: none;
+  min-height: var(--control-default);
+  margin-left: calc(-1 * var(--space-1));
+  font-size: var(--text-sm);
+  color: var(--text-2);
 }
 
-.back:hover {
-  color: var(--text);
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .back:hover {
+    color: var(--text);
+    text-decoration: none;
+  }
 }
 
 .title {
-  font-size: var(--text-display);
-  line-height: var(--leading-display);
   overflow-wrap: anywhere;
 }
 
 .heldOut {
-  max-width: var(--measure);
-  color: var(--text-secondary);
+  max-width: 60ch;
+  color: var(--text-2);
 }
 
+/* Info callout (§10.14): soft accent background, thin accent line, matching icon. */
 .notice {
   display: flex;
   gap: var(--space-2);
-  max-width: var(--measure);
+  max-width: var(--content-max);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  font-size: var(--text-callout);
-  line-height: var(--leading-callout);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
 }
 
 .notice svg {
   flex: none;
-  margin-top: 0.15rem;
+  margin-top: var(--space-0-5);
+  color: var(--accent);
 }
 
 .transport {
@@ -57,25 +59,23 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3) var(--space-6);
-  margin-top: calc(-1 * var(--space-2));
 }
 
 .now {
   display: grid;
-  min-width: 7rem;
+  min-width: 6.5rem;
 }
 
 .clock {
-  font-family: var(--font-display);
-  font-size: var(--text-title-1);
-  line-height: var(--leading-title-1);
+  font-size: var(--title-2);
+  line-height: var(--leading-title-2);
   font-weight: var(--weight-semibold);
 }
 
 .clockLabel {
   font-size: var(--text-caption);
   line-height: var(--leading-caption);
-  color: var(--text-secondary);
+  color: var(--text-3);
 }
 
 .buttons {
@@ -85,7 +85,8 @@
 }
 
 .play {
-  min-width: 7rem;
+  min-width: 6.5rem;
+  margin: 0 var(--space-1);
 }
 
 .speed {
@@ -93,20 +94,25 @@
   align-items: center;
   gap: var(--space-3);
   margin-left: auto;
-  font-size: var(--text-callout);
-  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  color: var(--text-2);
 }
 
 .keys {
   margin-top: calc(-1 * var(--space-3));
+  font-size: var(--text-footnote);
+  line-height: var(--leading-footnote);
+  color: var(--text-3);
+}
+
+.keys kbd {
   font-size: var(--text-caption);
-  line-height: var(--leading-caption);
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
   gap: var(--space-6);
   align-items: start;
 }
@@ -126,24 +132,27 @@
 }
 
 .about {
-  max-width: var(--measure);
-  font-size: var(--text-callout);
-  line-height: var(--leading-callout);
-  color: var(--text-secondary);
+  max-width: var(--content-max);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-2);
 }
 
 .about summary {
-  min-height: var(--touch-min);
   display: flex;
   align-items: center;
-  cursor: pointer;
+  min-height: var(--control-touch);
+  font-weight: var(--weight-medium);
   color: var(--text);
+  cursor: pointer;
 }
 
 .about dl {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: var(--space-2) var(--space-4);
+  padding-bottom: var(--space-4);
 }
 
 .about dt {
@@ -152,24 +161,24 @@
 }
 
 .skeleton {
-  border-radius: var(--radius-lg);
-  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
 }
 
 .skeletonTitle {
-  height: 3rem;
-  max-width: 32rem;
+  height: var(--space-10);
+  max-width: 28rem;
+  border-radius: var(--radius-md);
 }
 
 .skeletonBar {
-  height: 3.5rem;
+  height: var(--space-12);
 }
 
 .skeletonPanel {
   height: 20rem;
 }
 
-@media (max-width: 959px) {
+@media (max-width: 1279px) {
   .body {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -179,14 +188,14 @@
     grid-column: 1;
     grid-row: auto;
   }
+
+  .aside {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    align-items: start;
+  }
 }
 
-@media (max-width: 639px) {
-  .title {
-    font-size: var(--text-title-1);
-    line-height: var(--leading-title-1);
-  }
-
+@media (max-width: 767px) {
   .speed {
     margin-left: 0;
   }

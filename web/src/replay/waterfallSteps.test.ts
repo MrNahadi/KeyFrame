@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildWaterfall } from './waterfall'
+import { buildWaterfall } from './waterfallSteps'
 
 const groups = {
   'air path': 1.0,

@@ -31,7 +31,7 @@ export function buildSeries(replay: Replay, key: string, index: number): TraceRo
   })
 }
 
-const TICK = { fontSize: 11, fill: 'var(--chart-axis)' }
+const TICK = { fontSize: 12, fill: 'var(--chart-axis)' }
 
 /** Trend charts like an engine-room trend page: one per sensor, grouped by pipe colour, with live readings. */
 export function Traces({ replay, index, width, height }: TracesProps) {

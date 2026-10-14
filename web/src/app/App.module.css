@@ -1,96 +1,201 @@
+/* App shell (MY-DESIGN §7.3): sidebar at 1024px and up, a slide-in drawer below. */
+
 .shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  /* Never let a wide child (a chart, a long title) stretch the page past the viewport. */
-  grid-template-columns: minmax(0, 1fr);
 }
 
-.header {
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: var(--z-sheet);
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: min(var(--sidebar-width), 85vw);
+  padding: var(--space-2) var(--space-3) calc(var(--space-4) + env(safe-area-inset-bottom));
+  padding-left: calc(var(--space-3) + env(safe-area-inset-left));
+  border-right: 1px solid var(--border);
+  background: var(--bg-secondary);
+  overflow-y: auto;
+}
+
+.sidebarHead {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2) var(--space-6);
-  padding: var(--space-2) var(--space-4);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  min-height: calc(var(--topbar-height) - var(--space-2));
+  padding-left: var(--space-2);
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--touch-min);
-  font-family: var(--font-display);
-  font-size: var(--text-title-3);
+  min-height: var(--control-touch);
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
   font-weight: var(--weight-semibold);
   color: var(--text);
+}
+
+.brand:hover {
   text-decoration: none;
 }
 
 .nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
+  display: grid;
+  gap: var(--space-0-5);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .navLink {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--touch-min);
-  padding: 0 var(--space-3);
+  min-height: 36px;
+  padding: 0 var(--space-2);
   border-radius: var(--radius-md);
-  font-size: var(--text-callout);
-  font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-  text-decoration: none;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text);
+  transition: background-color var(--dur-fast) var(--ease-standard);
 }
 
-.navLink:hover {
-  background: var(--bg-secondary);
-  color: var(--text);
+.navLink svg {
+  color: var(--text-2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .navLink:hover {
+    background: var(--hover);
+    text-decoration: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .navLink {
+    min-height: var(--control-touch);
+  }
 }
 
 .active {
+  background: var(--selected);
+  font-weight: var(--weight-medium);
+}
+
+.active svg {
   color: var(--text);
-  box-shadow: inset 0 -2px 0 var(--text);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.sidebarFoot {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding: 0 var(--space-2);
+}
+
+.note {
+  font-size: var(--text-footnote);
+  line-height: var(--leading-footnote);
+  color: var(--text-3);
+}
+
+.footLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: var(--control-default);
+  font-size: var(--text-sm);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-sheet) - 1);
+  background: var(--backdrop-dim);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-slow) var(--ease-sheet),
+    visibility var(--dur-slow);
+}
+
+.column {
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-chrome);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--topbar-height);
+  padding: 0 var(--gutter);
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid transparent;
+  background: var(--bg);
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+
+.topbar[data-scrolled] {
+  border-bottom-color: var(--border);
+}
+
+.place {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.sentinel {
+  height: 1px;
+  margin-top: -1px;
 }
 
 .main {
   width: 100%;
-  max-width: 80rem;
+  max-width: var(--page-max);
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4) var(--space-12);
+  padding: var(--space-4) var(--gutter) var(--space-16);
 }
 
-.footer {
-  padding: var(--space-4);
-  border-top: 1px solid var(--border);
-  font-size: var(--text-caption);
-  line-height: var(--leading-caption);
-  color: var(--text-secondary);
+/* Below 1024px: the sidebar is a drawer that slides from the leading edge. */
+@media (max-width: 1023px) {
+  .sidebar {
+    visibility: hidden;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-overlay);
+    transition:
+      transform var(--dur-slow) var(--ease-sheet),
+      visibility var(--dur-slow);
+  }
+
+  .shell[data-open] .sidebar {
+    visibility: visible;
+    transform: none;
+  }
+
+  .shell[data-open] .backdrop {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
-.footer p {
-  max-width: 80rem;
-  margin: 0 auto;
-}
+@media (min-width: 1024px) {
+  .column {
+    margin-left: var(--sidebar-width);
+  }
 
-@media (min-width: 640px) {
-  .header {
-    padding: var(--space-2) var(--space-6);
+  .openMenu,
+  .closeMenu,
+  .backdrop {
+    display: none !important;
   }
 
   .main {
-    padding: var(--space-8) var(--space-6) var(--space-16);
-  }
-
-  .footer {
-    padding: var(--space-4) var(--space-6);
+    padding-top: var(--space-6);
   }
 }

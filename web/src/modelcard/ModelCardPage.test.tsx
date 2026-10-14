@@ -30,7 +30,7 @@ describe('ModelCardPage', () => {
     const load = vi.fn().mockRejectedValueOnce(new Error('Model card not found')).mockResolvedValue(CARD)
     render(<ModelCardPage load={load} />)
     expect(await screen.findByText('Model card not found')).toBeTruthy()
-    await userEvent.click(screen.getByRole('button', { name: /try again/i }))
+    await userEvent.click(screen.getByRole('button', { name: /retry/i }))
     expect(await screen.findByRole('heading', { name: 'Model card: Test' })).toBeTruthy()
     expect(load).toHaveBeenCalledTimes(2)
   })

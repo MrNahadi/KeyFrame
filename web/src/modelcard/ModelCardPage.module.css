@@ -1,23 +1,20 @@
 .page {
   display: grid;
   gap: var(--space-8);
-  max-width: 50rem;
+  max-width: var(--content-max);
 }
 
 .header {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .title {
-  font-size: var(--text-display);
-  line-height: var(--leading-display);
   overflow-wrap: anywhere;
 }
 
 .lead {
-  max-width: var(--measure);
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .section {
@@ -26,13 +23,13 @@
 }
 
 .sectionTitle {
-  font-size: var(--text-title-2);
-  line-height: var(--leading-title-2);
+  font-size: var(--title-3);
+  line-height: var(--leading-title-3);
 }
 
 .tableWrap {
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--surface);
   overflow-x: auto;
 }
@@ -40,8 +37,8 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--text-callout);
-  line-height: var(--leading-callout);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
 }
 
 .table th,
@@ -57,10 +54,8 @@
 }
 
 .table thead th {
-  font-size: var(--text-label);
   font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
+  color: var(--text-2);
 }
 
 .table tbody th {
@@ -69,11 +64,11 @@
 
 .note {
   display: block;
-  margin-top: 2px;
-  font-size: var(--text-caption);
-  line-height: var(--leading-caption);
+  margin-top: var(--space-0-5);
+  font-size: var(--text-footnote);
+  line-height: var(--leading-footnote);
   font-weight: var(--weight-regular);
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .table .num {
@@ -82,54 +77,61 @@
 }
 
 .result {
-  font-family: var(--font-display);
-  font-size: var(--text-headline);
   font-weight: var(--weight-semibold);
 }
 
+.target {
+  color: var(--text-2);
+}
+
+/* Status chips (§10.11): an icon and a word; green only for a target met. */
 .status {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  height: 22px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
+  background: var(--fill-soft);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--text-2);
   white-space: nowrap;
-  color: var(--text-secondary);
+}
+
+.status svg {
+  width: 12px;
+  height: 12px;
 }
 
 .met {
+  border-color: var(--success-line);
+  background: var(--success-soft);
   color: var(--success);
-  font-weight: var(--weight-semibold);
 }
 
 .card {
   display: grid;
   gap: var(--space-3);
-  max-width: var(--measure);
   overflow-wrap: anywhere;
 }
 
 .card h2 {
   margin-top: var(--space-6);
-  font-size: var(--text-title-2);
-  line-height: var(--leading-title-2);
+  font-size: var(--title-3);
+  line-height: var(--leading-title-3);
 }
 
 .card > p:first-child {
-  color: var(--text-secondary);
-  font-size: var(--text-callout);
+  color: var(--text-2);
+  font-size: var(--text-sm);
 }
 
 .card ul {
   display: grid;
   gap: var(--space-2);
   padding-left: var(--space-6);
-}
-
-.card code {
-  padding: 1px var(--space-1);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  font-family: inherit;
-  font-size: 0.95em;
 }
 
 .figure {
@@ -142,28 +144,27 @@
   display: block;
   max-width: 100%;
   height: auto;
-  padding: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--panel);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
 }
 
 .caption {
-  font-size: var(--text-callout);
-  color: var(--text-secondary);
+  font-size: var(--text-footnote);
+  line-height: var(--leading-footnote);
+  color: var(--text-2);
 }
 
 .external {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  min-height: var(--touch-min);
+  gap: var(--space-1-5);
+  min-height: var(--control-touch);
 }
 
 .skeleton {
   height: 8rem;
-  border-radius: var(--radius-lg);
-  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
 }
 
 .phoneLabel {
@@ -171,12 +172,7 @@
 }
 
 /* Phones: each row becomes the measure on one line, then result, target and status. */
-@media (max-width: 639px) {
-  .title {
-    font-size: var(--text-title-1);
-    line-height: var(--leading-title-1);
-  }
-
+@media (max-width: 575px) {
   .table thead {
     position: absolute;
     width: 1px;
@@ -220,7 +216,6 @@
   .table .target {
     grid-area: target;
     text-align: left;
-    color: var(--text-secondary);
   }
 
   .statusCell {

@@ -17,3 +17,13 @@ export function Keyframe({ kind, size = 12 }: { kind: 'switch-on' | 'alarm'; siz
     </svg>
   )
 }
+
+/** The brand mark: the keyframe diamond on a near-black tile, in the ink colour of the text. */
+export function Logo({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect width="24" height="24" rx="6" fill="var(--primary-fill)" />
+      <polygon points="12,5 19,12 12,19 5,12" fill="var(--on-primary)" />
+    </svg>
+  )
+}

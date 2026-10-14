@@ -11,7 +11,7 @@
 .track {
   position: relative;
   height: 36px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--healthy-span);
 }
 
@@ -25,21 +25,24 @@
   padding: 0 var(--space-3);
   overflow: hidden;
   font-size: var(--text-caption);
+  line-height: var(--leading-caption);
   font-weight: var(--weight-medium);
-  color: var(--text-secondary);
+  color: var(--text-2);
   white-space: nowrap;
 }
 
 .healthy {
   left: 0;
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
 .fault {
   right: 0;
   justify-content: flex-end;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: var(--fault-span);
+  box-shadow: inset 0 0 0 1px var(--danger-line);
+  color: var(--danger);
 }
 
 /* The part already played sits under a thin ink rule along the bottom edge. */
@@ -48,7 +51,7 @@
   left: 0;
   bottom: 0;
   height: 3px;
-  border-radius: 0 0 0 var(--radius-sm);
+  border-radius: 0 0 0 var(--radius-md);
   background: var(--playhead);
 }
 
@@ -74,8 +77,8 @@
   top: 0;
   left: -4px;
   width: 10px;
-  height: 6px;
-  border-radius: 2px;
+  height: 10px;
+  border-radius: 50%;
   background: var(--playhead);
 }
 
@@ -132,7 +135,7 @@
   gap: var(--space-4);
   font-size: var(--text-caption);
   line-height: var(--leading-caption);
-  color: var(--text-secondary);
+  color: var(--text-3);
 }
 
 .keys {
@@ -146,5 +149,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  font-size: var(--text-footnote);
+  line-height: var(--leading-footnote);
   color: var(--text);
 }
