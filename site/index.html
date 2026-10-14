@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Keyframe: fault diagnosis for marine diesels</title>
+    <meta
+      name="description"
+      content="Keyframe reads a marine diesel's sensor logs, names the fault it sees developing, and shows the readings behind every alarm. Now taking pilot partners."
+    />
+    <meta property="og:title" content="Keyframe: fault diagnosis for marine diesels" />
+    <meta
+      property="og:description"
+      content="Catch engine faults early, and see why. Scored on real test-bench data at engine loads it never trained on."
+    />
+    <meta property="og:image" content="images/hero.png" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!--
+      Placeholder: replace PILOT_EMAIL (pilots@keyframe.example) with the real address in every mailto link.
+    -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24">
+        <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" />
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+      </symbol>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></symbol>
+      <symbol id="i-external-link" viewBox="0 0 24 24">
+        <path d="M15 3h6v6" /><path d="M10 14 21 3" />
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      </symbol>
+      <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
+      <symbol id="i-triangle-alert" viewBox="0 0 24 24">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" />
+        <path d="M12 17h.01" />
+      </symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+    </svg>
+
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="nav" id="nav">
+      <div class="container nav-inner">
+        <a class="logo" href="./" aria-label="Keyframe home">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+            <rect class="logo-tile" width="24" height="24" rx="6" />
+            <polygon class="logo-mark" points="12,5 19,12 12,19 5,12" />
+          </svg>
+          <span>Keyframe</span>
+        </a>
+        <nav aria-label="Primary">
+          <ul class="nav-links">
+            <li><a href="#product">Product</a></li>
+            <li><a href="#results">Results</a></li>
+            <li><a href="#pilot">Pilot</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </nav>
+        <div class="nav-actions">
+          <a class="button button-ghost" href="demo/">Try the Demo</a>
+          <a class="button button-primary" href="mailto:pilots@keyframe.example?subject=Keyframe%20pilot">
+            Request a Pilot
+          </a>
+          <button
+            class="button button-ghost button-icon menu-button"
+            type="button"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="sheet"
+            id="menu-open"
+          >
+            <svg class="icon i20" aria-hidden="true"><use href="#i-menu" /></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Menu">
+      <div class="sheet-backdrop" data-close></div>
+      <div class="sheet-panel">
+        <div class="sheet-head">
+          <span class="logo" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+              <rect class="logo-tile" width="24" height="24" rx="6" />
+              <polygon class="logo-mark" points="12,5 19,12 12,19 5,12" />
+            </svg>
+            <span>Keyframe</span>
+          </span>
+          <button class="button button-ghost button-icon" type="button" aria-label="Close menu" data-close>
+            <svg class="icon i20" aria-hidden="true"><use href="#i-x" /></svg>
+          </button>
+        </div>
+        <ul class="sheet-links">
+          <li><a href="#product" data-close>Product</a></li>
+          <li><a href="#results" data-close>Results</a></li>
+          <li><a href="#pilot" data-close>Pilot</a></li>
+          <li><a href="#faq" data-close>FAQ</a></li>
+        </ul>
+        <a class="button button-hero button-primary" href="mailto:pilots@keyframe.example?subject=Keyframe%20pilot">
+          Request a Pilot
+        </a>
+        <a class="button button-hero button-secondary" href="demo/">Try the Demo</a>
+      </div>
+    </div>
+
+    <div id="sentinel" aria-hidden="true"></div>
+
+    <main id="main">
+      <section class="hero">
+        <div class="container">
+          <div class="hero-text">
+            <a class="tag" href="#pilot"><span class="tag-dot" aria-hidden="true"></span>Now taking pilot partners</a>
+            <h1>Catch engine faults early, and see why.</h1>
+            <p class="hero-sub">
+              Keyframe reads a marine diesel's sensor logs, names the fault it sees developing, and shows the
+              readings behind every alarm. Scored on real test-bench data, at engine loads it never trained on.
+            </p>
+            <div class="hero-ctas">
+              <a class="button button-hero button-primary" href="mailto:pilots@keyframe.example?subject=Keyframe%20pilot">
+                <svg class="icon i20" aria-hidden="true"><use href="#i-mail" /></svg>
+                Request a Pilot
+              </a>
+              <a class="button button-hero button-secondary" href="demo/">
+                <svg class="icon i20" aria-hidden="true"><use href="#i-play" /></svg>
+                Try the Demo
+              </a>
+            </div>
+            <p class="hero-note">The demo replays real bench runs in your browser. No account needed.</p>
+          </div>
+          <figure class="hero-shot">
+            <picture>
+              <source media="(max-width: 767px)" srcset="images/hero-phone.png" width="390" height="780" />
+              <img
+                src="images/hero.png"
+                width="1440"
+                height="900"
+                alt="The Keyframe replay screen for air cooler fouling at 75% load. The timeline shows the fault switching on at 43:41 and the alarm at 46:50; the model reads air cooler fouling at 86%, next to live trends of charge air pressure and temperatures."
+              />
+            </picture>
+            <figcaption>
+              Air cooler fouling at 75% load. The alarm fires 3 min 9 s after the fault is switched on, from a model
+              that never saw 75% load.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="proof" aria-label="Results at a glance">
+        <div class="container proof-inner">
+          <div class="proof-item">
+            <p class="proof-value">0.717</p>
+            <p class="proof-label">Macro F1 across 6 engine states, scored only on loads held out from training</p>
+          </div>
+          <div class="proof-item">
+            <p class="proof-value">3 min 9 s</p>
+            <p class="proof-label">Fastest alarm after a fault switched on</p>
+          </div>
+          <div class="proof-item">
+            <p class="proof-value">148 ms</p>
+            <p class="proof-label">For a diagnosis and its explanation, median</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="product" aria-labelledby="product-title">
+        <div class="container">
+          <div class="section-head">
+            <h2 class="section-title" id="product-title">From a drifting reading to a named fault</h2>
+            <p class="section-lead">
+              Keyframe watches the same channels your engine room logs: charge air, exhaust temperatures, cooling
+              water, fuel and lube oil. When a fault starts to build, it tells you which one and why.
+            </p>
+          </div>
+          <ul class="bento" data-count="4">
+            <li class="tile">
+              <div class="tile-media">
+                <img src="images/timeline.png" width="1164" height="323" alt="A replay timeline: healthy running, the fault switching on at 43:41, and the alarm at 46:50." />
+              </div>
+              <div class="tile-text">
+                <h3>Catch the moment it changes</h3>
+                <p>
+                  An alarm needs the same fault to hold across consecutive windows, so a single noisy reading
+                  doesn't send anyone to the engine room.
+                </p>
+              </div>
+            </li>
+            <li class="tile">
+              <div class="tile-media">
+                <img src="images/reading.png" width="384" height="397" alt="The model's reading: alarm for air cooler fouling, with the probability of each of six engine states." />
+              </div>
+              <div class="tile-text">
+                <h3>Name the likely fault</h3>
+                <p>Five fault types, from air cooler fouling to turbine degradation, each with the model's confidence.</p>
+              </div>
+            </li>
+            <li class="tile">
+              <div class="tile-media">
+                <img src="images/explain.png" width="384" height="640" alt="Why the model reads this as air cooler fouling: air path readings pushed the most, followed by the strongest single readings." />
+              </div>
+              <div class="tile-text">
+                <h3>Show the readings behind it</h3>
+                <p>Every alarm breaks down by sensor group and by reading, in engine terms an engineer can check.</p>
+              </div>
+            </li>
+            <li class="tile">
+              <div class="tile-media">
+                <img src="images/targets.png" width="768" height="615" alt="The model card's targets table, listing each measure with its result, its target and whether it was met." />
+              </div>
+              <div class="tile-text">
+                <h3>Know exactly where it falls short</h3>
+                <p>
+                  Targets were set before any model saw the data, and the model card reports every one, met or
+                  not.
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="results" aria-labelledby="results-title">
+        <div class="container">
+          <div class="section-head">
+            <h2 class="section-title" id="results-title">What the bench data shows</h2>
+            <p class="section-lead">
+              Keyframe was built and scored on the Marine Engine Fault Dataset: a three-cylinder Matsui marine
+              diesel run at 40 to 85% load with five faults switched on partway through. Here is what works, and
+              what doesn't yet.
+            </p>
+          </div>
+          <div class="results">
+            <div class="results-card good">
+              <h3>
+                <svg class="icon i24" aria-hidden="true"><use href="#i-circle-check" /></svg>
+                Works today
+              </h3>
+              <ul class="results-list">
+                <li>
+                  <strong>Reads two faults the way an engineer would</strong>
+                  Air cooler fouling from charge air temperature after the cooler, and injector clogging from the
+                  exhaust temperature spread between cylinders.
+                </li>
+                <li>
+                  <strong>Holds up at loads it hasn't seen</strong>
+                  Macro F1 of 0.717 on held-out engine loads, up from 0.44 for the first baseline. Never scored on
+                  a random split.
+                </li>
+                <li>
+                  <strong>Physics features earn their place</strong>
+                  Adding physics-derived quantities and rolling windows lifts macro F1 from 0.39 to 0.62 on the
+                  same model family.
+                </li>
+              </ul>
+            </div>
+            <div class="results-card gap">
+              <h3>
+                <svg class="icon i24" aria-hidden="true"><use href="#i-triangle-alert" /></svg>
+                Not there yet
+              </h3>
+              <ul class="results-list">
+                <li>
+                  <strong>Not tested on a ship</strong>
+                  All results come from one small engine on a test bench at steady loads.
+                </li>
+                <li>
+                  <strong>Misses too many faults, and alarms too often</strong>
+                  6 of 13 fault runs raised a sustained alarm. The false alarm rate is 12.2% against a 5% target.
+                </li>
+                <li>
+                  <strong>Turbine degradation is the weakest class</strong>
+                  Recall of 0.19, and two other faults are partly recognised by the day of testing rather than the
+                  fault.
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p class="results-foot">
+            <a href="demo/#/model-card">
+              Read the full model card
+              <svg class="icon i16" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+            </a>
+          </p>
+        </div>
+      </section>
+
+      <section class="section pilot" id="pilot" aria-labelledby="pilot-title">
+        <div class="container">
+          <div class="section-head center">
+            <h2 class="section-title" id="pilot-title">Find out what it makes of your engines</h2>
+            <p class="section-lead">The only way to know if Keyframe works on your fleet is to run it on your data.</p>
+          </div>
+          <ol class="steps">
+            <li class="step">
+              <h3>Share your logs</h3>
+              <p>Sensor logs from one engine type, plus the faults your team has already recorded on it.</p>
+            </li>
+            <li class="step">
+              <h3>Agree the checklist</h3>
+              <p>
+                Your engineers sign off what each fault should do to the sensors before any model is trained on
+                your data.
+              </p>
+            </li>
+            <li class="step">
+              <h3>Get an honest scorecard</h3>
+              <p>Replays of your own runs, and a report of what Keyframe catches, what it misses, and why.</p>
+            </li>
+          </ol>
+          <p class="pilot-fit">
+            Pilots suit engine makers and fleet operators with logged sensor data and an engineering team to judge
+            the results.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="faq" aria-labelledby="faq-title">
+        <div class="container">
+          <div class="section-head center">
+            <h2 class="section-title" id="faq-title">Questions engineers ask</h2>
+          </div>
+          <div class="faq">
+            <details>
+              <summary>
+                Has Keyframe been tested on a ship?
+                <svg class="icon i20" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+              </summary>
+              <p>
+                No. Every result so far comes from a test bench, and Keyframe must not be used for operating or
+                maintenance decisions yet. A pilot is how it moves from bench data to your engines.
+              </p>
+            </details>
+            <details>
+              <summary>
+                What data do you need from us?
+                <svg class="icon i20" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+              </summary>
+              <p>
+                Time-stamped sensor logs: pressures, temperatures, flows, speed and load, as most monitoring
+                systems already record them. The bench model uses about 70 channels at one reading every 1 to 2
+                seconds. Records of known faults make the scorecard far more useful.
+              </p>
+            </details>
+            <details>
+              <summary>
+                Will it work on our engines?
+                <svg class="icon i20" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+              </summary>
+              <p>
+                Not out of the box. The current model learned one three-cylinder test engine, so another engine
+                needs its own data. The method carries over: the same features, the same honest scoring, the same
+                explanations.
+              </p>
+            </details>
+            <details>
+              <summary>
+                How do you keep the scores honest?
+                <svg class="icon i20" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+              </summary>
+              <p>
+                Every score comes from an engine load the model never trained on. Targets and the fault checklist
+                were written down before any model saw the data, and one harder fault run was kept back and scored
+                once, at the very end.
+              </p>
+            </details>
+            <details>
+              <summary>
+                Does it replace our monitoring and alarm system?
+                <svg class="icon i20" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+              </summary>
+              <p>
+                No. Keyframe sits alongside it. Your existing alarms keep doing their job; Keyframe adds a likely
+                cause and the readings behind it.
+              </p>
+            </details>
+            <details>
+              <summary>
+                Can we check the work ourselves?
+                <svg class="icon i20" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+              </summary>
+              <p>
+                Yes. The code, notebooks, paper and model card are public, and one script rebuilds every result
+                from the published dataset.
+              </p>
+            </details>
+            <details>
+              <summary>
+                What does a pilot cost?
+                <svg class="icon i20" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+              </summary>
+              <p>
+                It depends on how much data you have and how many engine types you want covered. Request a pilot
+                and we'll agree scope and cost on a first call.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="section final" aria-labelledby="final-title">
+        <div class="container">
+          <div class="final-inner">
+            <h2 class="section-title" id="final-title">See it on your own engines</h2>
+            <p class="section-lead">Start with the demo, then bring your data.</p>
+            <div class="hero-ctas">
+              <a class="button button-hero button-primary" href="mailto:pilots@keyframe.example?subject=Keyframe%20pilot">
+                <svg class="icon i20" aria-hidden="true"><use href="#i-mail" /></svg>
+                Request a Pilot
+              </a>
+              <a class="button button-hero button-secondary" href="demo/">
+                <svg class="icon i20" aria-hidden="true"><use href="#i-play" /></svg>
+                Try the Demo
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <a class="logo" href="./" aria-label="Keyframe home">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                <rect class="logo-tile" width="24" height="24" rx="6" />
+                <polygon class="logo-mark" points="12,5 19,12 12,19 5,12" />
+              </svg>
+              <span>Keyframe</span>
+            </a>
+            <p>Fault diagnosis for marine diesels, with the reasons in plain sight.</p>
+            <p><a href="mailto:pilots@keyframe.example">pilots@keyframe.example</a></p>
+          </div>
+          <div class="footer-cols">
+            <div>
+              <h2>Product</h2>
+              <ul>
+                <li><a href="demo/">Demo</a></li>
+                <li><a href="demo/#/what-if">What-if</a></li>
+                <li><a href="demo/#/model-card">Model card</a></li>
+              </ul>
+            </div>
+            <div>
+              <h2>Research</h2>
+              <ul>
+                <li><a href="https://github.com/MrNahadi/KeyFrame">Code and paper</a></li>
+                <li><a href="https://doi.org/10.5281/zenodo.19857425">Dataset</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>
+            &copy; 2026 Keyframe. Demo data: Marine Engine Fault Dataset v1.0 (BahooToroody et al., 2026), CC BY
+            4.0. Bench results only; not tested on a ship.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Nav border once the page scrolls under it (MY-DESIGN §8).
+      const nav = document.getElementById('nav')
+      new IntersectionObserver(([e]) => nav.toggleAttribute('data-scrolled', !e.isIntersecting)).observe(
+        document.getElementById('sentinel'),
+      )
+
+      // Phone menu: a full-width sheet. Esc or any link closes it; focus returns to the menu button.
+      const sheet = document.getElementById('sheet')
+      const openButton = document.getElementById('menu-open')
+      const main = [document.getElementById('main'), nav, document.querySelector('.footer')]
+      function setOpen(open) {
+        sheet.toggleAttribute('data-open', open)
+        openButton.setAttribute('aria-expanded', String(open))
+        main.forEach((el) => (el.inert = open))
+        if (open) sheet.querySelector('.sheet-links a').focus()
+        else openButton.focus()
+      }
+      openButton.addEventListener('click', () => setOpen(true))
+      sheet.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', () => setOpen(false)))
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sheet.hasAttribute('data-open')) setOpen(false)
+      })
+    </script>
+  </body>
+</html>

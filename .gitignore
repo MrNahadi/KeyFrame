@@ -33,3 +33,6 @@ questions/
 .DS_Store
 .vscode/
 .idea/
+
+# Built public site (marketing page + demo)
+site-dist/
