@@ -1,10 +1,11 @@
-import { CircleAlert, Info, LoaderCircle, RotateCcw } from 'lucide-react'
+import { CircleAlert, Info, LoaderCircle, RotateCcw, SlidersHorizontal } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { channelUnit, faultName, featureName, GROUPS, groupOrder, sensorGroup, sensorLabel } from '../app/vocabulary'
 import { ProbabilityBars } from '../replay/ProbabilityBars'
 import { className } from '../replay/status'
 import { Waterfall } from '../replay/Waterfall'
-import { Button } from '../ui/Button'
+import { Button, LinkButton } from '../ui/Button'
+import { EmptyState } from '../ui/EmptyState'
 import { number, percent, precise, signed } from '../ui/format'
 import { Icon } from '../ui/Icon'
 import { Segmented } from '../ui/Segmented'
@@ -21,6 +22,26 @@ const steadyRows = (reading: Record<string, number>) =>
   Array.from({ length: WINDOW_S / STEP_S + 1 }, (_, i) => ({ ...reading, t: i * STEP_S }))
 
 export function WhatIfScreen() {
+  if (import.meta.env.VITE_WHATIF_ENABLED === 'false') {
+    return (
+      <div className={styles.screen}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>Try your own readings</h1>
+        </header>
+        <EmptyState
+          icon={SlidersHorizontal}
+          title="Live what-if predictions aren’t available in this demo"
+          action={<LinkButton href="#/replay">Open Replay</LinkButton>}
+        >
+          <p>Explore recorded engine runs and the readings behind each prediction in Replay.</p>
+        </EmptyState>
+      </div>
+    )
+  }
+  return <LiveWhatIfScreen />
+}
+
+function LiveWhatIfScreen() {
   const [baselines, setBaselines] = useState<Baselines | null>(null)
   const [failure, setFailure] = useState<ApiFailure | null>(null)
   const [load, setLoad] = useState<string | null>(null)
@@ -98,12 +119,18 @@ export function WhatIfScreen() {
         <section className={styles.problem} role="alert">
           <Icon icon={CircleAlert} size={20} />
           <div className={styles.problemBody}>
-            <h2 className={styles.problemTitle}>Can&rsquo;t reach the model&rsquo;s API</h2>
-            <p>{failure.message}</p>
-            <p>
-              Start it from the repository root with <code className={styles.code}>{START_COMMAND}</code>, then
-              retry.
-            </p>
+            <h2 className={styles.problemTitle}>Live predictions are unavailable</h2>
+            {import.meta.env.DEV ? (
+              <>
+                <p>{failure.message}</p>
+                <p>
+                  Start it from the repository root with <code className={styles.code}>{START_COMMAND}</code>, then
+                  retry.
+                </p>
+              </>
+            ) : (
+              <p>The prediction service could not be reached. Retry or explore a recorded run in Replay.</p>
+            )}
             <div>
               <Button variant="secondary" onClick={() => void loadBaselines()}>
                 Retry

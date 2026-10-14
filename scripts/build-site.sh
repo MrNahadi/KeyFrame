@@ -12,7 +12,7 @@ rm -rf "$out"
 mkdir -p "$out"
 
 npm --prefix "$root/web" ci
-VITE_SITE_URL=../ npm --prefix "$root/web" run build -- --base=./
+VITE_SITE_URL=../ VITE_WHATIF_ENABLED=false npm --prefix "$root/web" run build -- --base=./
 cp -R "$root/web/dist" "$out/demo"
 
 cp "$root/site/index.html" "$root/site/styles.css" "$root/site/favicon.svg" "$out/"

@@ -5,7 +5,10 @@ import { WhatIfScreen } from './WhatIfScreen'
 
 vi.mock('./api')
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+})
 
 const baselines: api.Baselines = {
   load_bins: [40, 60],
@@ -46,6 +49,15 @@ beforeEach(() => {
 })
 
 describe('WhatIfScreen', () => {
+  it('offers replay without requesting live predictions when the static demo disables what-if', () => {
+    vi.stubEnv('VITE_WHATIF_ENABLED', 'false')
+    vi.mocked(api.fetchBaselines).mockClear()
+    render(<WhatIfScreen />)
+    expect(screen.getByRole('heading', { name: 'Live what-if predictions aren’t available in this demo' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Open Replay' }).getAttribute('href')).toBe('#/replay')
+    expect(api.fetchBaselines).not.toHaveBeenCalled()
+  })
+
   it('shows the steady-state notice and loads the baseline for the chosen load', async () => {
     render(<WhatIfScreen />)
     expect(screen.getByText(/held these readings steady for 15 minutes/)).toBeTruthy()
