@@ -3,6 +3,7 @@
 # The demo is built with relative paths, so the site works on any static host and any domain.
 # Cloudflare Pages: build command `bash scripts/build-site.sh`, output directory `site-dist`,
 # environment variable NODE_VERSION=22.
+# Set SKIP_DEPENDENCY_INSTALL=true in Pages; this script installs only the web dependencies.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"

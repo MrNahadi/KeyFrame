@@ -478,6 +478,10 @@ a {
 }
 
 @media (max-width: 767px) {
+  .nav-inner {
+    gap: var(--space-2);
+  }
+
   .nav-links,
   .nav-actions .button-ghost {
     display: none;
@@ -486,6 +490,16 @@ a {
   .nav-actions .menu-button {
     display: inline-flex;
     margin-right: calc(-1 * var(--space-2));
+  }
+}
+
+@media (max-width: 380px) {
+  .nav-inner {
+    gap: var(--space-1);
+  }
+
+  .nav-actions > .button-primary {
+    padding-inline: var(--space-2);
   }
 }
 

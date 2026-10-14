@@ -56,7 +56,7 @@ npm --prefix web run dev                       # http://localhost:5173
 uv run uvicorn api.main:app --port 8000        # in a second terminal; the what-if screen needs it
 ```
 
-Replay and model card are static files, so `npm --prefix web run build` produces a site that runs on any static host. `bash scripts/build-site.sh` builds the public site into `site-dist/`: the marketing page from `site/` at the root and the demo at `/demo/`. On Cloudflare Pages, use that command as the build command, `site-dist` as the output directory, and set `NODE_VERSION=22`. The API serves `/health`, `/runs`, `/predict`, `/explain` and `/whatif/baselines`; a prediction takes about 90 ms and a prediction with its explanation about 150 ms.
+Replay and model card are static files, so `npm --prefix web run build` produces a site that runs on any static host. `bash scripts/build-site.sh` builds the public site into `site-dist/`: the marketing page from `site/` at the root and the demo at `/demo/`. On Cloudflare Pages, use that command as the build command, `site-dist` as the output directory, and set `NODE_VERSION=22` and `SKIP_DEPENDENCY_INSTALL=true`. The build script installs the web dependencies itself; the static deployment does not need the Python backend. It disables live what-if predictions and directs visitors to Replay. The API serves `/health`, `/runs`, `/predict`, `/explain` and `/whatif/baselines`; a prediction takes about 90 ms and a prediction with its explanation about 150 ms.
 
 ## Reproduce it
 
